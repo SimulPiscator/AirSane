@@ -35,7 +35,7 @@ sudo apt install libavahi-client-dev libusb-1.*-dev
 sudo apt install git cmake g++
 git clone https://github.com/SimulPiscator/AirSane.git
 mkdir AirSane-build && cd AirSane-build
-cmake ../AirSane
+cmake -DCMAKE_BUILD_TYPE=Release ../AirSane
 make
 ```
 ## Install
