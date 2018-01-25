@@ -29,35 +29,41 @@ In 'Printers and Scanners', exported scanners will be listed with a type of
 'Bonjour Scanner'.
 
 ## Build
-
- sudo apt install libsane-dev libjpeg-dev libpng-dev
- sudo apt install libavahi-client-dev libusb-1.*-dev
- sudo apt install git cmake g++
- git clone https://github.com/SimulPiscator/audiocast.git
- mkdir airsaned-build && cd airsaned-build
- cmake ../airsaned
- make
-
+```
+sudo apt install libsane-dev libjpeg-dev libpng-dev
+sudo apt install libavahi-client-dev libusb-1.*-dev
+sudo apt install git cmake g++
+git clone https://github.com/SimulPiscator/audiocast.git
+mkdir airsaned-build && cd airsaned-build
+cmake ../airsaned
+make
+```
 ## Install
 
 The provided systemd service file will assumes that user and group
 'saned' exist and have permission to access scanners.
 Installing the saned package is a convenient way to set up a user 'saned'
 with proper permissions:
- sudo apt install saned
-
- sudo make install
- sudo systemctl enable airsaned
- sudo systemctl start airsaned
- sudo systemctl status airsaned
+```sudo apt install saned```
+```
+sudo make install
+sudo systemctl enable airsaned
+sudo systemctl start airsaned
+sudo systemctl status airsaned
+```
 Disable saned if you are not using it:
- sudo systemctl disable saned
-Disable unused scanner backends to speed up device searching:
- sudo nano /etc/sane.d/dll.conf
+```
+sudo systemctl disable saned
+```
+Disable unused scanner backends to speed up device search:
+```
+sudo nano /etc/sane.d/dll.conf
+```
 The server's listening port, and other configuration details, may be changed
 by editing '/etc/default/airsane'. For options, and their meaning, run
- airsaned --help
-
+```
+airsaned --help
+```
 By default, the server listens on all local addresses, and port 8090.
 To verify http access, open `http://localhost:8090/` in a web browser.
 From there, follow a link to a scanner page, and click the 'update preview'
@@ -74,6 +80,8 @@ to separate software from hardware issues.
 
 To troubleshoot permission issues, compare debug output when running
 airsaned as user saned vs running as root:
+```
  sudo systemctl stop airsaned
  sudo su - saned -s /bin/sh -c 'airsaned --debug=true --access-log=-'
  sudo airsaned --debug=true --access-log=-
+```
