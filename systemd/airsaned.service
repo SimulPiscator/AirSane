@@ -1,0 +1,15 @@
+[Unit]
+Description=AirSane Imaging Service
+After=network.target
+
+[Service]
+EnvironmentFile=-/etc/default/airsane
+ExecStart=/usr/local/bin/airsaned --listen-address=${LISTEN_ADDRESS} --listen-port=${LISTEN_PORT} --access-log=${ACCESS_LOG} --hotplug=${HOTPLUG} --mdns-announce=${MDNS_ANNOUNCE} --local-only=${LOCAL_ONLY}
+ExecReload=/bin/kill -HUP $MAINPID
+User=saned
+Group=saned
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+Alias=airsaned.service

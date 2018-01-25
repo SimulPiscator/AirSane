@@ -1,0 +1,512 @@
+/*
+AirSane Imaging Daemon
+Copyright (C) 2018 Simul Piscator
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include "sanecpp.h"
+#include <map>
+#include <string>
+#include <limits>
+#include <locale>
+#include <sstream>
+#include <iostream>
+#include <cstring>
+#include <cassert>
+#include <mutex>
+
+namespace {
+    // locale-independent conversions
+    const std::locale clocale = std::locale("C");
+
+}
+
+namespace sanecpp {
+
+double strtod_c(const std::string& s)
+{
+    double d;
+    std::istringstream iss(s);
+    iss.imbue(clocale);
+    if(iss >> d)
+        return d;
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
+std::string dtostr_c(double d)
+{
+    std::ostringstream oss;
+    oss.imbue(clocale);
+    oss << d;
+    return oss.str();
+}
+
+std::ostream log(nullptr);
+
+option option_set::s_nulloption;
+
+// we call sane_exit() as frequently as possible
+// in order to minimize effects from bugs/leaks in backends
+int sane_init_refcount = 0;
+std::mutex sane_init_mutex;
+
+void sane_init_addref()
+{
+    std::lock_guard<std::mutex> lock(sane_init_mutex);
+    if(++sane_init_refcount == 1) {
+        log << "sane_init(nullptr, nullptr)" << std::endl;
+        ::sane_init(nullptr, nullptr);
+    }
+}
+
+void sane_init_release()
+{
+    std::lock_guard<std::mutex> lock(sane_init_mutex);
+    assert(sane_init_refcount > 0);
+    if(--sane_init_refcount == 0) {
+        log << "sane_exit()" << std::endl;
+        ::sane_exit();
+    }
+}
+
+option_set::option_set()
+{
+}
+
+option_set::option_set(device_handle h)
+{
+    init(h);
+}
+
+void option_set::init(device_handle h)
+{
+    m_device = h;
+    m_options.clear();
+    if(h) {
+        const SANE_Option_Descriptor* desc = nullptr;
+        for(int i = 1; desc = ::sane_get_option_descriptor(h.get(), i); ++i) {
+            if(desc->name && *desc->name)
+                m_options[desc->name] = option(this, desc, i);
+        }
+    }
+}
+
+void option_set::reload()
+{
+    SANE_Handle h = m_device.get();
+    const SANE_Option_Descriptor* desc = nullptr;
+    for(int i = 1; desc = ::sane_get_option_descriptor(h, i); ++i) {
+        if(desc->name && *desc->name) {
+            auto j = m_options.find(desc->name);
+            if(j == m_options.end())
+                m_options[desc->name] = option(this, desc, i);
+            else {
+                j->second.m_desc = desc;
+                j->second.m_index = i;
+            }
+        }
+    }
+}
+
+std::ostream &option_set::print(std::ostream &os) const
+{
+    for(const auto& opt : m_options)
+        if(opt.second.is_active()) {
+            os << "\n[" << opt.first << "] = ";
+            if(opt.second.is_null())
+                os << "null";
+            else if(opt.second.is_string())
+                os << "\"" << opt.second.string_value() << "\"";
+            else
+                os << opt.second.value();
+        }
+    return os;
+}
+
+option &option_set::operator[](const std::string & s)
+{
+    auto i = m_options.find(s);
+    return i == m_options.end() ? s_nulloption : i->second;
+}
+
+const option &option_set::operator[](const std::string & s) const
+{
+    auto i = m_options.find(s);
+    return i == m_options.end() ? s_nulloption : i->second;
+}
+
+option::option(option_set* set, const SANE_Option_Descriptor *d, SANE_Int i)
+    : m_set(set), m_desc(d), m_index(i)
+{
+}
+
+option::option()
+    : m_set(nullptr), m_desc(nullptr), m_index(0)
+{
+}
+
+option &option::operator=(const std::string &s)
+{
+    set_value(s);
+    return *this;
+}
+
+option &option::operator=(double d)
+{
+    set_value(d);
+    return *this;
+}
+
+bool option::is_null() const
+{
+    return !m_desc;
+}
+
+bool option::is_active() const
+{
+    return m_desc && SANE_OPTION_IS_ACTIVE(m_desc->cap);
+}
+
+bool option::is_settable() const
+{
+    return m_desc && SANE_OPTION_IS_SETTABLE(m_desc->cap);
+}
+
+bool option::is_string() const
+{
+    return m_desc && m_desc->type == SANE_TYPE_STRING;
+}
+
+bool option::is_numeric() const
+{
+    if(m_desc) switch(m_desc->type) {
+    case SANE_TYPE_INT:
+    case SANE_TYPE_FIXED:
+    case SANE_TYPE_BOOL:
+        return true;
+    }
+    return false;
+}
+
+bool option::set_value(const std::string &value)
+{
+    if(!set_string_value(value))
+        return set_numeric_value(strtod_c(value));
+    return true;
+}
+
+bool option::set_value(double value)
+{
+    if(!set_numeric_value(value))
+        return set_string_value(dtostr_c(value));
+    return true;
+}
+
+std::string option::value() const
+{
+    if(is_null() || is_string())
+        return string_value();
+    if(is_numeric()) {
+        std::ostringstream oss;
+        oss << dtostr_c(numeric_value()) << m_desc->unit;
+        return oss.str();
+    }
+    return "n/a";
+}
+
+bool option::set_string_value(const std::string &value)
+{
+    SANE_Handle h = m_set ? m_set->m_device.get() : nullptr;
+    if(!h)
+        return false;
+    if(!m_desc || m_desc->type != SANE_TYPE_STRING)
+        return false;
+    if(!is_settable() || !is_active())
+        return false;
+    SANE_Int info = 0;
+    SANE_Status status = ::sane_control_option(h, m_index, SANE_ACTION_SET_VALUE, const_cast<char*>(value.c_str()), &info);
+    log << "[" << m_desc->name << "] := \"" << value << "\"";
+    if(status != SANE_STATUS_GOOD)
+        log << " -> " << status;
+    else if(info & SANE_INFO_RELOAD_OPTIONS)
+        log << " -> reload options";
+    log << std::endl;
+    if(info & SANE_INFO_RELOAD_OPTIONS)
+        m_set->reload();
+    return status == SANE_STATUS_GOOD;
+}
+
+std::string option::string_value() const
+{
+    std::string s;
+    SANE_Handle h = m_set ? m_set->m_device.get() : nullptr;
+    if(h && is_string()) {
+        std::vector<SANE_Char> value(m_desc->size);
+        if(SANE_STATUS_GOOD == ::sane_control_option(h, m_index, SANE_ACTION_GET_VALUE, value.data(), nullptr))
+            s = value.data();
+    }
+    return s;
+}
+
+std::vector<std::string> option::allowed_string_values() const
+{
+    std::vector<std::string> values;
+    if(is_string() && m_desc->constraint_type == SANE_CONSTRAINT_STRING_LIST)
+        for(const SANE_String_Const* s = m_desc->constraint.string_list; *s && **s; ++s)
+            values.push_back(*s);
+    return values;
+}
+
+bool option::set_numeric_value(double value)
+{
+    SANE_Handle h = m_set ? m_set->m_device.get() : nullptr;
+    if(!h)
+        return false;
+    if(!is_numeric() || !is_settable() || !is_active())
+        return false;
+    SANE_Word w;
+    if(m_desc->type == SANE_TYPE_FIXED)
+        w = SANE_FIX(value);
+    else
+        w = value;
+    SANE_Int info = 0;
+    SANE_Status status = ::sane_control_option(h, m_index, SANE_ACTION_SET_VALUE, &w, &info);
+    log << "[" << m_desc->name << "] := " << value << m_desc->unit;
+    if(status != SANE_STATUS_GOOD)
+        log << " -> " << status;
+    else if(info & SANE_INFO_RELOAD_OPTIONS)
+        log << " -> reload options";
+    log << std::endl;
+    if(info & SANE_INFO_RELOAD_OPTIONS)
+        m_set->reload();
+    return status == SANE_STATUS_GOOD;
+}
+
+double option::numeric_value() const
+{
+    double value = std::numeric_limits<double>::quiet_NaN();
+    SANE_Handle h = m_set ? m_set->m_device.get() : nullptr;
+    if(!h || !is_numeric())
+        return value;
+    SANE_Word w;
+    if(SANE_STATUS_GOOD != ::sane_control_option(h, m_index, SANE_ACTION_GET_VALUE, &w, nullptr))
+        return value;
+    value = w;
+    if(m_desc->type == SANE_TYPE_FIXED)
+        value = SANE_UNFIX(value);
+    return value;
+}
+
+std::vector<double> option::allowed_numeric_values() const
+{
+    std::vector<double> values;
+    if(is_numeric() && m_desc->constraint_type == SANE_CONSTRAINT_WORD_LIST) {
+        for(int i = 1; i <= m_desc->constraint.word_list[0]; ++i)
+            values.push_back(m_desc->constraint.word_list[i]);
+        if(m_desc->type == SANE_TYPE_FIXED)
+            for(auto& value : values)
+                value = SANE_UNFIX(value);
+    }
+    return values;
+}
+
+double option::min() const
+{
+    double value = std::numeric_limits<double>::quiet_NaN();
+    if(m_desc) {
+        switch(m_desc->constraint_type) {
+        case SANE_CONSTRAINT_RANGE:
+            value = m_desc->constraint.range->min;
+            break;
+        case SANE_CONSTRAINT_WORD_LIST:
+            value = std::numeric_limits<double>::infinity();
+            for(int i = 1; i <= m_desc->constraint.word_list[0]; ++i)
+                value = std::min<double>(value, m_desc->constraint.word_list[i]);
+            break;
+        }
+        if(m_desc->type == SANE_TYPE_FIXED)
+            value = SANE_UNFIX(value);
+    }
+    return value;
+}
+
+double option::max() const
+{
+    double value = std::numeric_limits<double>::quiet_NaN();
+    if(m_desc) {
+        switch(m_desc->constraint_type) {
+        case SANE_CONSTRAINT_RANGE:
+            value = m_desc->constraint.range->max;
+            break;
+        case SANE_CONSTRAINT_WORD_LIST:
+            value = -std::numeric_limits<double>::infinity();
+            for(int i = 1; i <= m_desc->constraint.word_list[0]; ++i)
+                value = std::max<double>(value, m_desc->constraint.word_list[i]);
+            break;
+        }
+        if(m_desc->type == SANE_TYPE_FIXED)
+            value = SANE_UNFIX(value);
+    }
+    return value;
+}
+
+double option::quant() const
+{
+    double value = std::numeric_limits<double>::quiet_NaN();
+    if(m_desc && m_desc->constraint_type == SANE_CONSTRAINT_RANGE) {
+        value = m_desc->constraint.range->quant;
+        if(m_desc->type == SANE_TYPE_FIXED)
+            value = SANE_UNFIX(value);
+    }
+    return value;
+}
+
+SANE_Unit option::unit() const
+{
+    return m_desc ? m_desc->unit : SANE_UNIT_NONE;
+}
+
+device_handle open(const std::string& name, SANE_Status* pStatus)
+{
+    sane_init_addref();
+    SANE_Handle h;
+    SANE_Status status = ::sane_open(name.c_str(), &h);
+    if(pStatus)
+        *pStatus = status;
+    if(SANE_STATUS_GOOD == status) {
+        log << "sane_open(" << name << ") -> " << h << std::endl;
+        struct handle_deleter
+        {   void operator()(SANE_Handle h) const
+            {
+                log << "sane_close(" << h << ")" << std::endl;
+                ::sane_close(h);
+                sane_init_release();
+            }
+        };
+        return std::shared_ptr<void>(h, handle_deleter());
+    }
+    sane_init_release();
+    return std::shared_ptr<void>();
+}
+
+device_handle open(const device_info &info, SANE_Status* pStatus)
+{
+    return open(info.name, pStatus);
+}
+
+std::vector<device_info> enumerate_devices(bool localonly)
+{
+    std::vector<device_info> devices;
+    const SANE_Device** p;
+    sane_init_addref();
+    SANE_Status status = ::sane_get_devices(&p, localonly);
+    if(status == SANE_STATUS_GOOD)
+        while(*p) {
+            device_info info;
+            info.name = (*p)->name;
+            info.vendor = (*p)->vendor;
+            info.model = (*p)->model;
+            info.type = (*p)->type;
+            devices.push_back(info);
+            ++p;
+        }
+    sane_init_release();
+    return devices;
+}
+
+session::session(const std::string &devicename)
+    : m_status(SANE_STATUS_GOOD)
+{
+    m_device = sanecpp::open(devicename, &m_status);
+    init();
+}
+
+session::session(device_handle h)
+    : m_device(h), m_status(h ? SANE_STATUS_GOOD : SANE_STATUS_DEVICE_BUSY)
+{
+    init();
+}
+
+session &session::start()
+{
+    log << "sane_start(" << m_device.get() << ") with options:" << m_options << std::endl;
+    m_status = ::sane_start(m_device.get());
+    if(m_status == SANE_STATUS_GOOD)
+        m_status = ::sane_get_parameters(m_device.get(), &m_parameters);
+    return *this;
+}
+
+session &session::read(std::vector<char> &buffer)
+{
+    SANE_Status status = SANE_STATUS_GOOD;
+    size_t total = 0;
+    SANE_Byte* p = reinterpret_cast<SANE_Byte*>(buffer.data());
+    while(status == SANE_STATUS_GOOD && total < buffer.size()) {
+        SANE_Int read;
+        status = ::sane_read(m_device.get(), p + total, buffer.size() - total, &read);
+        total += read;
+    }
+    switch(status) {
+    case SANE_STATUS_GOOD:
+        break;
+    default:
+        log << "sane_read(" << m_device.get() << "): " << status << std::endl;
+    }
+    m_status = status;
+    return *this;
+}
+
+void session::init()
+{
+    ::memset(&m_parameters, 0, sizeof(m_parameters));
+    m_options.init(m_device);
+}
+
+std::ostream &print(std::ostream &os, SANE_Status s)
+{
+    return os << ::sane_strstatus(s);
+}
+
+std::ostream &print(std::ostream &os, SANE_Unit u)
+{
+    switch(u) {
+    case SANE_UNIT_NONE:
+        break;
+    case SANE_UNIT_BIT:
+        os << "bit";
+        break;
+    case SANE_UNIT_DPI:
+        os << "dpi";
+        break;
+    case SANE_UNIT_MICROSECOND:
+        os << "µs";
+        break;
+    case SANE_UNIT_MM:
+        os << "mm";
+        break;
+    case SANE_UNIT_PERCENT:
+        os << "%";
+        break;
+    case SANE_UNIT_PIXEL:
+        os << "px";
+        break;
+    default:
+        os << "[?]";
+    }
+    return os;
+}
+
+} // namespace sanecpp
+

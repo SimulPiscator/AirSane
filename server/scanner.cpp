@@ -1,0 +1,534 @@
+/*
+AirSane Imaging Daemon
+Copyright (C) 2018 Simul Piscator
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include "scanner.h"
+
+#include <sane/saneopts.h>
+
+#include <sstream>
+#include <algorithm>
+#include <mutex>
+#include <cstring>
+#include <cmath>
+
+#include "scanjob.h"
+#include "basic/uuid.h"
+#include "web/httpserver.h"
+
+namespace {
+std::string xmlEscape(const std::string& in)
+{
+    std::string out;
+    for(auto c : in) switch(c) {
+    case '"':
+        out += "&quot;";
+        break;
+    case '\'':
+        out += "&apos;";
+        break;
+    case '&':
+        out += "&amp;";
+        break;
+    case '<':
+        out += "&lt;";
+        break;
+    case '>':
+        out += "&gt;";
+        break;
+    default:
+        out += c;
+    }
+    return out;
+}
+
+std::string colorMode(const std::string& colorSpace, int bitDepth)
+{
+    std::ostringstream oss;
+    if(colorSpace == "grayscale")
+        oss << "Grayscale" << bitDepth;
+    else if(colorSpace == "color")
+        oss << "RGB" << 3*bitDepth;
+    return oss.str();
+}
+
+} // namespace
+
+struct Scanner::Private
+{
+    Scanner* p;
+    std::string mUri, mSaneName;
+
+    std::string mUuid, mAdminUri, mIconUri, mMakeAndModel;
+    int mMinResDpi, mMaxResDpi, mResStepDpi;
+    double mMaxWidthPx300dpi, mMaxHeightPx300dpi;
+    std::vector<double> mDiscreteResolutions;
+    std::vector<std::string> mDocumentFormats, mColorSpaces,
+        mColorModes, mSupportedIntents, mInputSources;
+    struct InputSource
+    {
+        Private* p;
+        double mMinWidth, mMaxWidth, mMinHeight, mMaxHeight,
+               mMaxPhysicalWidth, mMaxPhysicalHeight;
+        int mMaxBits;
+        InputSource(Private* p) : p(p) {}
+        const char* init(const sanecpp::option_set&);
+        void writeCapabilitiesXml(std::ostream&) const;
+    } *mpPlaten, *mpAdf;
+    bool mDuplex;
+
+    std::map<std::string, std::shared_ptr<ScanJob>> mJobs;
+    std::mutex mJobsMutex;
+
+    std::weak_ptr<sanecpp::session> mpSession;
+
+    const char* mError;
+
+    Private(Scanner* p) : p(p), mpPlaten(nullptr), mpAdf(nullptr), mDuplex(false), mError(nullptr) {}
+    ~Private() { delete mpPlaten; delete mpAdf; }
+    const char* init(const sanecpp::device_info&);
+    void writeScannerCapabilitiesXml(std::ostream&) const;
+    void writeSettingProfile(int bits, std::ostream&) const;
+    mutable int mCurrentProfile;
+    std::shared_ptr<ScanJob> createJob();
+    bool isOpen() const;
+    const char* statusString() const;
+};
+
+void Scanner::Private::writeScannerCapabilitiesXml(std::ostream& os) const
+{
+    mCurrentProfile = 0;
+    os <<
+    "<?xml version='1.0' encoding='UTF-8'?>"
+    "<scan:ScannerCapabilities"
+    " xmlns:pwg='http://www.pwg.org/schemas/2010/12/sm'"
+    " xmlns:scan='http://schemas.hp.com/imaging/escl/2011/05/03'>"
+    "<pwg:Version>2.0</pwg:Version>"
+    "<pwg:MakeAndModel>" << xmlEscape(mMakeAndModel) << "</pwg:MakeAndModel>"
+    "<scan:UUID>" << mUuid << "</scan:UUID>";
+    if(!mAdminUri.empty())
+        os << "<scan:AdminURI>" << mAdminUri << "</scan:AdminURI>";
+    if(!mIconUri.empty())
+        os << "<scan:IconURI>" << mIconUri << "</scan:IconURI>";
+    if(mpPlaten) {
+        os << "<scan:Platen><scan:PlatenInputCaps>";
+        mpPlaten->writeCapabilitiesXml(os);
+        os << "</scan:PlatenInputCaps></scan:Platen>";
+    }
+    if(mpAdf && !mDuplex) {
+        os << "<scan:Adf><scan:AdfSimplexInputCaps>";
+        mpAdf->writeCapabilitiesXml(os);
+        os << "</scan:AdfSimplexInputCaps></scan:Adf>";
+    }
+    if(mpAdf && mDuplex) {
+        os << "<scan:Adf><scan:AdfDuplexInputCaps>";
+        mpAdf->writeCapabilitiesXml(os);
+        os << "</scan:AdfDuplexInputCaps></scan:Adf>";
+    }
+    os << "</scan:ScannerCapabilities>";
+}
+
+void Scanner::Private::writeSettingProfile(int bits, std::ostream& os) const
+{
+    os <<
+    "<scan:SettingProfile name='" << mCurrentProfile++ << "'>"
+    "<scan:ColorModes>";
+    for(const auto& cs : mColorSpaces)
+        for(int i = 8; i <= bits; i += 8)
+            os << "<scan:ColorMode>" << colorMode(cs, i) << "</scan:ColorMode>";
+    os <<
+    "</scan:ColorModes>"
+    "<scan:ColorSpaces>";
+    for(const auto& cs : mColorSpaces)
+        os << "<scan:ColorSpace>" << cs << "</scan:ColorSpace>";
+    os <<
+    "</scan:ColorSpaces>"
+    "<scan:SupportedResolutions>";
+    if(mDiscreteResolutions.empty()) {
+        os << "<scan:ResolutionRange />"
+            "<scan:XResolutionRange>"
+              "<scan:Min>" << mMinResDpi << "</scan:Min>"
+              "<scan:Max>" << mMaxResDpi << "</scan:Max>"
+              "<scan:Step>" << mResStepDpi << "</scan:Step>"
+            "</scan:XResolutionRange>"
+            "<scan:YResolutionRange>"
+              "<scan:Min>" << mMinResDpi << "</scan:Min>"
+              "<scan:Max>" << mMaxResDpi << "</scan:Max>"
+              "<scan:Step>" << mResStepDpi << "</scan:Step>"
+            "</scan:YResolutionRange>";
+    } else {
+      os << "<scan:DiscreteResolutions>";
+      for(const auto& res : mDiscreteResolutions)
+        os << "<scan:DiscreteResolution>"
+               "<scan:XResolution>" << res << "</scan:XResolution>"
+               "<scan:YResolution>" << res << "</scan:YResolution>"
+              "</scan:DiscreteResolution>";
+      os << "</scan:DiscreteResolutions>";
+    }
+    os <<
+    "</scan:SupportedResolutions>"
+    "<scan:DocumentFormats>";
+    for(const auto& format : mDocumentFormats)
+        os << "<pwg:DocumentFormat>" << format << "</pwg:DocumentFormat>";
+    os <<
+    "</scan:DocumentFormats>"
+    "</scan:SettingProfile>";
+}
+
+std::shared_ptr<ScanJob> Scanner::Private::createJob()
+{
+    std::lock_guard<std::mutex> lock(mJobsMutex);
+    std::string jobUuid;
+    do {
+        jobUuid = Uuid(mUuid, ::time(nullptr), ::rand());
+    } while(mJobs.find(jobUuid) != mJobs.end());
+    auto job = std::make_shared<ScanJob>(p, jobUuid);
+    mJobs[jobUuid] = job;
+    return job;
+}
+
+bool Scanner::Private::isOpen() const
+{
+    return !!mpSession.lock();
+}
+
+const char *Scanner::Private::statusString() const
+{
+    return isOpen() ? "Processing" : "Idle";
+}
+
+void Scanner::Private::InputSource::writeCapabilitiesXml(std::ostream& os) const
+{
+    os <<
+    "<scan:MinWidth>" << mMinWidth << "</scan:MinWidth>"
+    "<scan:MinHeight>" << mMinHeight << "</scan:MinHeight>"
+    "<scan:MaxWidth>" << mMaxWidth << "</scan:MaxWidth>"
+    "<scan:MaxHeight>" << mMaxHeight << "</scan:MaxHeight>"
+    "<scan:MaxPhysicalWidth>" << mMaxPhysicalWidth << "</scan:MaxPhysicalWidth>"
+    "<scan:MaxPhysicalHeight>" << mMaxPhysicalHeight << "</scan:MaxPhysicalHeight>"
+    "<scan:MaxScanRegions>1</scan:MaxScanRegions>"
+    "<scan:SettingProfiles>";
+    p->writeSettingProfile(mMaxBits, os);
+    os <<
+    "</scan:SettingProfiles>"
+    "<scan:SupportedIntents>";
+    for(const auto& s : p->mSupportedIntents)
+      os << "<scan:SupportedIntent>" << s << "</scan:SupportedIntent>";
+    os <<
+    "</scan:SupportedIntents>";
+}
+
+
+const char* Scanner::Private::init(const sanecpp::device_info& info)
+{
+    mMakeAndModel = info.vendor + " " + info.model;
+    mSaneName = info.name;
+    mUuid = Uuid(mMakeAndModel, mSaneName);
+    mUri = "/" + mUuid;
+
+    auto device = sanecpp::open(info);
+    if(!device)
+        return "failed to open device";
+
+    sanecpp::option_set opt(device);
+    const auto& resolution = opt[SANE_NAME_SCAN_RESOLUTION];
+    if(resolution.is_null())
+        return "missing SANE parameter: " SANE_NAME_SCAN_RESOLUTION;
+    mDiscreteResolutions = resolution.allowed_numeric_values();
+    mMinResDpi = resolution.min();
+    mMaxResDpi = resolution.max();
+    mResStepDpi = resolution.quant();
+
+    mDocumentFormats = std::vector<std::string>({
+        HttpServer::MIME_TYPE_PDF,
+        HttpServer::MIME_TYPE_JPEG,
+        HttpServer::MIME_TYPE_PNG,
+    });
+
+    mSupportedIntents = std::vector<std::string>({
+        "Preview",
+        "TextAndGraphic",
+        "Photo",
+    });
+
+    auto modes = opt[SANE_NAME_SCAN_MODE].allowed_string_values();
+    if(modes.empty()) {
+        modes.push_back("Gray");
+        modes.push_back("Color");
+    }
+    if(std::find(modes.begin(), modes.end(), "Gray") != modes.end()) {
+        mColorSpaces.push_back("grayscale");
+        mColorModes.push_back("Grayscale8");
+    }
+    if(std::find(modes.begin(), modes.end(), "Color") != modes.end()) {
+        mColorSpaces.push_back("color");
+        mColorModes.push_back("RGB24");
+    }
+    const char* err = nullptr;
+    int maxBits = 8;
+    mMaxWidthPx300dpi = 0;
+    mMaxHeightPx300dpi = 0;
+    mInputSources.push_back("Flatbed");
+    if(opt[SANE_NAME_SCAN_SOURCE].set_string_value("Automatic Document Feeder")) {
+        mInputSources.push_back("Feeder");
+        mpAdf = new Private::InputSource(this);
+        err = mpAdf->init(opt);
+        if(!err) {
+            maxBits = std::max(maxBits, mpAdf->mMaxBits);
+            mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpAdf->mMaxWidth);
+            mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpAdf->mMaxHeight);
+        }
+    }
+    if(!err) {
+        opt[SANE_NAME_SCAN_SOURCE].set_string_value("Flatbed");
+        mpPlaten = new Private::InputSource(this);
+        err = mpPlaten->init(opt);
+        if(!err) {
+            maxBits = std::max(maxBits, mpPlaten->mMaxBits);
+            mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpPlaten->mMaxWidth);
+            mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpPlaten->mMaxHeight);
+        }
+    }
+    if(maxBits == 16) {
+        if(std::find(mColorModes.begin(), mColorModes.end(), "Grayscale8") != mColorModes.end())
+            mColorModes.push_back("Grayscale16");
+        if(std::find(mColorModes.begin(), mColorModes.end(), "RGB24") != mColorModes.end())
+            mColorModes.push_back("RGB48");
+    }
+    return err;
+}
+
+const char* Scanner::Private::InputSource::init(const sanecpp::option_set& opt)
+{
+    mMaxBits = 8;
+    if(!opt[SANE_NAME_BIT_DEPTH].is_null())
+        mMaxBits = opt[SANE_NAME_BIT_DEPTH].max();
+
+    const auto
+            &tl_x = opt[SANE_NAME_SCAN_TL_X],
+            &tl_y = opt[SANE_NAME_SCAN_TL_Y],
+            &br_x = opt[SANE_NAME_SCAN_BR_X],
+            &br_y = opt[SANE_NAME_SCAN_BR_Y];
+
+    if(tl_x.is_null() || tl_y.is_null() || br_x.is_null() || br_y.is_null())
+        return "missing scan area parameter(s)";
+    auto unit = tl_x.unit();
+    if(tl_y.unit() != unit || br_x.unit() != unit || br_y.unit() != unit)
+        return "inconsistent unit in scan area parameters";
+
+    // eSCL expresses sizes in terms of pixels at 300 dpi
+    double f = 300;
+    switch(unit) {
+    case SANE_UNIT_MM:
+        f /= 25.4;
+        break;
+    case SANE_UNIT_PIXEL:
+        f /= opt[SANE_NAME_SCAN_RESOLUTION].numeric_value();
+        break;
+    default:
+        return "unexpected unit in scan area parameters";
+    }
+
+    mMinWidth = std::max(0.0, br_x.min() - tl_x.max());
+    mMaxWidth = br_x.max() - tl_x.min();
+    mMaxPhysicalWidth = br_x.max();
+    mMinHeight = std::max(0.0, br_y.min() - tl_y.max());
+    mMaxHeight = br_y.max() - tl_y.min();
+    mMaxPhysicalHeight = br_y.max();
+    for(auto pValue : {
+        &mMinWidth, &mMaxWidth, &mMinHeight, &mMaxHeight,
+        &mMaxPhysicalWidth, &mMaxPhysicalHeight
+    }) *pValue = ::floor(*pValue * f + 0.5);
+    return nullptr;
+}
+
+Scanner::Scanner(const sanecpp::device_info& info)
+    : p(new Private(this))
+{
+    p->mError = p->init(info);
+}
+
+Scanner::~Scanner()
+{
+    delete p;
+}
+
+const char *Scanner::error() const
+{
+    return p->mError;
+}
+
+std::string Scanner::statusString() const
+{
+    return p->statusString();
+}
+
+const std::string &Scanner::uuid() const
+{
+    return p->mUuid;
+}
+
+const std::string &Scanner::uri() const
+{
+    return p->mUri;
+}
+
+const std::string &Scanner::makeAndModel() const
+{
+    return p->mMakeAndModel;
+}
+
+const std::vector<std::string> &Scanner::documentFormats() const
+{
+    return p->mDocumentFormats;
+}
+
+const std::vector<std::string> &Scanner::colorSpaces() const
+{
+    return p->mColorSpaces;
+}
+
+const std::vector<std::string> &Scanner::colorModes() const
+{
+    return p->mColorModes;
+}
+
+const std::vector<std::string> &Scanner::supportedIntents() const
+{
+    return p->mSupportedIntents;
+}
+
+const std::vector<std::string> &Scanner::inputSources() const
+{
+    return p->mInputSources;
+}
+
+int Scanner::minResDpi() const
+{
+    return p->mMinResDpi;
+}
+
+int Scanner::maxResDpi() const
+{
+    return p->mMaxResDpi;
+}
+
+int Scanner::maxWidthPx300dpi() const
+{
+    return p->mMaxWidthPx300dpi;
+}
+
+int Scanner::maxHeightPx300dpi() const
+{
+    return p->mMaxHeightPx300dpi;
+}
+
+bool Scanner::hasPlaten() const
+{
+    return p->mpPlaten;
+}
+
+bool Scanner::hasAdf() const
+{
+    return p->mpAdf;
+}
+
+bool Scanner::hasDuplexAdf() const
+{
+    return p->mpAdf && p->mDuplex;
+}
+
+std::shared_ptr<sanecpp::session> Scanner::open()
+{
+    auto session = std::make_shared<sanecpp::session>(p->mSaneName);
+    p->mpSession = session;
+    return session;
+}
+
+bool Scanner::isOpen() const
+{
+    return p->isOpen();
+}
+
+void Scanner::writeScannerCapabilitiesXml(std::ostream& os) const
+{
+    os.imbue(std::locale("C"));
+    p->writeScannerCapabilitiesXml(os);
+}
+
+std::shared_ptr<ScanJob> Scanner::createJobFromScanSettingsXml(const std::string& xml, bool autoselectFormat)
+{
+    auto job = p->createJob();
+    job->initWithScanSettingsXml(xml, autoselectFormat);
+    return job;
+}
+
+std::shared_ptr<ScanJob> Scanner::getJob(const std::string &uuid)
+{
+    std::lock_guard<std::mutex> lock(p->mJobsMutex);
+    auto i = p->mJobs.find(uuid);
+    return i == p->mJobs.end() ? nullptr : i->second;
+}
+
+bool Scanner::cancelJob(const std::string &uuid)
+{
+    std::lock_guard<std::mutex> lock(p->mJobsMutex);
+    auto i = p->mJobs.find(uuid);
+    if(i == p->mJobs.end())
+        return false;
+    i->second->cancel();
+    return true;
+}
+
+int Scanner::purgeJobs(int maxAgeSeconds)
+{
+    int n = 0;
+    std::lock_guard<std::mutex> lock(p->mJobsMutex);
+    for(auto i = p->mJobs.begin(); i != p->mJobs.end(); )
+    {
+        if(i->second->ageSeconds() > maxAgeSeconds)
+            i = p->mJobs.erase(i), ++n;
+        else
+            ++i;
+    }
+    return n;
+}
+
+Scanner::JobList Scanner::jobs() const
+{
+    JobList jobs;
+    std::lock_guard<std::mutex> lock(p->mJobsMutex);
+    for(const auto& job : p->mJobs)
+        jobs.push_back(job.second);
+    return jobs;
+}
+
+void Scanner::writeScannerStatusXml(std::ostream &os) const
+{
+    os <<
+    "<?xml version='1.0' encoding='UTF-8'?>"
+    "<scan:ScannerStatus xmlns:pwg='http://www.pwg.org/schemas/2010/12/sm'"
+    " xmlns:scan='http://schemas.hp.com/imaging/escl/2011/05/03'>"
+    "<pwg:Version>2.0</pwg:Version>"
+    "<pwg:State>" << p->statusString() << "</pwg:State>"
+    "<pwg:StateReasons><pwg:StateReason>None</pwg:StateReason></pwg:StateReasons>"
+    "<scan:Jobs>";
+    std::lock_guard<std::mutex> lock(p->mJobsMutex);
+    for(const auto& job : p->mJobs)
+        job.second->writeJobInfoXml(os);
+    os << "</scan:Jobs></scan:ScannerStatus>" << std::endl;
+}
