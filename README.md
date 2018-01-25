@@ -44,7 +44,10 @@ The provided systemd service file will assumes that user and group
 'saned' exist and have permission to access scanners.
 Installing the saned package is a convenient way to set up a user 'saned'
 with proper permissions:
-```sudo apt install saned```
+```
+sudo apt install saned
+```
+To install AirSane:
 ```
 sudo make install
 sudo systemctl enable airsaned
