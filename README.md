@@ -33,9 +33,9 @@ In 'Printers and Scanners', exported scanners will be listed with a type of
 sudo apt install libsane-dev libjpeg-dev libpng-dev
 sudo apt install libavahi-client-dev libusb-1.*-dev
 sudo apt install git cmake g++
-git clone https://github.com/SimulPiscator/audiocast.git
-mkdir airsaned-build && cd airsaned-build
-cmake ../airsaned
+git clone https://github.com/SimulPiscator/AirSane.git
+mkdir AirSane-build && cd AirSane-build
+cmake ../AirSane
 make
 ```
 ## Install
