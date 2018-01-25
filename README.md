@@ -1,4 +1,4 @@
-#AirSane
+# AirSane
 
 A SANE WebScan frontend that supports Apple's AirScan protocol.
 Scanners are detected automatically, and published through mDNS.
@@ -18,17 +18,17 @@ implemented in Apple's AirScanScanner client
 If you are looking for a powerful SANE web frontend, AirSane may not be for you.
 You may be interested in [phpSANE] (https://sourceforge.net/projects/phpsane) instead.
 
-##Usage
-###Web interface
+## Usage
+### Web interface
 Open `http://machine-name:8090/` in a web browser, and follow a scanner 
 link from the main page.
-###macos
+### macos
 When opening Apple Image Capture or similar applications, scanners exported
 by AirSane should be immediately available.
 In 'Printers and Scanners', exported scanners will be listed with a type of 
 'Bonjour Scanner'.
 
-##Build
+## Build
 
  sudo apt install libsane-dev libjpeg-dev libpng-dev
  sudo apt install libavahi-client-dev libusb-1.*-dev
@@ -38,7 +38,7 @@ In 'Printers and Scanners', exported scanners will be listed with a type of
  cmake ../airsaned
  make
 
-##Install
+## Install
 
 The provided systemd service file will assumes that user and group
 'saned' exist and have permission to access scanners.
@@ -63,7 +63,7 @@ To verify http access, open `http://localhost:8090/` in a web browser.
 From there, follow a link to a scanner page, and click the 'update preview'
 button for a preview scan.
 
-##Troubleshoot
+## Troubleshoot
 
 If you are able to open the server's web page locally, but not from a remote
 machine, you may have to allow access to port 8090 in your iptables
