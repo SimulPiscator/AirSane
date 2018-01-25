@@ -16,7 +16,7 @@ implemented in Apple's AirScanScanner client
 (macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`).
 
 If you are looking for a powerful SANE web frontend, AirSane may not be for you.
-You may be interested in [phpSANE] (https://sourceforge.net/projects/phpsane) instead.
+You may be interested in [phpSANE](https://sourceforge.net/projects/phpsane) instead.
 
 ## Usage
 ### Web interface
