@@ -33,9 +33,9 @@ In 'Printers and Scanners', exported scanners will be listed with a type of
 sudo apt install libsane-dev libjpeg-dev libpng-dev
 sudo apt install libavahi-client-dev libusb-1.*-dev
 sudo apt install git cmake g++
-git clone https://github.com/SimulPiscator/audiocast.git
-mkdir airsaned-build && cd airsaned-build
-cmake ../airsaned
+git clone https://github.com/SimulPiscator/AirSane.git
+mkdir AirSane-build && cd AirSane-build
+cmake -DCMAKE_BUILD_TYPE=Release ../AirSane
 make
 ```
 ## Install
@@ -44,7 +44,10 @@ The provided systemd service file will assumes that user and group
 'saned' exist and have permission to access scanners.
 Installing the saned package is a convenient way to set up a user 'saned'
 with proper permissions:
-```sudo apt install saned```
+```
+sudo apt install saned
+```
+To install AirSane:
 ```
 sudo make install
 sudo systemctl enable airsaned
