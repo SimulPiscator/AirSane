@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <list>
 #include <algorithm>
 #include <iostream>
+#include <cerrno>
+#include <cstring>
 
 struct MdnsPublisher::Private
 {
@@ -135,15 +137,18 @@ struct MdnsPublisher::Private
     {
         mpThread = ::avahi_threaded_poll_new();
         if(mpThread) {
-            ::avahi_threaded_poll_start(mpThread);
             createClient();
+            if(::avahi_threaded_poll_start(mpThread)) {
+              int err = errno;// phtread error
+              std::cerr << ::strerror(err) << std::endl;
+            }
         }
    }
     ~Private()
     {
-        destroyClient();
         if(mpThread)
             ::avahi_threaded_poll_free(mpThread);
+        destroyClient();
     }
 
     static void clientCallback(AvahiClient* client, AvahiClientState state, void* instance)
