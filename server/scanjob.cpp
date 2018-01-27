@@ -379,8 +379,7 @@ void ScanJob::Private::finishTransfer(std::ostream &os)
     if(isProcessing()) {
         if(mDocumentFormat == HttpServer::MIME_TYPE_JPEG) {
             auto jpegEncoder = new JpegEncoder;
-            if(mIntent != "Preview")
-                jpegEncoder->setQualityPercent(100);
+            jpegEncoder->setQualityPercent(90);
             pEncoder.reset(jpegEncoder);
         }
         else if(mDocumentFormat == HttpServer::MIME_TYPE_PDF) {
