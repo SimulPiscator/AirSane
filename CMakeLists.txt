@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
 
 project(airsaned)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wreturn-type")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -Wreturn-type")
+set(CMAKE_CXX_FLAGS_MINSIZEREL  "${CMAKE_CXX_FLAGS_MINSIZEREL} -s")
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE MinSizeRel CACHE STRING "Build type" FORCE)
+endif()
 include_directories(.)
 add_executable(${PROJECT_NAME}
     server/main.cpp
