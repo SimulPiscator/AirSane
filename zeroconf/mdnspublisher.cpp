@@ -146,9 +146,11 @@ struct MdnsPublisher::Private
    }
     ~Private()
     {
-        if(mpThread)
+        if(mpThread) {
+            ::avahi_threaded_poll_stop(mpThread);
+            destroyClient();
             ::avahi_threaded_poll_free(mpThread);
-        destroyClient();
+        }
     }
 
     static void clientCallback(AvahiClient* client, AvahiClientState state, void* instance)
