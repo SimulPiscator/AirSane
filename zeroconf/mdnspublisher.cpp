@@ -73,9 +73,9 @@ struct MdnsPublisher::Private
             if(!mpEntryGroup)
                 return ::avahi_client_errno(pClient);
             int err = ::avahi_entry_group_add_service(mpEntryGroup,
-                AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0),
-                mpService->name().c_str(), mpService->type().c_str(),
-                nullptr, nullptr, mpService->port(), nullptr
+                  mpService->interfaceIndex(), AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0),
+                  mpService->name().c_str(), mpService->type().c_str(),
+                  nullptr, nullptr, mpService->port(), nullptr
             );
             if(!err)
                 err = ::avahi_entry_group_commit(mpEntryGroup);
@@ -84,7 +84,7 @@ struct MdnsPublisher::Private
                 for(const auto& entry : mpService->txtRecord())
                     txt = ::avahi_string_list_add_pair(txt, entry.first.c_str(), entry.second.c_str());
                 err = ::avahi_entry_group_update_service_txt_strlst(mpEntryGroup,
-                      AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0),
+                      mpService->interfaceIndex(), AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0),
                       mpService->name().c_str(), mpService->type().c_str(),
                       nullptr, txt);
                 ::avahi_string_list_free(txt);
@@ -139,7 +139,7 @@ struct MdnsPublisher::Private
         if(mpThread) {
             createClient();
             if(::avahi_threaded_poll_start(mpThread)) {
-              int err = errno;// phtread error
+              int err = errno;
               std::cerr << ::strerror(err) << std::endl;
             }
         }

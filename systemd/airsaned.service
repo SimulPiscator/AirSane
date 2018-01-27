@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 EnvironmentFile=-/etc/default/airsane
-ExecStart=/usr/local/bin/airsaned --listen-address=${LISTEN_ADDRESS} --listen-port=${LISTEN_PORT} --access-log=${ACCESS_LOG} --hotplug=${HOTPLUG} --mdns-announce=${MDNS_ANNOUNCE} --local-only=${LOCAL_ONLY}
+ExecStart=/usr/local/bin/airsaned --interface=${INTERFACE} --listen-port=${LISTEN_PORT} --access-log=${ACCESS_LOG} --hotplug=${HOTPLUG} --mdns-announce=${MDNS_ANNOUNCE} --local-scanners-only=${LOCAL_SCANNERS_ONLY}
 ExecReload=/bin/kill -HUP $MAINPID
 User=saned
 Group=saned

@@ -32,14 +32,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ScanServer::ScanServer(int argc, char** argv)
     : mDoRun(true), mHotplug(true), mAnnounce(true), mLocalonly(true)
 {
-    std::string address, port, accesslog, hotplug, announce, localonly, debug;
+    std::string port, interface, accesslog, hotplug, announce, localonly, debug;
     struct { const std::string name, def, info; std::string& value; } options[] = {
-    { "listen-address", "*", "listening IP address", address },
     { "listen-port", "8090", "listening port", port },
+    { "interface", "", "listen on named interface only", interface },
     { "access-log", "", "HTTP access log, - for stdout", accesslog },
     { "hotplug", "true", "reload scanner list on hotplug event", hotplug },
     { "mdns-announce", "true", "announce scanners via mDNS (avahi)", announce },
-    { "local-only", "true", "ignore SANE network scanners", localonly },
+    { "local-scanners-only", "true", "ignore SANE network scanners", localonly },
     { "debug", "false", "log debug information to stderr", debug },
     };
     for(auto& opt : options)
@@ -88,7 +88,9 @@ ScanServer::ScanServer(int argc, char** argv)
         mDoRun = false;
     }
     if(mDoRun) {
-        setAddress(address).setPort(port_);
+        if(!interface.empty())
+            setInterfaceName(interface);
+        setPort(port_);
         if(accesslog.empty())
             std::cout.rdbuf(nullptr);
         else if(accesslog != "-")
@@ -135,7 +137,8 @@ bool ScanServer::run()
             if(mAnnounce && !pScanner->error())
             {
                 pService = std::make_shared<MdnsPublisher::Service>(&mPublisher);
-                pService->setType("_uscan._tcp.").setName(pScanner->makeAndModel()).setPort(port());
+                pService->setType("_uscan._tcp.").setName(pScanner->makeAndModel());
+                pService->setInterfaceIndex(interfaceIndex()).setPort(port());
                 pService->setTxt("txtvers", "1");
                 pService->setTxt("vers", "2.0");
                 std::string s;

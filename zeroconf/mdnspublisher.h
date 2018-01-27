@@ -29,7 +29,7 @@ public:
     class Service
     {
     public:
-        Service(MdnsPublisher* p) : mpPublisher(p), mPort(0) {}
+        Service(MdnsPublisher* p) : mpPublisher(p), mPort(0), mIfIndex(-1) {}
         ~Service() { unannounce(); }
 
         typedef std::vector<std::pair<std::string, std::string>> TxtRecord;
@@ -37,6 +37,8 @@ public:
         const std::string& type() const { return mType; }
         Service& setName(const std::string&);
         std::string name() const;
+        Service& setInterfaceIndex(int i) { mIfIndex = i; return *this; }
+        int interfaceIndex() const { return mIfIndex; }
         Service& setPort(uint16_t p) { mPort = p; return *this; }
         uint16_t port() const { return mPort; }
         Service& setTxt(const std::string&, const std::string&);
@@ -49,6 +51,7 @@ public:
     private:
         MdnsPublisher* mpPublisher;
         std::string mType, mName;
+        int mIfIndex;
         uint16_t mPort;
         TxtRecord mTxtRecord;
         mutable std::mutex mNameMutex;

@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <ifaddrs.h>
 #include <unistd.h>
 #include <poll.h>
 #include <netdb.h>
@@ -53,7 +55,9 @@ const char* HttpServer::MIME_TYPE_JPEG = "image/jpeg";
 const char* HttpServer::MIME_TYPE_PDF = "application/pdf";
 const char* HttpServer::MIME_TYPE_PNG = "image/png";
 
-static const char* statusReason(int status)
+namespace {
+
+const char* statusReason(int status)
 {
     switch(status) {
     case HttpServer::HTTP_OK: return "OK";
@@ -66,8 +70,8 @@ static const char* statusReason(int status)
     return "Unknown Reason";
 }
 
-static const std::locale clocale = std::locale("C");
-static std::string ctolower(const std::string& s)
+const std::locale clocale = std::locale("C");
+std::string ctolower(const std::string& s)
 {
     std::string r = s;
     for(auto& c : r)
@@ -75,7 +79,7 @@ static std::string ctolower(const std::string& s)
     return r;
 }
 
-static std::string ctrim(const std::string& s)
+std::string ctrim(const std::string& s)
 {
     std::string r;
     for(const auto& c : s)
@@ -84,12 +88,12 @@ static std::string ctrim(const std::string& s)
     return r;
 }
 
-static long hexdecode(const std::string& s)
+long hexdecode(const std::string& s)
 {
     return ::strtol(s.c_str(), nullptr, 16);
 }
 
-static std::string urldecode(const std::string& s)
+std::string urldecode(const std::string& s)
 {
     std::string r;
     for(size_t i = 0; i < s.size(); ++i) {
@@ -109,28 +113,110 @@ static std::string urldecode(const std::string& s)
     return r;
 }
 
+typedef union { sockaddr sa; sockaddr_in in; sockaddr_in6 in6; } Sockaddr;
+std::string ipString(Sockaddr address)
+{
+    char buf[128] = "n/a";
+    switch(address.sa.sa_family) {
+    case AF_INET:
+        ::inet_ntop(AF_INET, &address.in.sin_addr, buf, sizeof(buf));
+        break;
+    case AF_INET6:
+        ::inet_ntop(AF_INET6, &address.in6.sin6_addr, buf, sizeof(buf));
+        break;
+    }
+    return buf;
+}
+
+uint16_t portNumber(Sockaddr address)
+{
+    switch(address.sa.sa_family) {
+    case AF_INET:
+        return ntohs(address.in.sin_port);
+    case AF_INET6:
+        return ntohs(address.in6.sin6_port);
+    }
+    return 0;
+}
+
+std::vector<Sockaddr> interfaceAddresses(const char* if_name)
+{
+    std::vector<Sockaddr> r;
+    struct ifaddrs* pAddr;
+    if(::getifaddrs(&pAddr)) {
+        std::cerr << ::strerror(errno) << std::endl;
+        return r;
+    }
+    for(const ifaddrs* p = pAddr; p != nullptr; p = p->ifa_next)
+    {
+        if(p->ifa_addr && (!if_name || !::strcmp(if_name, p->ifa_name)))
+        {
+            Sockaddr addr;
+            switch(p->ifa_addr->sa_family) {
+            case AF_INET:
+                ::memcpy(&addr.sa, p->ifa_addr, sizeof(sockaddr_in));
+                r.push_back(addr);
+                break;
+            case AF_INET6:
+                ::memcpy(&addr.sa, p->ifa_addr, sizeof(sockaddr_in6));
+                r.push_back(addr);
+                break;
+            }
+        }
+    }
+    ::freeifaddrs(pAddr);
+    return r;
+}
+
+}
+
 struct HttpServer::Private
 {
+
     HttpServer* mInstance;
     std::atomic<int> mTerminationStatus;
 
     uint16_t mPort;
-    std::string mHostname, mAddress;
-    int mBacklog;
-    union Sockaddr { sockaddr sa; sockaddr_in in; sockaddr_in6 in6; } mSockaddr;
+    std::string mHostname, mInterfaceName;
+    int mInterfaceIndex, mBacklog;
 
     std::atomic<bool> mRunning;
     std::atomic<int> mPipeWriteFd;
 
     Private(HttpServer* instance)
-        : mInstance(instance), mPort(0), mBacklog(SOMAXCONN),
+        : mInstance(instance), mPort(0),
+          mBacklog(SOMAXCONN), mInterfaceIndex(invalidInterface),
           mTerminationStatus(0), mRunning(false), mPipeWriteFd(-1)
     {
-        ::memset(&mSockaddr, 0, sizeof(mSockaddr));
     }
 
-    ~Private()
+    int createListeningSocket(Sockaddr addr)
     {
+        size_t socklen = 0;
+        switch(addr.sa.sa_family) {
+        case AF_INET:
+            addr.in.sin_port = htons(mPort);
+            socklen = sizeof(sockaddr_in);
+            break;
+        case AF_INET6:
+            addr.in6.sin6_port = htons(mPort);
+            socklen = sizeof(sockaddr_in6);
+            break;
+        }
+        int sockfd = ::socket(addr.sa.sa_family, SOCK_STREAM, 0);
+        if(sockfd < 0)
+            return -1;
+        int reuseaddr = 1;
+        int err = ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(reuseaddr));
+        if(!err)
+            err = ::bind(sockfd, &addr.sa, socklen);
+        if(!err)
+            err = ::listen(sockfd, mBacklog);
+        if(err) {
+            ::close(sockfd);
+            sockfd = -1;
+        }
+        return sockfd;
     }
 
     bool run()
@@ -150,40 +236,40 @@ struct HttpServer::Private
         int pipeReadFd = pipe[0];
         mPipeWriteFd = pipe[1];
         mTerminationStatus = 0;
-        size_t socklen = 0;
-        switch(mSockaddr.sa.sa_family) {
-        case AF_INET:
-            mSockaddr.in.sin_port = htons(mPort);
-            socklen = sizeof(sockaddr_in);
-            break;
-        case AF_INET6:
-            mSockaddr.in6.sin6_port = htons(mPort);
-            socklen = sizeof(sockaddr_in6);
-            break;
-        }
+
+        std::vector<Sockaddr> addresses;
         int err = 0;
-        int sockfd = ::socket(mSockaddr.sa.sa_family, SOCK_STREAM, 0);
-        if(sockfd < 0)
-            err = errno;
-        int reuseaddr = 1;
-        if(!err && ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(reuseaddr)) < 0)
-            err = errno;
-        if(!err && ::bind(sockfd, &mSockaddr.sa, socklen) < 0)
-            err = errno;
-        if(!err && ::listen(sockfd, mBacklog) < 0)
-            err = errno;
+        const char* if_name = nullptr;
+        if(mInterfaceIndex == invalidInterface)
+            err = ENXIO;
+        else if(mInterfaceIndex != anyInterface)
+            if_name = mInterfaceName.c_str();
+        if(!err)
+            addresses = interfaceAddresses(if_name);
+        if(addresses.empty())
+            err = EINVAL;
         if(!err)
         {
-            struct pollfd pfd[] =
-            {
-                { pipeReadFd, POLLIN, 0 },
-                { sockfd, POLLIN, 0 },
-            };
-            bool done = false;
+            std::vector<struct pollfd> pfds(1);
+            pfds[0].fd = pipeReadFd;
+            pfds[0].events = POLLIN;
+            for(auto& address : addresses) {
+                int sockfd = createListeningSocket(address);
+                if(sockfd < 0)
+                    err = errno;
+                else {
+                    struct pollfd pfd = { sockfd, POLLIN, 0 };
+                    pfds.push_back(pfd);
+                    std::clog << "listening on "
+                              << ipString(address) << ":" << mPort
+                              << std::endl;
+                }
+            }
+            bool done = (err != 0);
             while(!done)
             {
-                int r = ::poll(pfd, 2, -1);
-                if(r > 0 && pfd[0].revents)
+                int r = ::poll(pfds.data(), pfds.size(), -1);
+                if(r > 0 && pfds[0].revents)
                 {
                     done = true;
                     int value;
@@ -194,13 +280,17 @@ struct HttpServer::Private
                         mTerminationStatus = value;
                     }
                 }
-                else if(r > 0 && pfd[1].revents)
+                else if(r > 0)
                 {
-                    Sockaddr addr;
-                    socklen_t len = sizeof(addr);
-                    int fd = ::accept(sockfd, &addr.sa, &len);
-                    if(fd >= 0)
-                        std::thread([this, fd, addr](){handleRequest(fd, addr);}).detach();
+                    for(size_t i = 1; i < pfds.size(); ++i) {
+                        if(pfds[i].revents) {
+                            Sockaddr addr;
+                            socklen_t len = sizeof(addr);
+                            int fd = ::accept(pfds[i].fd, &addr.sa, &len);
+                            if(fd >= 0)
+                                std::thread([this, fd, addr](){handleRequest(fd, addr);}).detach();
+                        }
+                    }
                 }
                 else if(r < 0 && errno != EINTR)
                 {
@@ -209,10 +299,11 @@ struct HttpServer::Private
                     std::cerr << ::strerror(err) << std::endl;
                 }
             }
+            for(size_t i = 1; i < pfds.size(); ++i)
+                ::close(pfds[i].fd);
         }
         if(err)
             mTerminationStatus = err;
-        ::close(sockfd);
         ::close(pipeReadFd);
         ::close(mPipeWriteFd);
         mPipeWriteFd = -1;
@@ -255,17 +346,8 @@ struct HttpServer::Private
             struct tm tm_;
             ::strftime(time, sizeof(time), "%d/%b/%Y:%T %z", ::localtime_r(&now, &tm_));
 
-            char clientip[128] = "n/a";
-            switch(address.sa.sa_family) {
-            case AF_INET:
-                ::inet_ntop(AF_INET, &address.in.sin_addr, clientip, sizeof(clientip));
-                break;
-            case AF_INET6:
-                ::inet_ntop(AF_INET6, &address.in6.sin6_addr, clientip, sizeof(clientip));
-                break;
-            }
             std::cout // apache combined log format, custom loginfo added
-                << clientip << " - - [" << time << "] "
+                << ipString(address) << " - - [" << time << "] "
                 << "\"" << request.method() << " " << request.uri() << "\" "
                 << response.status() << " " << os.tellp() - response.contentBegin()
                 << " \"" << request.header(HTTP_HEADER_REFERER) << "\""
@@ -293,7 +375,7 @@ HttpServer::HttpServer()
     std::getline(std::ifstream("/etc/hostname"), p->mHostname);
     if(p->mHostname.empty())
         p->mHostname = "unknown";
-    setAddress("*").setPort(8080);
+    setInterfaceIndex(anyInterface).setPort(8080);
 }
 
 HttpServer::~HttpServer()
@@ -306,48 +388,46 @@ const std::string &HttpServer::hostname() const
     return p->mHostname;
 }
 
-HttpServer &HttpServer::setAddress(const std::string &inAddr)
+HttpServer &HttpServer::setInterfaceName(const std::string &s)
 {
-    p->mTerminationStatus = 0;
-    std::string s = inAddr.empty() ? "*" : inAddr;
-    int family = s[0] == '[' ? AF_INET6 : AF_INET;
-    if(family == AF_INET6 && s.length() > 2)
-        s = s.substr(1, s.length() - 2);
-    union { in_addr in; in6_addr in6; } buf;
     if(s == "*") {
-        switch(family) {
-        case AF_INET:
-            buf.in.s_addr = htonl(INADDR_ANY);
-            break;
-        case AF_INET6:
-            buf.in6 = IN6ADDR_ANY_INIT;
-            break;
-        }
+        p->mInterfaceName = "*";
+        p->mInterfaceIndex = anyInterface;
     } else {
-        int r = ::inet_pton(family, s.c_str(), &buf);
-        if(r < 0)
-            p->mTerminationStatus = errno;
-        else if(r == 0)
-            p->mTerminationStatus = EINVAL;
-    }
-    if(!p->mTerminationStatus) {
-        p->mAddress = inAddr;
-        p->mSockaddr.sa.sa_family = family;
-        switch(family) {
-        case AF_INET:
-            p->mSockaddr.in.sin_addr = buf.in;
-            break;
-        case AF_INET6:
-            p->mSockaddr.in6.sin6_addr = buf.in6;
-            break;
+        int i = ::if_nametoindex(s.c_str());
+        if(i < 0) {
+            p->mInterfaceName = "<invalid>";
+            p->mInterfaceIndex = invalidInterface;
+        } else {
+            p->mInterfaceName = s;
+            p->mInterfaceIndex = i;
         }
     }
     return *this;
 }
 
-const std::string &HttpServer::address() const
+HttpServer &HttpServer::setInterfaceIndex(int i)
 {
-    return p->mAddress;
+    if(i == anyInterface) {
+        p->mInterfaceName = "*";
+        p->mInterfaceIndex = anyInterface;
+    } else {
+        char buf[IF_NAMESIZE] = { 0 };
+        if(!::if_indextoname(i, buf)) {
+            p->mInterfaceName = buf;
+            p->mInterfaceIndex = i;
+        }
+        else {
+            p->mInterfaceName = "<invalid>";
+            p->mInterfaceIndex = invalidInterface;
+        }
+    }
+    return *this;
+}
+
+int HttpServer::interfaceIndex() const
+{
+    return p->mInterfaceIndex;
 }
 
 HttpServer &HttpServer::setPort(uint16_t port)

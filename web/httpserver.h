@@ -54,8 +54,11 @@ public:
     HttpServer& operator=(const HttpServer&) = delete;
 
     const std::string& hostname() const;
-    HttpServer& setAddress(const std::string&);
-    const std::string& address() const;
+    HttpServer& setInterfaceName(const std::string&);
+    const std::string& interfaceName() const;
+    HttpServer& setInterfaceIndex(int);
+    enum { anyInterface = -1, invalidInterface = -2 };
+    int interfaceIndex() const;
     HttpServer& setPort(uint16_t port);
     uint16_t port() const;
     HttpServer& setBacklog(int);
