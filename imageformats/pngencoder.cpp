@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "pngencoder.h"
-#include <libpng/png.h>
+#include <libpng16/png.h>
 #include <stdexcept>
 #include <vector>
 #if __APPLE__
