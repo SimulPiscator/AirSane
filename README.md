@@ -74,17 +74,24 @@ button for a preview scan.
 
 ## Troubleshoot
 
-If you are able to open the server's web page locally, but not from a remote
-machine, you may have to allow access to port 8090 in your iptables
+* Compiling fails because of **`#include <libpng/png.h>`** not being found. 
+On some distributions (e.g., Arch Linux), `libpng` may come in multiple flavors, with each having its
+own `/usr/include` subdirectory. 
+Creating a symlink will then fix the build:
+```
+  ln -s /usr/include/libpng16/ /usr/include/libpng/
+```
+* If you are able to open the server's web page locally, but **not from a remote
+machine,** you may have to allow access to port 8090 in your iptables
 configuration.
 
-Enabling the 'test' backend in `/etc/sane.d/dll.conf` may be helpful 
+* Enabling the **'test' backend** in `/etc/sane.d/dll.conf` may be helpful 
 to separate software from hardware issues.
 
-To troubleshoot permission issues, compare debug output when running
+* To troubleshoot **permission issues,** compare debug output when running
 airsaned as user saned vs running as root:
 ```
- sudo systemctl stop airsaned
- sudo su - saned -s /bin/sh -c 'airsaned --debug=true --access-log=-'
- sudo airsaned --debug=true --access-log=-
+  sudo systemctl stop airsaned
+  sudo su - saned -s /bin/sh -c 'airsaned --debug=true --access-log=-'
+  sudo airsaned --debug=true --access-log=-
 ```
