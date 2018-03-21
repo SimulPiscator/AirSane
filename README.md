@@ -8,12 +8,13 @@ its intended purpose is to be used with AirScan/eSCL clients such as
 Apple's Image Capture.
 
 Images are encoded on-the-fly during acquisition, keeping memory/storage
-demands low. Designed to run on a Raspberry Pi or similar device.
-Authentication and secure communication are not supported.
+demands low. Thus, AirSane will run fine on a Raspberry Pi or similar device.
 
 AirSane has been developed by reverse-engineering the communication protocol
 implemented in Apple's AirScanScanner client
 (macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`).
+
+Authentication and secure communication are not supported.
 
 If you are looking for a powerful SANE web frontend, AirSane may not be for you.
 You may be interested in [phpSANE](https://sourceforge.net/projects/phpsane) instead.
@@ -63,7 +64,7 @@ Disable unused scanner backends to speed up device search:
 sudo nano /etc/sane.d/dll.conf
 ```
 The server's listening port, and other configuration details, may be changed
-by editing '/etc/default/airsane'. For options, and their meaning, run
+by editing '/etc/default/airsane'. For options, and their meanings, run
 ```
 airsaned --help
 ```
