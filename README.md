@@ -8,8 +8,8 @@ its intended purpose is to be used with AirScan/eSCL clients such as
 Apple's Image Capture.
 
 Images are encoded on-the-fly during acquisition, keeping memory/storage
-demands low. Should work fine on a Raspberry Pi or similar device.
-Authentication and secure communication are not unsupported.
+demands low. Designed to run on a Raspberry Pi or similar device.
+Authentication and secure communication are not supported.
 
 AirSane has been developed by reverse-engineering the communication protocol
 implemented in Apple's AirScanScanner client
