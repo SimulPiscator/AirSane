@@ -50,6 +50,7 @@ sudo apt install sane-utils
 ```
 To install AirSane:
 ```
+sudo apt install avahi-daemon
 sudo make install
 sudo systemctl enable airsaned
 sudo systemctl start airsaned
