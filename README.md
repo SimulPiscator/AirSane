@@ -41,7 +41,7 @@ make
 ```
 ## Install
 
-The provided systemd service file will assumes that user and group
+The provided systemd service file assumes that user and group
 'saned' exist and have permission to access scanners.
 Installing the saned package is a convenient way to set up a user 'saned'
 with proper permissions:
