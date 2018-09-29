@@ -79,16 +79,22 @@ public:
     bool is_string() const;
     bool is_numeric() const;
 
-    bool set_value(const std::string&);
-    bool set_value(double);
-    std::string value() const;
+    int array_size() const;
 
-    bool set_string_value(const std::string& value);
-    std::string string_value() const;
+    bool set_value(int index, const std::string& value);
+    bool set_value(const std::string& s) { return set_value(0, s); }
+    bool set_value(int index, double value);
+    bool set_value(double d) { return set_value(0, d); }
+    std::string value(int = 0) const;
+
+    bool set_string_value(int index, const std::string& value);
+    bool set_string_value(const std::string& value) { return set_string_value(0, value); }
+    std::string string_value(int index = 0) const;
     std::vector<std::string> allowed_string_values() const;
 
-    bool set_numeric_value(double);
-    double numeric_value() const;
+    bool set_numeric_value(int index, double);
+    bool set_numeric_value(double value) { return set_numeric_value(0, value); }
+    double numeric_value(int index = 0) const;
     std::vector<double> allowed_numeric_values() const;
 
     double min() const;

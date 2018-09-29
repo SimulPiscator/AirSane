@@ -129,8 +129,10 @@ std::ostream &option_set::print(std::ostream &os) const
                 os << "null";
             else if(opt.second.is_string())
                 os << "\"" << opt.second.string_value() << "\"";
-            else
+            else if(opt.second.array_size() == 1)
                 os << opt.second.value();
+            else for(int i = 0; i < opt.second.array_size(); ++i)
+                os << opt.second.value(i) << ' ';
         }
     return os;
 }
@@ -174,6 +176,19 @@ bool option::is_null() const
     return !m_desc;
 }
 
+int option::array_size() const
+{
+    if(m_desc) switch(m_desc->type) {
+        case SANE_TYPE_STRING:
+            return 1;
+        case SANE_TYPE_INT:
+        case SANE_TYPE_FIXED:
+        case SANE_TYPE_BOOL:
+            return m_desc->size / sizeof(SANE_Word);
+  }
+  return 0;
+}
+
 bool option::is_active() const
 {
     return m_desc && SANE_OPTION_IS_ACTIVE(m_desc->cap);
@@ -200,38 +215,42 @@ bool option::is_numeric() const
     return false;
 }
 
-bool option::set_value(const std::string &value)
+bool option::set_value(int index, const std::string &value)
 {
-    if(!set_string_value(value))
-        return set_numeric_value(strtod_c(value));
+    if(!set_string_value(index, value))
+        return set_numeric_value(index, strtod_c(value));
     return true;
 }
 
-bool option::set_value(double value)
+bool option::set_value(int index, double value)
 {
-    if(!set_numeric_value(value))
-        return set_string_value(dtostr_c(value));
+    if(!set_numeric_value(index, value))
+        return set_string_value(index, dtostr_c(value));
     return true;
 }
 
-std::string option::value() const
+std::string option::value(int index) const
 {
-    if(is_null() || is_string())
-        return string_value();
-    if(is_numeric()) {
-        std::ostringstream oss;
-        oss << dtostr_c(numeric_value()) << m_desc->unit;
-        return oss.str();
+    if(index >= 0 && index < array_size()) {
+        if(is_null() || is_string())
+            return string_value(index);
+        if(is_numeric()) {
+            std::ostringstream oss;
+            oss << dtostr_c(numeric_value(index)) << m_desc->unit;
+            return oss.str();
+      }
     }
     return "n/a";
 }
 
-bool option::set_string_value(const std::string &value)
+bool option::set_string_value(int index, const std::string &value)
 {
     SANE_Handle h = m_set ? m_set->m_device.get() : nullptr;
     if(!h)
         return false;
     if(!m_desc || m_desc->type != SANE_TYPE_STRING)
+        return false;
+    if(index != 0)
         return false;
     if(!is_settable() || !is_active())
         return false;
@@ -248,11 +267,11 @@ bool option::set_string_value(const std::string &value)
     return status == SANE_STATUS_GOOD;
 }
 
-std::string option::string_value() const
+std::string option::string_value(int index) const
 {
     std::string s;
     SANE_Handle h = m_set ? m_set->m_device.get() : nullptr;
-    if(h && is_string()) {
+    if(h && is_string() && index == 0) {
         std::vector<SANE_Char> value(m_desc->size);
         if(SANE_STATUS_GOOD == ::sane_control_option(h, m_index, SANE_ACTION_GET_VALUE, value.data(), nullptr))
             s = value.data();
@@ -269,7 +288,7 @@ std::vector<std::string> option::allowed_string_values() const
     return values;
 }
 
-bool option::set_numeric_value(double value)
+bool option::set_numeric_value(int index, double value)
 {
     SANE_Handle h = m_set ? m_set->m_device.get() : nullptr;
     if(!h)
@@ -282,8 +301,21 @@ bool option::set_numeric_value(double value)
     else
         w = value;
     SANE_Int info = 0;
-    SANE_Status status = ::sane_control_option(h, m_index, SANE_ACTION_SET_VALUE, &w, &info);
-    log << "[" << m_desc->name << "] := " << value << m_desc->unit;
+    SANE_Status status = SANE_STATUS_GOOD;
+    if(array_size() == 1 && index == 0) {
+        status = ::sane_control_option(h, m_index, SANE_ACTION_SET_VALUE, &w, &info);
+        log << "[" << m_desc->name << "] := " << value << m_desc->unit;
+    } else if(index >= 0 && index < array_size()) {
+        std::vector<SANE_Word> data(array_size());
+        status = ::sane_control_option(h, m_index, SANE_ACTION_GET_VALUE, data.data(), &info);
+        if(status == SANE_STATUS_GOOD) {
+          data[index] = w;
+          status = ::sane_control_option(h, m_index, SANE_ACTION_SET_VALUE, data.data(), &info);
+        }
+        log << "[" << m_desc->name << "][" << index << "] := " << value << m_desc->unit;
+    } else {
+        log << "invalid array index for parameter " << m_desc->name << ": " << index;
+    }
     if(status != SANE_STATUS_GOOD)
         log << " -> " << status;
     else if(info & SANE_INFO_RELOAD_OPTIONS)
@@ -294,16 +326,18 @@ bool option::set_numeric_value(double value)
     return status == SANE_STATUS_GOOD;
 }
 
-double option::numeric_value() const
+double option::numeric_value(int index) const
 {
     double value = std::numeric_limits<double>::quiet_NaN();
     SANE_Handle h = m_set ? m_set->m_device.get() : nullptr;
     if(!h || !is_numeric())
         return value;
-    SANE_Word w;
-    if(SANE_STATUS_GOOD != ::sane_control_option(h, m_index, SANE_ACTION_GET_VALUE, &w, nullptr))
+    if(index < 0 || index >= array_size())
         return value;
-    value = w;
+    std::vector<SANE_Word> data(array_size());
+    if(SANE_STATUS_GOOD != ::sane_control_option(h, m_index, SANE_ACTION_GET_VALUE, data.data(), nullptr))
+        return value;
+    value = data[index];
     if(m_desc->type == SANE_TYPE_FIXED)
         value = SANE_UNFIX(value);
     return value;
