@@ -204,9 +204,21 @@ struct Homepage : WebPage
             for(const auto& s : mScanners) {
                 auto name = s.second ? s.second->name() : s.first->makeAndModel();
                 scannersList.addItem(anchor(s.first->uri()).addText(name));
+                scannersList.addContent("\n");
             }
             out() << scannersList << std::endl;
         }
+        out() << heading(2).addText("Build");
+        list version;
+        version.addItem(paragraph().addText("date: " __DATE__ ", " __TIME__));
+        version.addContent("\n");
+        version.addItem(paragraph().addText(
+          "commit: " GIT_COMMIT_HASH
+          " (branch " GIT_BRANCH
+          ", revision " GIT_REVISION_NUMBER ")"
+        ));
+        version.addContent("\n");
+        out() << version << std::endl;
     }
 };
 }
