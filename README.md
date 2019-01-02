@@ -4,7 +4,7 @@ A SANE WebScan frontend that supports Apple's AirScan protocol.
 Scanners are detected automatically, and published through mDNS.
 Though images may be acquired and transferred
 in JPEG, PNG, and PDF/raster format through a simple web interface,
-its intended purpose is to be used with AirScan/eSCL clients such as
+AirSane's intended purpose is to be used with AirScan/eSCL clients such as
 Apple's Image Capture.
 
 Images are encoded on-the-fly during acquisition, keeping memory/storage
