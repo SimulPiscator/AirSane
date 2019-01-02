@@ -30,6 +30,8 @@ paperSizes[] = {
 { "A5 Landscape", 2480, 1748 },
 { "A6 Portrait", 1240, 1748 },
 { "A6 Landscape", 1748, 1240 },
+{ "US Letter", 2550, 3300 },
+{ "US Legal", 2550, 4200 },
 { "Full", 0, 0 },
 };
 
