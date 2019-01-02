@@ -66,6 +66,36 @@ std::string colorMode(const std::string& colorSpace, int bitDepth)
     return oss.str();
 }
 
+std::string findFlatbedName(const std::vector<std::string>& names)
+{
+    auto i = std::find(names.begin(), names.end(), "Flatbed");
+    if(i == names.end())
+      return "";
+    return *i;
+}
+
+std::string findAdfSimplexName(const std::vector<std::string>& names)
+{
+    auto i = std::find(names.begin(), names.end(), "Automatic Document Feeder");
+    if(i == names.end())
+      i = std::find(names.begin(), names.end(), "ADF Simplex");
+    if(i == names.end())
+      i = std::find(names.begin(), names.end(), "ADF Front");
+    if(i == names.end())
+      i = std::find(names.begin(), names.end(), "ADF");
+    if(i == names.end())
+      return "";
+    return *i;
+}
+
+std::string findAdfDuplexName(const std::vector<std::string>& names)
+{
+    auto i = std::find(names.begin(), names.end(), "ADF Duplex");
+    if(i == names.end())
+      return "";
+    return *i;
+}
+
 } // namespace
 
 struct Scanner::Private
@@ -82,6 +112,7 @@ struct Scanner::Private
     struct InputSource
     {
         Private* p;
+        std::string mSourceName;
         double mMinWidth, mMaxWidth, mMinHeight, mMaxHeight,
                mMaxPhysicalWidth, mMaxPhysicalHeight;
         int mMaxBits;
@@ -282,26 +313,39 @@ const char* Scanner::Private::init(const sanecpp::device_info& info)
     int maxBits = 8;
     mMaxWidthPx300dpi = 0;
     mMaxHeightPx300dpi = 0;
-    mInputSources.push_back("Flatbed");
-    if(opt[SANE_NAME_SCAN_SOURCE].set_string_value("Automatic Document Feeder")) {
-        mInputSources.push_back("Feeder");
-        mpAdf = new Private::InputSource(this);
-        err = mpAdf->init(opt);
-        if(!err) {
-            maxBits = std::max(maxBits, mpAdf->mMaxBits);
-            mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpAdf->mMaxWidth);
-            mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpAdf->mMaxHeight);
-        }
+
+    auto sources = opt[SANE_NAME_SCAN_SOURCE].allowed_string_values();
+    auto flatbedName = findFlatbedName(sources),
+         adfSimplexName = findAdfSimplexName(sources),
+         adfDuplexName = findAdfDuplexName(sources),
+         adfName = std::string();
+    if(!adfDuplexName.empty())
+      adfName = adfDuplexName;
+    else if(!adfSimplexName.empty())
+      adfName = adfSimplexName;
+
+    if(!flatbedName.empty()) {
+      mInputSources.push_back("Flatbed");
+      opt[SANE_NAME_SCAN_SOURCE].set_string_value(flatbedName);
+      mpPlaten = new Private::InputSource(this);
+      err = mpPlaten->init(opt);
+      if(!err) {
+        maxBits = std::max(maxBits, mpPlaten->mMaxBits);
+        mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpPlaten->mMaxWidth);
+        mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpPlaten->mMaxHeight);
+      }
     }
-    if(!err) {
-        opt[SANE_NAME_SCAN_SOURCE].set_string_value("Flatbed");
-        mpPlaten = new Private::InputSource(this);
-        err = mpPlaten->init(opt);
-        if(!err) {
-            maxBits = std::max(maxBits, mpPlaten->mMaxBits);
-            mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpPlaten->mMaxWidth);
-            mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpPlaten->mMaxHeight);
-        }
+    if(!adfName.empty()) {
+      mInputSources.push_back("Feeder");
+      mDuplex = !adfDuplexName.empty();
+      opt[SANE_NAME_SCAN_SOURCE].set_string_value(adfName);
+      mpAdf = new Private::InputSource(this);
+      err = mpAdf->init(opt);
+      if(!err) {
+        maxBits = std::max(maxBits, mpAdf->mMaxBits);
+        mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpAdf->mMaxWidth);
+        mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpAdf->mMaxHeight);
+      }
     }
     if(maxBits == 16) {
         if(std::find(mColorModes.begin(), mColorModes.end(), "Grayscale8") != mColorModes.end())
@@ -314,6 +358,8 @@ const char* Scanner::Private::init(const sanecpp::device_info& info)
 
 const char* Scanner::Private::InputSource::init(const sanecpp::option_set& opt)
 {
+    mSourceName = opt[SANE_NAME_SCAN_SOURCE].string_value();
+
     mMaxBits = 8;
     if(!opt[SANE_NAME_BIT_DEPTH].is_null())
         mMaxBits = opt[SANE_NAME_BIT_DEPTH].max();
@@ -450,6 +496,16 @@ bool Scanner::hasAdf() const
 bool Scanner::hasDuplexAdf() const
 {
     return p->mpAdf && p->mDuplex;
+}
+
+std::string Scanner::platenSourceName() const
+{
+    return p->mpPlaten ? p->mpPlaten->mSourceName : "";
+}
+
+std::string Scanner::adfSourceName() const
+{
+    return p->mpAdf ? p->mpAdf->mSourceName : "";
 }
 
 std::shared_ptr<sanecpp::session> Scanner::open()

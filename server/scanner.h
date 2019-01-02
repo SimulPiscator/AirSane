@@ -56,6 +56,8 @@ public:
     bool hasPlaten() const;
     bool hasAdf() const;
     bool hasDuplexAdf() const;
+    std::string platenSourceName() const;
+    std::string adfSourceName() const;
 
     std::shared_ptr<ScanJob> createJobFromScanSettingsXml(const std::string&, bool autoselectFormat = false);
     std::shared_ptr<ScanJob> getJob(const std::string& uuid);

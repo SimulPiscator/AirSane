@@ -212,9 +212,9 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
 
     std::string inputSource = settings.getString("InputSource");
     if(inputSource == "Platen")
-        mScanSource = "Flatbed";
+        mScanSource = mpScanner->platenSourceName();
     else if(inputSource == "Feeder")
-        mScanSource = "Automatic Document Feeder";
+        mScanSource = mpScanner->adfSourceName();
 
     if(err) {
         mState = aborted;
