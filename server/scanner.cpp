@@ -323,6 +323,8 @@ const char* Scanner::Private::init(const sanecpp::device_info& info)
       adfName = adfDuplexName;
     else if(!adfSimplexName.empty())
       adfName = adfSimplexName;
+    if(adfName.empty() && flatbedName.empty())
+      flatbedName = "Flatbed";
 
     if(!flatbedName.empty()) {
       mInputSources.push_back("Flatbed");

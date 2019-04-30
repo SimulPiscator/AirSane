@@ -144,20 +144,23 @@ bool ScanServer::run()
                 std::string s;
                 for(const auto f : pScanner->documentFormats())
                     s += "," + f;
-                pService->setTxt("pdl", s.substr(1));
+                if(!s.empty())
+                  pService->setTxt("pdl", s.substr(1));
                 pService->setTxt("ty", pScanner->makeAndModel());
                 pService->setTxt("uuid", pScanner->uuid());
                 pService->setTxt("rs", pScanner->uri());
                 s.clear();
                 for(const auto cs : pScanner->colorSpaces())
                     s += "," + cs;
-                pService->setTxt("cs", s.substr(1));
+                if(!s.empty())
+                  pService->setTxt("cs", s.substr(1));
                 s.clear();
                 if(pScanner->hasPlaten())
                     s += ",platen";
                 if(pScanner->hasAdf())
                     s += ",adf";
-                pService->setTxt("is", s.substr(1));
+                if(!s.empty())
+                  pService->setTxt("is", s.substr(1));
                 pService->setTxt("duplex", pScanner->hasDuplexAdf() ? "T" : "F");
 
                 if(!pService->announce())
