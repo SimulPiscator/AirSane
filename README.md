@@ -78,11 +78,10 @@ button for a preview scan.
 
 * Compiling fails with error: "‘png_const_bytep’ does not name a type".
 You have libpng installed in an old version. Some distributions provide libpng12 and libpng16 for you to select.
-Running
+Installing libpng16-dev should fix the issue:
 ```
-   sudo apt install libpng16
+   sudo apt install libpng16-dev
 ```
-should fix the issue.
 * Compiling fails because of **`#include <libpng/png.h>`** not being found. 
 On some distributions (e.g., Arch Linux), `libpng` may come in multiple flavors, with each having its
 own `/usr/include` subdirectory. 
