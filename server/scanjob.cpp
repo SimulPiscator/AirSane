@@ -290,17 +290,17 @@ void ScanJob::Private::updateStatus(SANE_Status status)
 void ScanJob::writeJobInfoXml(std::ostream &os) const
 {
     os <<
-    "<scan:JobInfo>\n"
-        "<pwg:JobUri>" << uri() << "</pwg:JobUri>\n"
-        "<pwg:JobUuid>" << uuid() << "</pwg:JobUuid>\n"
-        "<scan:Age>" << ::time(nullptr) - p->mCreated << "</scan:Age>\n"
-        "<pwg:JobState>" << p->statusString() << "</pwg:JobState>\n"
-        "<pwg:ImagesToTransfer>" << p->mImagesToTransfer << "</pwg:ImagesToTransfer>\n"
-        "<pwg:ImagesCompleted>" << p->mImagesCompleted << "</pwg:ImagesCompleted>\n"
-        "<pwg:JobStateReasons>\n"
-            "<pwg:JobStateReason>" << p->mStateReason << "</pwg:JobStateReason>\n"
-        "</pwg:JobStateReasons>\n"
-    "</scan:JobInfo>\n";
+    "<scan:JobInfo>\r\n"
+        "<pwg:JobUri>" << uri() << "</pwg:JobUri>\r\n"
+        "<pwg:JobUuid>" << uuid() << "</pwg:JobUuid>\r\n"
+        "<scan:Age>" << ::time(nullptr) - p->mCreated << "</scan:Age>\r\n"
+        "<pwg:JobState>" << p->statusString() << "</pwg:JobState>\r\n"
+        "<pwg:ImagesToTransfer>" << p->mImagesToTransfer << "</pwg:ImagesToTransfer>\r\n"
+        "<pwg:ImagesCompleted>" << p->mImagesCompleted << "</pwg:ImagesCompleted>\r\n"
+        "<pwg:JobStateReasons>\r\n"
+            "<pwg:JobStateReason>" << p->mStateReason << "</pwg:JobStateReason>\r\n"
+        "</pwg:JobStateReasons>\r\n"
+    "</scan:JobInfo>\r\n";
 }
 
 bool ScanJob::beginTransfer()

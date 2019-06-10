@@ -144,80 +144,79 @@ void Scanner::Private::writeScannerCapabilitiesXml(std::ostream& os) const
 {
     mCurrentProfile = 0;
     os <<
-    "<?xml version='1.0' encoding='UTF-8'?>"
+    "<?xml version='1.0' encoding='UTF-8'?>\r\n"
     "<scan:ScannerCapabilities"
     " xmlns:pwg='http://www.pwg.org/schemas/2010/12/sm'"
-    " xmlns:scan='http://schemas.hp.com/imaging/escl/2011/05/03'>"
-    "<pwg:Version>2.0</pwg:Version>"
-    "<pwg:MakeAndModel>" << xmlEscape(mMakeAndModel) << "</pwg:MakeAndModel>"
-    "<scan:UUID>" << mUuid << "</scan:UUID>";
+    " xmlns:scan='http://schemas.hp.com/imaging/escl/2011/05/03'>\r\n"
+    "<pwg:Version>2.0</pwg:Version>\r\n"
+    "<pwg:MakeAndModel>" << xmlEscape(mMakeAndModel) << "</pwg:MakeAndModel>\r\n"
+    "<scan:UUID>" << mUuid << "</scan:UUID>\r\n";
     if(!mAdminUri.empty())
-        os << "<scan:AdminURI>" << mAdminUri << "</scan:AdminURI>";
+        os << "<scan:AdminURI>" << mAdminUri << "</scan:AdminURI>\r\n";
     if(!mIconUri.empty())
-        os << "<scan:IconURI>" << mIconUri << "</scan:IconURI>";
+        os << "<scan:IconURI>" << mIconUri << "</scan:IconURI>\r\n";
     if(mpPlaten) {
-        os << "<scan:Platen><scan:PlatenInputCaps>";
+        os << "<scan:Platen><scan:PlatenInputCaps>\r\n";
         mpPlaten->writeCapabilitiesXml(os);
-        os << "</scan:PlatenInputCaps></scan:Platen>";
+        os << "</scan:PlatenInputCaps></scan:Platen>\r\n";
     }
     if(mpAdf && !mDuplex) {
-        os << "<scan:Adf><scan:AdfSimplexInputCaps>";
+        os << "<scan:Adf><scan:AdfSimplexInputCaps>\r\n";
         mpAdf->writeCapabilitiesXml(os);
-        os << "</scan:AdfSimplexInputCaps></scan:Adf>";
+        os << "</scan:AdfSimplexInputCaps></scan:Adf>\r\n";
     }
     if(mpAdf && mDuplex) {
-        os << "<scan:Adf><scan:AdfDuplexInputCaps>";
+        os << "<scan:Adf><scan:AdfDuplexInputCaps>\r\n";
         mpAdf->writeCapabilitiesXml(os);
-        os << "</scan:AdfDuplexInputCaps></scan:Adf>";
+        os << "</scan:AdfDuplexInputCaps></scan:Adf>\r\n";
     }
-    os << "</scan:ScannerCapabilities>";
+    os << "</scan:ScannerCapabilities>\r\n";
 }
 
 void Scanner::Private::writeSettingProfile(int bits, std::ostream& os) const
 {
     os <<
-    "<scan:SettingProfile name='" << mCurrentProfile++ << "'>"
-    "<scan:ColorModes>";
+    "<scan:SettingProfile name='" << mCurrentProfile++ << "'>\r\n"
+    "<scan:ColorModes>\r\n";
     for(const auto& cs : mColorSpaces)
         for(int i = 8; i <= bits; i += 8)
-            os << "<scan:ColorMode>" << colorMode(cs, i) << "</scan:ColorMode>";
+            os << "<scan:ColorMode>" << colorMode(cs, i) << "</scan:ColorMode>\r\n";
     os <<
-    "</scan:ColorModes>"
-    "<scan:ColorSpaces>";
+    "</scan:ColorModes>\r\n"
+    "<scan:ColorSpaces>\r\n";
     for(const auto& cs : mColorSpaces)
-        os << "<scan:ColorSpace>" << cs << "</scan:ColorSpace>";
+        os << "<scan:ColorSpace>" << cs << "</scan:ColorSpace>\r\n";
     os <<
-    "</scan:ColorSpaces>"
-    "<scan:SupportedResolutions>";
+    "</scan:ColorSpaces>\r\n"
+    "<scan:SupportedResolutions>\r\n";
     if(mDiscreteResolutions.empty()) {
-        os << "<scan:ResolutionRange />"
-            "<scan:XResolutionRange>"
-              "<scan:Min>" << mMinResDpi << "</scan:Min>"
-              "<scan:Max>" << mMaxResDpi << "</scan:Max>"
-              "<scan:Step>" << mResStepDpi << "</scan:Step>"
-            "</scan:XResolutionRange>"
-            "<scan:YResolutionRange>"
-              "<scan:Min>" << mMinResDpi << "</scan:Min>"
-              "<scan:Max>" << mMaxResDpi << "</scan:Max>"
-              "<scan:Step>" << mResStepDpi << "</scan:Step>"
-            "</scan:YResolutionRange>";
+        os << "<scan:XResolutionRange>\r\n"
+              "<scan:Min>" << mMinResDpi << "</scan:Min>\r\n"
+              "<scan:Max>" << mMaxResDpi << "</scan:Max>\r\n"
+              "<scan:Step>" << mResStepDpi << "</scan:Step>\r\n"
+            "</scan:XResolutionRange>\r\n"
+            "<scan:YResolutionRange>\r\n"
+              "<scan:Min>" << mMinResDpi << "</scan:Min>\r\n"
+              "<scan:Max>" << mMaxResDpi << "</scan:Max>\r\n"
+              "<scan:Step>" << mResStepDpi << "</scan:Step>\r\n"
+            "</scan:YResolutionRange>\r\n";
     } else {
-      os << "<scan:DiscreteResolutions>";
+      os << "<scan:DiscreteResolutions>\r\n";
       for(const auto& res : mDiscreteResolutions)
-        os << "<scan:DiscreteResolution>"
-               "<scan:XResolution>" << res << "</scan:XResolution>"
-               "<scan:YResolution>" << res << "</scan:YResolution>"
-              "</scan:DiscreteResolution>";
-      os << "</scan:DiscreteResolutions>";
+        os << "<scan:DiscreteResolution>\r\n"
+               "<scan:XResolution>" << res << "</scan:XResolution>\r\n"
+               "<scan:YResolution>" << res << "</scan:YResolution>\r\n"
+              "</scan:DiscreteResolution>\r\n";
+      os << "</scan:DiscreteResolutions>\r\n";
     }
     os <<
-    "</scan:SupportedResolutions>"
-    "<scan:DocumentFormats>";
+    "</scan:SupportedResolutions>\r\n"
+    "<scan:DocumentFormats>\r\n";
     for(const auto& format : mDocumentFormats)
-        os << "<pwg:DocumentFormat>" << format << "</pwg:DocumentFormat>";
+        os << "<pwg:DocumentFormat>" << format << "</pwg:DocumentFormat>\r\n";
     os <<
-    "</scan:DocumentFormats>"
-    "</scan:SettingProfile>";
+    "</scan:DocumentFormats>\r\n"
+    "</scan:SettingProfile>\r\n";
 }
 
 std::shared_ptr<ScanJob> Scanner::Private::createJob()
@@ -245,22 +244,22 @@ const char *Scanner::Private::statusString() const
 void Scanner::Private::InputSource::writeCapabilitiesXml(std::ostream& os) const
 {
     os <<
-    "<scan:MinWidth>" << mMinWidth << "</scan:MinWidth>"
-    "<scan:MinHeight>" << mMinHeight << "</scan:MinHeight>"
-    "<scan:MaxWidth>" << mMaxWidth << "</scan:MaxWidth>"
-    "<scan:MaxHeight>" << mMaxHeight << "</scan:MaxHeight>"
-    "<scan:MaxPhysicalWidth>" << mMaxPhysicalWidth << "</scan:MaxPhysicalWidth>"
-    "<scan:MaxPhysicalHeight>" << mMaxPhysicalHeight << "</scan:MaxPhysicalHeight>"
-    "<scan:MaxScanRegions>1</scan:MaxScanRegions>"
-    "<scan:SettingProfiles>";
+    "<scan:MinWidth>" << mMinWidth << "</scan:MinWidth>\r\n"
+    "<scan:MinHeight>" << mMinHeight << "</scan:MinHeight>\r\n"
+    "<scan:MaxWidth>" << mMaxWidth << "</scan:MaxWidth>\r\n"
+    "<scan:MaxHeight>" << mMaxHeight << "</scan:MaxHeight>\r\n"
+    "<scan:MaxPhysicalWidth>" << mMaxPhysicalWidth << "</scan:MaxPhysicalWidth>\r\n"
+    "<scan:MaxPhysicalHeight>" << mMaxPhysicalHeight << "</scan:MaxPhysicalHeight>\r\n"
+    "<scan:MaxScanRegions>1</scan:MaxScanRegions>\r\n"
+    "<scan:SettingProfiles>\r\n";
     p->writeSettingProfile(mMaxBits, os);
     os <<
-    "</scan:SettingProfiles>"
-    "<scan:SupportedIntents>";
+    "</scan:SettingProfiles>\r\n"
+    "<scan:SupportedIntents>\r\n";
     for(const auto& s : p->mSupportedIntents)
-      os << "<scan:SupportedIntent>" << s << "</scan:SupportedIntent>";
+      os << "<scan:SupportedIntent>" << s << "</scan:SupportedIntent>\r\n";
     os <<
-    "</scan:SupportedIntents>";
+    "</scan:SupportedIntents>\r\n";
 }
 
 
@@ -579,15 +578,15 @@ Scanner::JobList Scanner::jobs() const
 void Scanner::writeScannerStatusXml(std::ostream &os) const
 {
     os <<
-    "<?xml version='1.0' encoding='UTF-8'?>"
+    "<?xml version='1.0' encoding='UTF-8'?>\r\n"
     "<scan:ScannerStatus xmlns:pwg='http://www.pwg.org/schemas/2010/12/sm'"
-    " xmlns:scan='http://schemas.hp.com/imaging/escl/2011/05/03'>"
-    "<pwg:Version>2.0</pwg:Version>"
-    "<pwg:State>" << p->statusString() << "</pwg:State>"
-    "<pwg:StateReasons><pwg:StateReason>None</pwg:StateReason></pwg:StateReasons>"
-    "<scan:Jobs>";
+    " xmlns:scan='http://schemas.hp.com/imaging/escl/2011/05/03'>\r\n"
+    "<pwg:Version>2.0</pwg:Version>\r\n"
+    "<pwg:State>" << p->statusString() << "</pwg:State>\r\n"
+    "<pwg:StateReasons>\r\n<pwg:StateReason>None</pwg:StateReason>\r\n</pwg:StateReasons>\r\n"
+    "<scan:Jobs>\r\n";
     std::lock_guard<std::mutex> lock(p->mJobsMutex);
     for(const auto& job : p->mJobs)
         job.second->writeJobInfoXml(os);
-    os << "</scan:Jobs></scan:ScannerStatus>" << std::endl;
+    os << "</scan:Jobs>\r\n</scan:ScannerStatus>\r\n" << std::flush;
 }
