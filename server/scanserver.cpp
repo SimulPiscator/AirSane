@@ -148,7 +148,7 @@ bool ScanServer::run()
                   pService->setTxt("pdl", s.substr(1));
                 pService->setTxt("ty", pScanner->makeAndModel());
                 pService->setTxt("uuid", pScanner->uuid());
-                pService->setTxt("rs", pScanner->uri());
+                pService->setTxt("rs", pScanner->uri().substr(1));
                 s.clear();
                 for(const auto cs : pScanner->colorSpaces())
                     s += "," + cs;
