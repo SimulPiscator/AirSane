@@ -156,19 +156,19 @@ void Scanner::Private::writeScannerCapabilitiesXml(std::ostream& os) const
     if(!mIconUri.empty())
         os << "<scan:IconURI>" << mIconUri << "</scan:IconURI>\r\n";
     if(mpPlaten) {
-        os << "<scan:Platen><scan:PlatenInputCaps>\r\n";
+        os << "<scan:Platen>\r\n<scan:PlatenInputCaps>\r\n";
         mpPlaten->writeCapabilitiesXml(os);
-        os << "</scan:PlatenInputCaps></scan:Platen>\r\n";
+        os << "</scan:PlatenInputCaps>\r\n</scan:Platen>\r\n";
     }
     if(mpAdf && !mDuplex) {
-        os << "<scan:Adf><scan:AdfSimplexInputCaps>\r\n";
+        os << "<scan:Adf>\r\n<scan:AdfSimplexInputCaps>\r\n";
         mpAdf->writeCapabilitiesXml(os);
-        os << "</scan:AdfSimplexInputCaps></scan:Adf>\r\n";
+        os << "</scan:AdfSimplexInputCaps>\r\n</scan:Adf>\r\n";
     }
     if(mpAdf && mDuplex) {
-        os << "<scan:Adf><scan:AdfDuplexInputCaps>\r\n";
+        os << "<scan:Adf>\r\n<scan:AdfDuplexInputCaps>\r\n";
         mpAdf->writeCapabilitiesXml(os);
-        os << "</scan:AdfDuplexInputCaps></scan:Adf>\r\n";
+        os << "</scan:AdfDuplexInputCaps>\r\n</scan:Adf>\r\n";
     }
     os << "</scan:ScannerCapabilities>\r\n";
 }
@@ -190,7 +190,8 @@ void Scanner::Private::writeSettingProfile(int bits, std::ostream& os) const
     "</scan:ColorSpaces>\r\n"
     "<scan:SupportedResolutions>\r\n";
     if(mDiscreteResolutions.empty()) {
-        os << "<scan:XResolutionRange>\r\n"
+        os << "<scan:ResolutionRange />\r\n" <<
+              "<scan:XResolutionRange>\r\n"
               "<scan:Min>" << mMinResDpi << "</scan:Min>\r\n"
               "<scan:Max>" << mMaxResDpi << "</scan:Max>\r\n"
               "<scan:Step>" << mResStepDpi << "</scan:Step>\r\n"
