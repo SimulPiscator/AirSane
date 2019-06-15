@@ -93,4 +93,9 @@ void Uuid::initFromString(const std::string& inStringData)
     ::memset(mData, 0, sizeof(mData));
     for(auto i = 0; i < s.length(); ++i)
         mData[i % sizeof(mData)] ^= s[i];
+    // Report the UUID as version 5 (which is closest to our case).
+    mData[6] &= 0x0f;
+    mData[6] |= 0x50;
+    mData[8] &= 0x3f;
+    mData[8] |= 0x80;
 }
