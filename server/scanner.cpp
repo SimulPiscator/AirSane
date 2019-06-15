@@ -96,6 +96,30 @@ std::string findAdfDuplexName(const std::vector<std::string>& names)
     return *i;
 }
 
+double roundToNearestStep(double value, double min, double step)
+{
+    return min + ::floor((value - min)/step) * step;
+}
+
+std::vector<double> discretizeResolutions(double min, double max, double step)
+{
+    auto resolutions = std::vector<double>();
+    resolutions.push_back(min);
+    double r = 75;
+    double r2 = roundToNearestStep(r, min, step);
+    while(r2 <= max)
+    {
+      if(r2 > resolutions.back())
+          resolutions.push_back(r2);
+      r *= 2;
+      r2 = roundToNearestStep(r, min, step);
+    }
+    r2 = roundToNearestStep(max, min, step);
+    if(r2 > resolutions.back())
+        resolutions.push_back(r2);
+    return resolutions;
+}
+
 } // namespace
 
 struct Scanner::Private
@@ -279,10 +303,12 @@ const char* Scanner::Private::init(const sanecpp::device_info& info)
     const auto& resolution = opt[SANE_NAME_SCAN_RESOLUTION];
     if(resolution.is_null())
         return "missing SANE parameter: " SANE_NAME_SCAN_RESOLUTION;
-    mDiscreteResolutions = resolution.allowed_numeric_values();
     mMinResDpi = resolution.min();
     mMaxResDpi = resolution.max();
     mResStepDpi = resolution.quant();
+    mDiscreteResolutions = resolution.allowed_numeric_values();
+    if(mDiscreteResolutions.empty()) // mopria client assumes discrete resolutions
+      mDiscreteResolutions = discretizeResolutions(mMinResDpi, mMaxResDpi, mResStepDpi);
 
     mDocumentFormats = std::vector<std::string>({
         HttpServer::MIME_TYPE_PDF,
