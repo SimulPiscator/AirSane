@@ -241,6 +241,7 @@ void ScanServer::onRequest(const Request& request, Response& response)
             return;
         }
     }
+    HttpServer::onRequest(request, response);
 }
 
 static bool clientIsAirscan(const HttpServer::Request& req)
