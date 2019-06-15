@@ -28,6 +28,8 @@ When opening Apple Image Capture or similar applications, scanners exported
 by AirSane should be immediately available.
 In 'Printers and Scanners', exported scanners will be listed with a type of 
 'Bonjour Scanner'.
+### Android
+The Mopria Scanner App may be used to scan from AirSane scanners.
 
 ## Build
 ```
@@ -94,8 +96,7 @@ machine,** you may have to allow access to port 8090 in your iptables
 configuration.
 
 * Enabling the **'test' backend** in `/etc/sane.d/dll.conf` may be helpful 
-to separate software from hardware issues. Note that the 'test' backend has some unusual properties which may be a problem
-for some clients (the Mopria Scanner App is known to crash when it sees a test scanner).
+to separate software from hardware issues.
 
 * To troubleshoot **permission issues,** compare debug output when running
 airsaned as user saned vs running as root:
