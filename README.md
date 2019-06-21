@@ -50,6 +50,9 @@ with proper permissions:
 ```
 sudo apt install sane-utils
 ```
+Make sure that ```sudo scanimage -L``` lists all scanners attached to your machine.
+If this is not the case, [this ubuntu help page](https://help.ubuntu.com/community/SANE%20-%20Installing%20a%20scanner%20that%20isn%27t%20auto-detected) might be useful.
+
 To install AirSane:
 ```
 sudo apt install avahi-daemon
