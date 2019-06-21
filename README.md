@@ -23,7 +23,7 @@ You may be interested in [phpSANE](https://sourceforge.net/projects/phpsane) ins
 ### Web interface
 Open `http://machine-name:8090/` in a web browser, and follow a scanner 
 link from the main page.
-### macos
+### macOS
 When opening Apple Image Capture or similar applications, scanners exported
 by AirSane should be immediately available.
 In 'Printers and Scanners', exported scanners will be listed with a type of 
