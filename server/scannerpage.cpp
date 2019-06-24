@@ -128,7 +128,7 @@ void ScannerPage::onRender()
     d.applyDefaultValue("PaperSize", papers.front());
 
     out() << "<form id='scanform' method='POST'>\n"
-          << "<div id='leftpane'>\n"
+          << "<div id='maindiv'>\n"
           << "<div id='settings'>\n";
     const struct { const char* name, *label; const std::vector<std::string>& options; } select[] = {
     { "DocumentFormat", "Document type", mScanner.documentFormats() },
@@ -147,24 +147,29 @@ void ScannerPage::onRender()
               << "</nobr>"
               << br();
     out() << "<div id='status'>" << statusinfo << "</div>\n";
-    out() << "<div id='downloadbtn'>\n"
+    out() << "</div>\n"
+          << "<div id='downloadbtn'>\n"
           << formInput("submit")
              .setName("download")
              .setValue("Scan and download")
-          << "</div>\n"
           << "</div>\n";
     int imgwidth = 320,
         imgheight = mScanner.maxHeightPx300dpi()*imgwidth/mScanner.maxWidthPx300dpi();
     std::string s = "width:" + numtostr(imgwidth) + "px;"
                     "height:" + numtostr(imgheight) + "px";
     out() << "<div id='previewpane'>"
-          << "<div id='previewimg' style='" << s << "'>"
-          << element("img")
-             .setAttribute("src", imageuri)
-             .setAttribute("alt", "Preview")
-             .setAttribute("width", imgwidth)
-             .setAttribute("height", imgheight)
-          << "</div>\n"
+          << "<div id='previewimg' style='" << s << "'>\n";
+    if(imageuri.empty())
+      out() << element("span")
+               .setAttribute("id", "previewlabel")
+               .addText("Preview");
+    else
+      out() << element("img")
+               .setAttribute("src", imageuri)
+               .setAttribute("alt", "Preview")
+               .setAttribute("width", imgwidth)
+               .setAttribute("height", imgheight);
+    out() << "</div>\n"
           << formInput("submit")
              .setName("preview")
              .setValue("Update preview")
@@ -175,13 +180,14 @@ void ScannerPage::onRender()
 
     addStyle(R"(
         #scanform { position:relative; float:left; overflow:hidden; background-color:lightsteelblue }
-        #leftpane { float:left; overflow:hidden }
+        #maindiv { float:left; overflow:hidden; padding:0 }
         #settings { float:left; min-width:45%; padding:0.2em }
-        #downloadbtn { position:absolute; bottom:0.5em; left:0.5em }
-        #previewbtn  { position:absolute; bottom:0.5em; margin-left:0.5em }
+        #downloadbtn { position:absolute; bottom:8px; margin-left:8px }
+        #previewbtn  { position:absolute; bottom:8px; margin-left:8px }
         #status { padding-top:2em; color:red }
         #previewpane { overflow:hidden }
-        #previewimg { background-color:lightgray; line-height:2.5em; text-align:center }
+        #previewimg { background-color:lightgray; line-height:2.5em; text-align:left }
+        #previewlabel { position:absolute; top 8px; margin-left:8px }
         label { display:inline-block; padding-right:5%; padding-top:0.5em; width:40%; text-align:right; }
         input[type=text], input[type=number] { display:inline-block; width:40%; text-align:left; }
     )");
