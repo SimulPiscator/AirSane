@@ -68,10 +68,12 @@ PngEncoder::~PngEncoder()
 
 void PngEncoder::onImageBegin()
 {
+#if BYTE_ORDER == LITTLE_ENDIAN
     if(bitDepth() == 16)
         p->mLineBuffer.resize(width()*components());
     else
         p->mLineBuffer.clear();
+#endif
     p->mpInfo = nullptr;
     p->mpPng = ::png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     if(p->mpPng) {
