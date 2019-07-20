@@ -222,6 +222,12 @@ struct Homepage : WebPage
         ));
         version.addContent("\n");
         out() << version << std::endl;
+
+        out() << heading(2).addText("Server Maintenance");
+        list maintenance;
+        maintenance.addItem(anchor("/reset").addText("Reset"));
+        maintenance.addContent("\n");
+        out() << maintenance << std::endl;
     }
 };
 }
@@ -234,6 +240,21 @@ void ScanServer::onRequest(const Request& request, Response& response)
         Homepage(mScanners)
                 .setTitle("AirSane Server on " + hostname())
                 .render(request, response);
+    }
+    else if(request.uri() == "/reset") {
+        response.setStatus(HttpServer::HTTP_OK);
+        response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
+        response.setHeader(HttpServer::HTTP_HEADER_REFRESH, "2; url=/");
+        struct : WebPage
+        {
+          void onRender() override {
+            out() << heading(1).addText(title()) << std::endl;
+            out() << paragraph().addText("You will be redirected to the main page in a few seconds.") << std::endl;
+          }
+        } resetpage;
+        resetpage.setTitle("Resetting AirSane Server on " + hostname() + "...")
+                 .render(request, response);
+        this->terminate(SIGHUP);
     }
     for(auto& s : mScanners) {
         if(request.uri().find(s.first->uri()) == 0) {

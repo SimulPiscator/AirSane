@@ -50,6 +50,7 @@ const char* HttpServer::HTTP_HEADER_REFERER = "referer";
 const char* HttpServer::HTTP_HEADER_CONNECTION = "connection";
 const char* HttpServer::HTTP_HEADER_TRANSFER_ENCODING = "transfer-encoding";
 const char* HttpServer::HTTP_HEADER_CONTENT_DISPOSITION = "content-disposition";
+const char* HttpServer::HTTP_HEADER_REFRESH = "refresh";
 
 const char* HttpServer::MIME_TYPE_JPEG = "image/jpeg";
 const char* HttpServer::MIME_TYPE_PDF = "application/pdf";
