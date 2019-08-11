@@ -165,8 +165,12 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
         width = settings.getNumber("Width"),
         height = settings.getNumber("Height");
 
-    if(std::isnan(left) || std::isnan(top) || std::isnan(width)
-            || std::isnan(height) || std::isnan(res_dpi))
+    if(std::isnan(left))
+        left = 0;
+    if(std::isnan(top))
+        top = 0;
+
+    if(std::isnan(width) || std::isnan(height) || std::isnan(res_dpi))
         err = PWG_INVALID_SCAN_TICKET;
 
     double px_per_unit = 1.0;
