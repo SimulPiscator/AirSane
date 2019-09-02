@@ -92,7 +92,7 @@ On some distributions (e.g., Arch Linux), `libpng` may come in multiple flavors,
 own `/usr/include` subdirectory. 
 Creating a symlink will then fix the build:
 ```
-  ln -s /usr/include/libpng16/ /usr/include/libpng/
+  sudo ln -s /usr/include/libpng16/ /usr/include/libpng/
 ```
 * If you are able to open the server's web page locally, but **not from a remote
 machine,** you may have to allow access to port 8090 in your iptables
