@@ -103,6 +103,8 @@ double roundToNearestStep(double value, double min, double step)
 
 std::vector<double> discretizeResolutions(double min, double max, double step)
 {
+    if(step < 1)
+      step = 1;
     auto resolutions = std::vector<double>();
     resolutions.push_back(min);
     double r = 75;
