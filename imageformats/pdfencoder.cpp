@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "pdfencoder.h"
 
+#include <stdexcept>
 #include <vector>
 #include <iostream>
 #include <iomanip>
