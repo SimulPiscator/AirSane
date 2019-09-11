@@ -59,6 +59,9 @@ public:
     std::string platenSourceName() const;
     std::string adfSourceName() const;
 
+    std::string grayScanModeName() const;
+    std::string colorScanModeName() const;
+
     std::shared_ptr<ScanJob> createJobFromScanSettingsXml(const std::string&, bool autoselectFormat = false);
     std::shared_ptr<ScanJob> getJob(const std::string& uuid);
     bool cancelJob(const std::string&);

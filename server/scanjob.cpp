@@ -195,11 +195,11 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
         int esclBpp = atoi(m[2].str().c_str());
         auto c = m[1].str();
         if(c == "RGB") {
-            mColorMode = "Color";
+            mColorMode = mpScanner->colorScanModeName();
             mBitDepth = esclBpp/3;
         }
         else if(c == "Grayscale") {
-            mColorMode = "Gray";
+            mColorMode = mpScanner->grayScanModeName();
             mBitDepth = esclBpp;
         }
     }

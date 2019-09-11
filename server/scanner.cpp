@@ -70,6 +70,8 @@ std::string findFlatbedName(const std::vector<std::string>& names)
 {
     auto i = std::find(names.begin(), names.end(), "Flatbed");
     if(i == names.end())
+      i = std::find(names.begin(), names.end(), "FlatBed");
+    if(i == names.end())
       return "";
     return *i;
 }
@@ -84,6 +86,10 @@ std::string findAdfSimplexName(const std::vector<std::string>& names)
     if(i == names.end())
       i = std::find(names.begin(), names.end(), "ADF");
     if(i == names.end())
+      for(i = names.begin(); i != names.end(); ++i)
+        if(i->find("Automatic Document Feeder") != std::string::npos)
+          break;
+    if(i == names.end())
       return "";
     return *i;
 }
@@ -91,6 +97,37 @@ std::string findAdfSimplexName(const std::vector<std::string>& names)
 std::string findAdfDuplexName(const std::vector<std::string>& names)
 {
     auto i = std::find(names.begin(), names.end(), "ADF Duplex");
+    if(i == names.end())
+      for(i = names.begin(); i != names.end(); ++i)
+        if(i->find("Automatic Document Feeder") != std::string::npos
+          && i->find("Duplex") != std::string::npos)
+            break;
+    if(i == names.end())
+      return "";
+    return *i;
+}
+
+std::string findGrayName(const std::vector<std::string>& names)
+{
+    auto i = std::find(names.begin(), names.end(), "Gray");
+    if(i == names.end())
+      i = std::find(names.begin(), names.end(), "True Gray");
+    if(i == names.end())
+      for(i = names.begin(); i != names.end(); ++i)
+        if(i->find("Gray") != std::string::npos)
+          break;
+    if(i == names.end())
+      return "";
+    return *i;
+}
+
+std::string findColorName(const std::vector<std::string>& names)
+{
+    auto i = std::find(names.begin(), names.end(), "Color");
+    if(i == names.end())
+      for(i = names.begin(); i != names.end(); ++i)
+        if(i->find("Color") != std::string::npos)
+          break;
     if(i == names.end())
       return "";
     return *i;
@@ -147,6 +184,8 @@ struct Scanner::Private
         void writeCapabilitiesXml(std::ostream&) const;
     } *mpPlaten, *mpAdf;
     bool mDuplex;
+
+    std::string mGrayScanModeName, mColorScanModeName;
 
     std::map<std::string, std::shared_ptr<ScanJob>> mJobs;
     std::mutex mJobsMutex;
@@ -329,14 +368,20 @@ const char* Scanner::Private::init(const sanecpp::device_info& info)
         modes.push_back("Gray");
         modes.push_back("Color");
     }
-    if(std::find(modes.begin(), modes.end(), "Gray") != modes.end()) {
+    mGrayScanModeName = findGrayName(modes);
+    mColorScanModeName = findColorName(modes);
+    if(mGrayScanModeName.empty() && mColorScanModeName.empty()) {
+        mGrayScanModeName = "Gray"; // make sure we have at least one scan mode
+    }
+    if(!mGrayScanModeName.empty()) {
         mColorSpaces.push_back("grayscale");
         mColorModes.push_back("Grayscale8");
     }
-    if(std::find(modes.begin(), modes.end(), "Color") != modes.end()) {
+    if(!mColorScanModeName.empty()) {
         mColorSpaces.push_back("color");
         mColorModes.push_back("RGB24");
     }
+
     const char* err = nullptr;
     int maxBits = 8;
     mMaxWidthPx300dpi = 0;
@@ -537,6 +582,16 @@ std::string Scanner::platenSourceName() const
 std::string Scanner::adfSourceName() const
 {
     return p->mpAdf ? p->mpAdf->mSourceName : "";
+}
+
+std::string Scanner::grayScanModeName() const
+{
+    return p->mGrayScanModeName;
+}
+
+std::string Scanner::colorScanModeName() const
+{
+    return p->mColorScanModeName;
 }
 
 std::shared_ptr<sanecpp::session> Scanner::open()
