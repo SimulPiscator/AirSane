@@ -415,12 +415,13 @@ SANE_Unit option::unit() const
 device_handle open(const std::string& name, SANE_Status* pStatus)
 {
     sane_init_addref();
+    log << "sane_open(" << name << ") -> ";
     SANE_Handle h;
     SANE_Status status = ::sane_open(name.c_str(), &h);
     if(pStatus)
         *pStatus = status;
     if(SANE_STATUS_GOOD == status) {
-        log << "sane_open(" << name << ") -> " << h << std::endl;
+        log << h << std::endl;
         struct handle_deleter
         {   void operator()(SANE_Handle h) const
             {
@@ -430,6 +431,9 @@ device_handle open(const std::string& name, SANE_Status* pStatus)
             }
         };
         return std::shared_ptr<void>(h, handle_deleter());
+    }
+    else {
+        log << "SANE_Status " << status << std::endl;
     }
     sane_init_release();
     return std::shared_ptr<void>();
@@ -445,7 +449,9 @@ std::vector<device_info> enumerate_devices(bool localonly)
     std::vector<device_info> devices;
     const SANE_Device** p;
     sane_init_addref();
+    log << "sane_get_devices() ..." << std::endl;
     SANE_Status status = ::sane_get_devices(&p, localonly);
+    log << "... sane_get_devices() -> SANE_Status " << status << std::endl;
     if(status == SANE_STATUS_GOOD)
         while(*p) {
             device_info info;
