@@ -30,6 +30,8 @@ In 'Printers and Scanners', exported scanners will be listed with a type of
 'Bonjour Scanner'.
 ### Android
 The Mopria Scanner App may be used to scan from AirSane scanners.
+As of version 1.2.8, however, the app does not display scanners announced by
+AirSane any more. You may enter the scanner URL manually, still.
 
 ## Build
 ```
@@ -105,6 +107,6 @@ to separate software from hardware issues.
 airsaned as user saned vs running as root:
 ```
   sudo systemctl stop airsaned
-  sudo su - saned -s /bin/sh -c 'airsaned --debug=true --access-log=-'
+  sudo -u saned airsaned --debug=true --access-log=-
   sudo airsaned --debug=true --access-log=-
 ```
