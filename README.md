@@ -53,7 +53,16 @@ with proper permissions:
 sudo apt install sane-utils
 ```
 Make sure that ```sudo scanimage -L``` lists all scanners attached to your machine.
-If this is not the case, [this ubuntu help page](https://help.ubuntu.com/community/SANE%20-%20Installing%20a%20scanner%20that%20isn%27t%20auto-detected) might be useful.
+Listing scanners as user 'saned' should show all scanners as well:
+```sudo -u saned scanimage -L```
+If all scanners are listed for 'root' but none for 'saned,' you might have hit
+a [bug in libsane](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=918358).
+As a workaround, create a file ```/etc/udev/rules.d/55-libsane.rules``` with this content:
+```
+ENV{libsane_matched}=="yes", RUN+="/bin/setfacl -m g:scanner:rw $env{DEVNAME}"
+```
+Unplug and re-plug all scanners. ```sudo -u saned scanimage -L``` should now list all
+of them.
 
 To install AirSane:
 ```
