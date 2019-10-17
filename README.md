@@ -54,7 +54,9 @@ sudo apt install sane-utils
 ```
 Make sure that ```sudo scanimage -L``` lists all scanners attached to your machine.
 Listing scanners as user 'saned' should show all scanners as well:
-```sudo -u saned scanimage -L```
+```
+sudo -u saned scanimage -L
+```
 If all scanners are listed for 'root' but none for 'saned,' you might have hit
 a [bug in libsane](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=918358).
 As a workaround, create a file ```/etc/udev/rules.d/55-libsane.rules``` with this content:
