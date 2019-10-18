@@ -59,7 +59,7 @@ sudo -u saned scanimage -L
 ```
 If all scanners are listed for 'root' but none for 'saned,' you might have hit
 a [bug in libsane](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=918358).
-As a workaround, create a file ```/etc/udev/rules.d/55-libsane.rules``` with this content:
+As a workaround, create a file ```/etc/udev/rules.d/65-libsane.rules``` with this content:
 ```
 ENV{libsane_matched}=="yes", RUN+="/bin/setfacl -m g:scanner:rw $env{DEVNAME}"
 ```
