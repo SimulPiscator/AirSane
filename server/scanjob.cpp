@@ -404,9 +404,9 @@ void ScanJob::Private::finishTransfer(std::ostream &os)
     }
     if(isProcessing()) {
         pEncoder->setResolutionDpi(mRes_dpi);
-        if(mColorMode == "Color")
+        if(mColorMode == mpScanner->colorScanModeName())
             pEncoder->setColorspace(ImageEncoder::RGB);
-        else if(mColorMode == "Gray")
+        else if(mColorMode == mpScanner->grayScanModeName())
             pEncoder->setColorspace(ImageEncoder::Grayscale);
         auto p = mpSession->parameters();
         pEncoder->setWidth(p->pixels_per_line);
