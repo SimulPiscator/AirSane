@@ -79,7 +79,6 @@ struct OstreamDestinationMgr : ::jpeg_destination_mgr
 
 struct JpegEncoder::Private
 {
-    // first instance member must be jpeg_compress_struct
     ::jpeg_compress_struct mCompressStruct;
     ::jpeg_error_mgr mErrorMgr;
     OstreamDestinationMgr mDestMgr;
@@ -87,21 +86,19 @@ struct JpegEncoder::Private
     int mQualityPercent;
     bool mCompressing;
 
-    typedef void (*format_message_func)(::jpeg_common_struct*, char*);
-    static format_message_func jpeg_format_message;
-
     static void throwOnError(::jpeg_common_struct* p)
     {
-        char msg[JMSG_LENGTH_MAX];
-        jpeg_format_message(p, msg);
+        char buf[JMSG_LENGTH_MAX];
+        (p->err->format_message)(p, buf);
         ::jpeg_abort(p);
+        std::string msg = "libjpeg error: ";
+        msg += buf;
         throw std::runtime_error(msg);
     }
 
     Private() : mQualityPercent(90), mCompressing(false)
     {
         ::jpeg_std_error(&mErrorMgr);
-        jpeg_format_message = mErrorMgr.format_message;
         mErrorMgr.error_exit = &throwOnError;
         mCompressStruct.err = &mErrorMgr;
         ::jpeg_create_compress(&mCompressStruct);
@@ -118,8 +115,6 @@ struct JpegEncoder::Private
         ::jpeg_destroy_compress(&mCompressStruct);
     }
 };
-
-JpegEncoder::Private::format_message_func JpegEncoder::Private::jpeg_format_message;
 
 JpegEncoder::JpegEncoder() : p(new Private)
 {
@@ -146,7 +141,7 @@ JpegEncoder &JpegEncoder::setQualityPercent(int i)
 {
     onParamChange();
     if(i < 0 || i > 100)
-        throw std::runtime_error("qualityPercent outside 0..100 range");
+        throw std::runtime_error("JpegEncoder: qualityPercent outside 0..100 range");
     p->mQualityPercent = i;
     return *this;
 }
@@ -159,7 +154,7 @@ int JpegEncoder::qualityPercent() const
 void JpegEncoder::onImageBegin()
 {
     if(bitDepth() != BITS_IN_JSAMPLE)
-        throw std::runtime_error("bit depth unsupported");
+        throw std::runtime_error("JpegEncoder: bit depth unsupported");
     p->mCompressStruct.image_width = width();
     p->mCompressStruct.image_height = height();
     p->mCompressStruct.input_components = components();
@@ -206,6 +201,6 @@ void JpegEncoder::onWriteLine(const void* data)
     auto linedata = JSAMPROW(data);
     int written = ::jpeg_write_scanlines(&p->mCompressStruct, &linedata, 1);
     if(written != 1)
-        throw std::runtime_error("could not write scan line");
+        throw std::runtime_error("JpegEncoder: could not write scan line");
 }
 
