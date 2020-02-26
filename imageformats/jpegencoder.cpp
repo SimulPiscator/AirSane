@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <cstring>
 
+static_assert(BITS_IN_JSAMPLE == 8, "libjpeg must have been compiled with BITS_IN_JSAMPLE = 8");
+
 namespace {
 
 struct OstreamDestinationMgr : ::jpeg_destination_mgr
@@ -57,10 +59,6 @@ struct OstreamDestinationMgr : ::jpeg_destination_mgr
         if(os) {
             const char* p = reinterpret_cast<const char*>(buffer);
             os->write(p, sizeof(buffer) - free_in_buffer);
-#if 0
-            if(!*os)
-                throw std::runtime_error("could not write to destination");
-#endif
         }
     }
 
@@ -84,10 +82,7 @@ struct JpegEncoder::Private
     // first instance member must be jpeg_compress_struct
     ::jpeg_compress_struct mCompressStruct;
     ::jpeg_error_mgr mErrorMgr;
-    OstreamDestinationMgr mDestMgr_;
-#if BITS_IN_JSAMPLE != 8
-    std::vector<uint16_t> mScanRowBuffer;
-#endif
+    OstreamDestinationMgr mDestMgr;
 
     int mQualityPercent;
     bool mCompressing;
@@ -178,7 +173,7 @@ void JpegEncoder::onImageBegin()
     default:
         p->mCompressStruct.in_color_space = JCS_UNKNOWN;
     }
-    p->mDestMgr_.os = destination();
+    p->mDestMgr.os = destination();
     ::jpeg_set_defaults(&p->mCompressStruct);
     ::jpeg_set_quality(&p->mCompressStruct, p->mQualityPercent, TRUE);
     if(p->mQualityPercent == 100) {
@@ -195,7 +190,7 @@ void JpegEncoder::onImageBegin()
     p->mCompressStruct.density_unit = 1;
     p->mCompressStruct.X_density = resolutionDpi();
     p->mCompressStruct.Y_density = resolutionDpi();
-    p->mCompressStruct.dest = &p->mDestMgr_;
+    p->mCompressStruct.dest = &p->mDestMgr;
     ::jpeg_start_compress(&p->mCompressStruct, TRUE);
     p->mCompressing = true;
 }
