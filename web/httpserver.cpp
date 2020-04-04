@@ -550,6 +550,7 @@ std::ostream &HttpServer::Response::sendHeaders()
         setHeader(HTTP_HEADER_TRANSFER_ENCODING, "");
     }
     else if(encoding == "chunked") {
+        delete mpChunkstream;
         mpChunkstream = new Chunkstream(mStream);
         setHeader(HTTP_HEADER_CONTENT_LENGTH, "");
     }
