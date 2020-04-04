@@ -29,6 +29,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scannerpage.h"
 #include "zeroconf/hotplugnotifier.h"
 
+extern const char* GIT_COMMIT_HASH;
+extern const char* GIT_BRANCH;
+extern const char* GIT_REVISION_NUMBER;
+extern const char* BUILD_TIME_STAMP;
+
 ScanServer::ScanServer(int argc, char** argv)
     : mDoRun(true), mHotplug(true), mAnnounce(true), mLocalonly(true)
 {
@@ -213,12 +218,14 @@ struct Homepage : WebPage
         }
         out() << heading(2).addText("Build");
         list version;
-        version.addItem(paragraph().addText("date: " __DATE__ ", " __TIME__));
+        version.addItem(paragraph().addText(
+          std::string("date: ") + BUILD_TIME_STAMP
+        ));
         version.addContent("\n");
         version.addItem(paragraph().addText(
-          "commit: " GIT_COMMIT_HASH
-          " (branch " GIT_BRANCH
-          ", revision " GIT_REVISION_NUMBER ")"
+          std::string("commit: ") + GIT_COMMIT_HASH
+          + " (branch " + GIT_BRANCH
+          + ", revision " + GIT_REVISION_NUMBER + ")"
         ));
         version.addContent("\n");
         out() << version << std::endl;

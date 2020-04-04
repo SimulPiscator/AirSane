@@ -2,29 +2,13 @@ cmake_minimum_required(VERSION 3.1)
 
 project(airsaned)
 
-# collect some version information from git
-execute_process(
-  COMMAND git rev-parse --abbrev-ref HEAD
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE GIT_BRANCH
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-execute_process(
-  COMMAND git log -1 --format=%h
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE GIT_COMMIT_HASH
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-execute_process(
-  COMMAND git rev-list --count --first-parent HEAD
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE GIT_REVISION_NUMBER
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-add_definitions(
-  "-DGIT_BRANCH=\"${GIT_BRANCH}\""
-  "-DGIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\""
-  "-DGIT_REVISION_NUMBER=\"${GIT_REVISION_NUMBER}\""
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+           ${CMAKE_CURRENT_BINARY_DIR}/_version.cpp
+    COMMAND ${CMAKE_COMMAND}
+            -DFILE=${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
 set(CMAKE_CXX_STANDARD 11)
@@ -37,6 +21,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 include_directories(.)
 add_executable(${PROJECT_NAME}
+    ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
     server/main.cpp
     server/scanserver.cpp
     server/scanner.cpp
