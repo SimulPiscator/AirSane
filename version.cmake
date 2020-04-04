@@ -17,6 +17,12 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
   ERROR_QUIET
 )
+execute_process(
+  COMMAND sh -c "git diff --quiet --exit-code || echo +"
+  OUTPUT_VARIABLE GIT_DIFF
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+)
 
 if("${GIT_REVISION_NUMBER}" STREQUAL "")
   set(GIT_REVISION_NUMBER "N/A")
@@ -30,7 +36,7 @@ set(VERSION
 "
   const char* GIT_BRANCH=\"${GIT_BRANCH}\";
   const char* GIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\";
-  const char* GIT_REVISION_NUMBER=\"${GIT_REVISION_NUMBER}\";
+  const char* GIT_REVISION_NUMBER=\"${GIT_REVISION_NUMBER}${GIT_DIFF}\";
   const char* BUILD_TIME_STAMP=\"${BUILD_TIME_STAMP}\";
 "
 )
