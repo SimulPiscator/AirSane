@@ -38,6 +38,7 @@ AirSane any more. You may enter the scanner URL manually, still.
 sudo apt install libsane-dev libjpeg-dev libpng-dev
 sudo apt install libavahi-client-dev libusb-1.*-dev
 sudo apt install git cmake g++
+sudo apt install libusb-1.0-0-dev libavahi-client-dev # May be necessary on some systems
 git clone https://github.com/SimulPiscator/AirSane.git
 mkdir AirSane-build && cd AirSane-build
 cmake ../AirSane
