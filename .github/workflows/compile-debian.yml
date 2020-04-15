@@ -1,0 +1,19 @@
+name: Compile on Debian
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: debian
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      run: sudo apt install libsane-dev libjpeg-dev libpng-dev libavahi-client-dev libusb-1.*-dev
+    - name: set up directories
+      run: mkdir ./build
+    - name: configure
+      run: cd build && cmake ..
+    - name: make
+      run: cd build && make
