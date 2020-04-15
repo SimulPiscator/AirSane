@@ -1,4 +1,4 @@
-name: Compile on Ubuntu
+name: Build
 
 on: [push]
 

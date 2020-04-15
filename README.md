@@ -1,3 +1,5 @@
+![Build](https://github.com/SimulPiscator/AirSane/workflows/Build/badge.svg)
+
 # AirSane
 
 A SANE WebScan frontend that supports Apple's AirScan protocol.
@@ -126,5 +128,3 @@ airsaned as user saned vs running as root:
   sudo -u saned airsaned --debug=true --access-log=-
   sudo airsaned --debug=true --access-log=-
 ```
-
-![C/C++ on ubuntu-latest](https://github.com/SimulPiscator/AirSane/workflows/C/C++%20on%20ubuntu-latest/badge.svg)
