@@ -33,7 +33,12 @@ The Mopria Scanner App may be used to scan from AirSane scanners.
 As of version 1.2.8, however, the app does not display scanners announced by
 AirSane any more. You may enter the scanner URL manually, still.
 
-## Build
+## Build for OpenWRT
+
+Build files and instructions have been published here:
+https://github.com/tbaela/AirSane-openwrt
+
+## Build on Debian/Ubuntu/Raspbian
 ```
 sudo apt install libsane-dev libjpeg-dev libpng-dev
 sudo apt install libavahi-client-dev libusb-1.*-dev
@@ -121,3 +126,5 @@ airsaned as user saned vs running as root:
   sudo -u saned airsaned --debug=true --access-log=-
   sudo airsaned --debug=true --access-log=-
 ```
+
+![C/C++ on ubuntu-latest](https://github.com/SimulPiscator/AirSane/workflows/C/C++%20on%20ubuntu-latest/badge.svg)
