@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: C/C++ on ubuntu-latest
 
 on: [push]
 
