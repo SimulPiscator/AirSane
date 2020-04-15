@@ -127,4 +127,4 @@ airsaned as user saned vs running as root:
   sudo airsaned --debug=true --access-log=-
 ```
 
-![C/C++ CI](https://github.com/SimulPiscator/AirSane/workflows/C/C++%20CI/badge.svg)
+![C/C++ on ubuntu-latest](https://github.com/SimulPiscator/AirSane/workflows/C/C++%20on%20ubuntu-latest/badge.svg)
