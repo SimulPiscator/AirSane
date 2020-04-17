@@ -1,4 +1,4 @@
-![Build](https://github.com/SimulPiscator/AirSane/workflows/Build/badge.svg)
+![build](https://github.com/SimulPiscator/AirSane/workflows/build/badge.svg)
 
 # AirSane
 
