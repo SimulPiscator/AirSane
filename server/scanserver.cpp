@@ -187,11 +187,11 @@ bool ScanServer::run()
         }
     } while(!done);
     if(ok) {
-        std::clog << "finished ok" << std::endl;
+        std::clog << "server finished ok" << std::endl;
     } else {
-        std::cerr << "finished with error "
-                  << terminationStatus() << ": "
-                  << ::strerror(terminationStatus())
+        std::cerr << "server finished with error status "
+                  << terminationStatus() << ", last error was "
+                  << lastError() << ": " << ::strerror(lastError())
                   << std::endl;
     }
     return ok;

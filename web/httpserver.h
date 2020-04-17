@@ -67,6 +67,7 @@ public:
     bool run();
     bool terminate(int status);
     int terminationStatus() const;
+    int lastError() const;
 
     class Request
     {

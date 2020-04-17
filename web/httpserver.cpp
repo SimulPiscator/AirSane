@@ -175,7 +175,7 @@ struct HttpServer::Private
 {
 
     HttpServer* mInstance;
-    std::atomic<int> mTerminationStatus;
+    std::atomic<int> mTerminationStatus, mLastError;
 
     uint16_t mPort;
     std::string mHostname, mInterfaceName;
@@ -187,7 +187,8 @@ struct HttpServer::Private
     Private(HttpServer* instance)
         : mInstance(instance), mPort(0),
           mBacklog(SOMAXCONN), mInterfaceIndex(invalidInterface),
-          mTerminationStatus(0), mRunning(false), mPipeWriteFd(-1)
+          mTerminationStatus(0), mLastError(0), mRunning(false),
+          mPipeWriteFd(-1)
     {
     }
 
@@ -226,12 +227,13 @@ struct HttpServer::Private
         mRunning.compare_exchange_strong(wasRunning, true);
         if(wasRunning) {
             std::cerr << "server already running" << std::endl;
-            mTerminationStatus = EAGAIN;
+            mTerminationStatus = -1;
             return false;
         }
         int pipe[] = { -1, -1 };
         if(::pipe(pipe) < 0) {
-            mTerminationStatus = errno;
+            mLastError = errno;
+            mTerminationStatus = -1;
             return false;
         }
         int pipeReadFd = pipe[0];
@@ -303,8 +305,9 @@ struct HttpServer::Private
             for(size_t i = 1; i < pfds.size(); ++i)
                 ::close(pfds[i].fd);
         }
-        if(err)
-            mTerminationStatus = err;
+        mLastError = err;
+        if(err && !mTerminationStatus)
+          mTerminationStatus = -1;
         ::close(pipeReadFd);
         ::close(mPipeWriteFd);
         mPipeWriteFd = -1;
@@ -458,14 +461,19 @@ bool HttpServer::run()
     return p->run();
 }
 
-bool HttpServer::terminate(int signal)
+bool HttpServer::terminate(int status)
 {
-    return p->terminate(signal);
+    return p->terminate(status);
 }
 
 int HttpServer::terminationStatus() const
 {
     return p->mTerminationStatus;
+}
+
+int HttpServer::lastError() const
+{
+    return p->mLastError;
 }
 
 void HttpServer::onRequest(const HttpServer::Request &, HttpServer::Response &response)
