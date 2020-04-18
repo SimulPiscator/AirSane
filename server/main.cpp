@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <csignal>
 #include "scanserver.h"
 
+const char* CONFIG_FILE_PATH = "/etc/airsane/airsane.conf";
+
 static ScanServer* pServer;
 
 static void onSignal(int signal)

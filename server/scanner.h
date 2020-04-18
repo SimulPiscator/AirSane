@@ -41,6 +41,7 @@ public:
     const std::string& uuid() const;
     const std::string& uri() const;
     const std::string& makeAndModel() const;
+    const std::string& saneName() const;
 
     const std::vector<std::string>& documentFormats() const;
     const std::vector<std::string>& colorSpaces() const;

@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "imageformats/pdfencoder.h"
 #include "imageformats/pngencoder.h"
 #include "web/httpserver.h"
+#include "configfile.h"
 #include <sane/saneopts.h>
 #include <regex>
 #include <atomic>
@@ -41,6 +42,8 @@ static const char* PWG_INVALID_SCAN_TICKET = "InvalidScanTicket";
 static const char* PWG_UNSUPPORTED_DOCUMENT_FORMAT = "UnsupportedDocumentFormat";
 static const char* PWG_DOCUMENT_PERMISSION_ERROR = "DocumentPermissionError";
 static const char* PWG_ERRORS_DETECTED = "ErrorsDetected";
+
+extern const char* CONFIG_FILE_PATH;
 
 namespace {
 
@@ -356,6 +359,11 @@ void ScanJob::Private::start()
     opt[SANE_NAME_SCAN_TL_Y] = top;
     opt[SANE_NAME_SCAN_BR_X] = right;
     opt[SANE_NAME_SCAN_BR_Y] = bottom;
+
+    ConfigFile config(CONFIG_FILE_PATH);
+    auto section = config.deviceSection(mpScanner->saneName());
+    for(const auto& option : section)
+      opt[option.first] = option.second;
 
     SANE_Status status = SANE_STATUS_INVAL;
     if(ok)

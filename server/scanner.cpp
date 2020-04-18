@@ -514,6 +514,11 @@ const std::string &Scanner::makeAndModel() const
     return p->mMakeAndModel;
 }
 
+const std::string &Scanner::saneName() const
+{
+    return p->mSaneName;
+}
+
 const std::vector<std::string> &Scanner::documentFormats() const
 {
     return p->mDocumentFormats;
