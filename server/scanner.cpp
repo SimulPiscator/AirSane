@@ -187,6 +187,8 @@ struct Scanner::Private
 
     std::string mGrayScanModeName, mColorScanModeName;
 
+    OptionsFile::Options mDeviceOptions;
+
     std::map<std::string, std::shared_ptr<ScanJob>> mJobs;
     std::mutex mJobsMutex;
 
@@ -599,10 +601,18 @@ std::string Scanner::colorScanModeName() const
     return p->mColorScanModeName;
 }
 
+void Scanner::setDefaultOptions(const OptionsFile::Options& opt)
+{
+    p->mDeviceOptions = opt;
+}
+
 std::shared_ptr<sanecpp::session> Scanner::open()
 {
     auto session = std::make_shared<sanecpp::session>(p->mSaneName);
     p->mpSession = session;
+    auto& sessionOptions = session->options();
+    for(const auto& option : p->mDeviceOptions)
+        sessionOptions[option.first] = option.second;
     return session;
 }
 

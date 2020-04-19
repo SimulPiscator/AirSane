@@ -4,3 +4,4 @@ ACCESS_LOG=
 HOTPLUG=true
 MDNS_ANNOUNCE=true
 LOCAL_SCANNERS_ONLY=true
+OPTIONS_FILE=/etc/airsane/options.conf

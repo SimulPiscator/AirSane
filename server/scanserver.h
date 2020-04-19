@@ -47,6 +47,7 @@ private:
     ScannerList mScanners;
     std::filebuf mLogfile;
     bool mAnnounce, mLocalonly, mHotplug;
+    std::string mOptionsfile;
     bool mDoRun;
 };
 

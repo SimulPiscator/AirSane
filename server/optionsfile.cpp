@@ -16,29 +16,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "configfile.h"
+#include "optionsfile.h"
 #include "scanner.h"
 #include <sstream>
 #include <fstream>
-#include <map>
 #include <regex>
 
-static ConfigFile::Section sEmptySection;
-
-struct ConfigFile::Private
+OptionsFile::OptionsFile(const std::string& fileName)
 {
-    std::string mFileName;
-    Section mGlobalSection;
-    std::map<std::string, Section> mDeviceSections;
-};
-
-ConfigFile::ConfigFile(const std::string& fileName)
-: p(new Private)
-{
-    p->mFileName = fileName;
+    mFileName = fileName;
     std::ifstream file(fileName);
+    if(file.is_open())
+        std::clog << "reading device options from '" << fileName << "'" << std::endl;
+    else
+        std::clog << "no device options at '" << fileName << "'" << std::endl;
+
     std::string line;
-    Section* pDeviceSection = nullptr;
+    Options* pDeviceSection = nullptr;
     while(std::getline(file >> std::ws, line)) {
         std::istringstream iss(line);
         std::string name, value;
@@ -46,45 +40,45 @@ ConfigFile::ConfigFile(const std::string& fileName)
         std::getline(iss >> std::ws, value);
         while(!value.empty() && std::isspace(value.back()))
             value.resize(value.length() - 1);
-        if(name == "device")
-            pDeviceSection = &p->mDeviceSections[value];
+        if(name == "device") {
+            mDeviceOptions.push_back(std::make_pair(value, Options()));
+            pDeviceSection = &mDeviceOptions.back().second;
+        }
         else if(!pDeviceSection)
-            p->mGlobalSection.push_back(std::make_pair(name, value));
+            mGlobalOptions.push_back(std::make_pair(name, value));
         else
             pDeviceSection->push_back(std::make_pair(name, value));
     }
 }
 
-ConfigFile::~ConfigFile()
+OptionsFile::~OptionsFile()
 {
-    delete p;
 }
 
-const ConfigFile::Section& ConfigFile::globalSection() const
+OptionsFile::Options OptionsFile::scannerOptions(const Scanner* pScanner) const
 {
-    return p->mGlobalSection;
-}
-
-const ConfigFile::Section& ConfigFile::deviceSection(const Scanner* pScanner) const
-{
-    for(const auto& section : p->mDeviceSections) {
+    auto options = mGlobalOptions;
+    for(const auto& section : mDeviceOptions) {
         std::regex r(section.first);
+        bool match = false;
         if(std::regex_match(pScanner->saneName(), r)) {
-            std::clog << p->mFileName
+            std::clog << mFileName
                       << ": regex '" << section.first
                       << "' matches device name '"
                       << pScanner->saneName() << "'"
                       << std::endl;
-            return section.second;
+            match = true;
         }
-        if(std::regex_match(pScanner->makeAndModel(), r)) {
-            std::clog << p->mFileName
+        else if(std::regex_match(pScanner->makeAndModel(), r)) {
+            std::clog << mFileName
                       << ": regex '" << section.first
                       << "' matches device make and model '"
                       << pScanner->makeAndModel() << "'"
                       << std::endl;
-            return section.second;
+            match = true;
         }
+        if(match)
+            options.insert(options.end(), section.second.begin(), section.second.end());
     }
-    return sEmptySection;
+    return options;
 }

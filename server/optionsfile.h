@@ -16,30 +16,30 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef CONFIG_FILE_H
-#define CONFIG_FILE_H
+#ifndef OPTIONS_FILE_H
+#define OPTIONS_FILE_H
 
 #include <string>
 #include <vector>
 
 class Scanner;
 
-class ConfigFile
+class OptionsFile
 {
 public:
-  ConfigFile(const ConfigFile&) = delete;
-  ConfigFile& operator=(const ConfigFile&) = delete;
+    OptionsFile(const OptionsFile&) = delete;
+    OptionsFile& operator=(const OptionsFile&) = delete;
 
-  ConfigFile(const std::string&);
-  ~ConfigFile();
+    OptionsFile(const std::string&);
+    ~OptionsFile();
 
-  typedef std::vector<std::pair<std::string, std::string>> Section;
-  const Section& globalSection() const;
-  const Section& deviceSection(const Scanner*) const;
+    typedef std::vector<std::pair<std::string, std::string>> Options;
+    Options scannerOptions(const Scanner*) const;
 
 private:
-  struct Private;
-  Private* p;
+    std::string mFileName;
+    Options mGlobalOptions;
+    std::vector<std::pair<std::string, Options>> mDeviceOptions;
 };
 
-#endif // CONFIG_FILE_H
+#endif // OPTIONS_FILE_H

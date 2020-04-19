@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scanner.h"
 #include "scanjob.h"
 #include "scannerpage.h"
+#include "optionsfile.h"
 #include "zeroconf/hotplugnotifier.h"
 
 extern const char* GIT_COMMIT_HASH;
@@ -34,10 +35,31 @@ extern const char* GIT_BRANCH;
 extern const char* GIT_REVISION_NUMBER;
 extern const char* BUILD_TIME_STAMP;
 
+namespace {
+
+    struct Notifier : HotplugNotifier
+    {
+        ScanServer& server;
+        Notifier(ScanServer& s) : server(s) {}
+        void onHotplugEvent(Event ev) override
+        {
+            switch(ev) {
+            case deviceArrived:
+            case deviceLeft:
+                std::clog << "hotplug event, reloading configuration" << std::endl;
+                server.terminate(SIGHUP);
+                break;
+            }
+        }
+    };
+} // namespace
+
+
 ScanServer::ScanServer(int argc, char** argv)
     : mDoRun(true), mHotplug(true), mAnnounce(true), mLocalonly(true)
 {
-    std::string port, interface, accesslog, hotplug, announce, localonly, debug;
+    std::string port, interface, accesslog, hotplug, announce,
+        localonly, optionsfile, debug;
     struct { const std::string name, def, info; std::string& value; } options[] = {
     { "listen-port", "8090", "listening port", port },
     { "interface", "", "listen on named interface only", interface },
@@ -45,6 +67,7 @@ ScanServer::ScanServer(int argc, char** argv)
     { "hotplug", "true", "reload scanner list on hotplug event", hotplug },
     { "mdns-announce", "true", "announce scanners via mDNS (avahi)", announce },
     { "local-scanners-only", "true", "ignore SANE network scanners", localonly },
+    { "options-file", "/etc/airsane/options.conf", "location of device options file", optionsfile },
     { "debug", "false", "log debug information to stderr", debug },
     };
     for(auto& opt : options)
@@ -79,6 +102,7 @@ ScanServer::ScanServer(int argc, char** argv)
     mHotplug = (hotplug == "true");
     mAnnounce = (announce == "true");
     mLocalonly = (localonly == "true");
+    mOptionsfile = optionsfile;
 
     uint16_t port_ = 0;
     if(!(std::istringstream(port) >> port_)) {
@@ -108,27 +132,13 @@ bool ScanServer::run()
     if(!mDoRun)
         return false;
 
-    struct Notifier : HotplugNotifier
-    {
-        ScanServer& server;
-        Notifier(ScanServer& s) : server(s) {}
-        void onHotplugEvent(Event ev) override
-        {
-            switch(ev) {
-            case deviceArrived:
-            case deviceLeft:
-                std::clog << "hotplug event, reloading configuration" << std::endl;
-                server.terminate(SIGHUP);
-                break;
-            }
-        }
-    };
     std::shared_ptr<Notifier> pNotifier;
     if(mHotplug)
         pNotifier = std::make_shared<Notifier>(*this);
 
     bool ok = false, done = false;
     do {
+        OptionsFile optionsfile(mOptionsfile);
         std::clog << "enumerating " << (mLocalonly ? "local " : " ") << "devices..." << std::endl;
         auto scanners = sanecpp::enumerate_devices(mLocalonly);
         for(const auto& s : scanners) {
@@ -138,6 +148,12 @@ bool ScanServer::run()
                 std::clog << "error: " << pScanner->error() << std::endl;
             else
                 std::clog << "uuid: " << pScanner->uuid() << std::endl;
+
+            if(!pScanner->error()) {
+                auto options = optionsfile.scannerOptions(pScanner.get());
+                pScanner->setDefaultOptions(options);
+            }
+
             std::shared_ptr<MdnsPublisher::Service> pService;
             if(mAnnounce && !pScanner->error())
             {

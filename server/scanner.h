@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 
 #include "sanecpp/sanecpp.h"
+#include "optionsfile.h"
 
 class ScanJob;
 
@@ -62,6 +63,8 @@ public:
 
     std::string grayScanModeName() const;
     std::string colorScanModeName() const;
+
+    void setDefaultOptions(const OptionsFile::Options&);
 
     std::shared_ptr<ScanJob> createJobFromScanSettingsXml(const std::string&, bool autoselectFormat = false);
     std::shared_ptr<ScanJob> getJob(const std::string& uuid);
