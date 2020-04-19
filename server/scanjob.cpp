@@ -329,6 +329,15 @@ void ScanJob::Private::start()
     assert(!mpSession);
     mpSession = mpScanner->open();
     auto& opt = mpSession->options();
+
+    ConfigFile config(CONFIG_FILE_PATH);
+    auto& globalSection = config.globalSection();
+    for(const auto& option : globalSection)
+        opt[option.first] = option.second;
+    auto& section = config.deviceSection(mpScanner);
+    for(const auto& option : section)
+        opt[option.first] = option.second;
+
     if(mIntent == "Preview")
         opt[SANE_NAME_PREVIEW] = 1;
     opt[SANE_NAME_BIT_DEPTH] = mBitDepth;
@@ -359,11 +368,6 @@ void ScanJob::Private::start()
     opt[SANE_NAME_SCAN_TL_Y] = top;
     opt[SANE_NAME_SCAN_BR_X] = right;
     opt[SANE_NAME_SCAN_BR_Y] = bottom;
-
-    ConfigFile config(CONFIG_FILE_PATH);
-    auto section = config.deviceSection(mpScanner->saneName());
-    for(const auto& option : section)
-      opt[option.first] = option.second;
 
     SANE_Status status = SANE_STATUS_INVAL;
     if(ok)

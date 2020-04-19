@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "configfile.h"
+#include "scanner.h"
 #include <sstream>
 #include <fstream>
 #include <map>
@@ -26,6 +27,7 @@ static ConfigFile::Section sEmptySection;
 
 struct ConfigFile::Private
 {
+    std::string mFileName;
     Section mGlobalSection;
     std::map<std::string, Section> mDeviceSections;
 };
@@ -33,6 +35,7 @@ struct ConfigFile::Private
 ConfigFile::ConfigFile(const std::string& fileName)
 : p(new Private)
 {
+    p->mFileName = fileName;
     std::ifstream file(fileName);
     std::string line;
     Section* pDeviceSection = nullptr;
@@ -41,6 +44,8 @@ ConfigFile::ConfigFile(const std::string& fileName)
         std::string name, value;
         iss >> name;
         std::getline(iss >> std::ws, value);
+        while(!value.empty() && std::isspace(value.back()))
+            value.resize(value.length() - 1);
         if(name == "device")
             pDeviceSection = &p->mDeviceSections[value];
         else if(!pDeviceSection)
@@ -60,12 +65,26 @@ const ConfigFile::Section& ConfigFile::globalSection() const
     return p->mGlobalSection;
 }
 
-const ConfigFile::Section& ConfigFile::deviceSection(const std::string& dev) const
+const ConfigFile::Section& ConfigFile::deviceSection(const Scanner* pScanner) const
 {
     for(const auto& section : p->mDeviceSections) {
         std::regex r(section.first);
-        if(std::regex_match(dev, r))
+        if(std::regex_match(pScanner->saneName(), r)) {
+            std::clog << p->mFileName
+                      << ": regex '" << section.first
+                      << "' matches device name '"
+                      << pScanner->saneName() << "'"
+                      << std::endl;
             return section.second;
+        }
+        if(std::regex_match(pScanner->makeAndModel(), r)) {
+            std::clog << p->mFileName
+                      << ": regex '" << section.first
+                      << "' matches device make and model '"
+                      << pScanner->makeAndModel() << "'"
+                      << std::endl;
+            return section.second;
+        }
     }
     return sEmptySection;
 }

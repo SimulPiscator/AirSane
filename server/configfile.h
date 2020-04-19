@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <vector>
 
+class Scanner;
+
 class ConfigFile
 {
 public:
@@ -33,7 +35,7 @@ public:
 
   typedef std::vector<std::pair<std::string, std::string>> Section;
   const Section& globalSection() const;
-  const Section& deviceSection(const std::string&) const;
+  const Section& deviceSection(const Scanner*) const;
 
 private:
   struct Private;
