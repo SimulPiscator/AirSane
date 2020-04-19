@@ -34,6 +34,10 @@ OptionsFile::OptionsFile(const std::string& fileName)
     std::string line;
     Options* pDeviceSection = nullptr;
     while(std::getline(file >> std::ws, line)) {
+
+        if(line.empty() || line.front() == '#')
+            continue;
+
         std::istringstream iss(line);
         std::string name, value;
         iss >> name;
