@@ -99,6 +99,36 @@ To verify http access, open `http://localhost:8090/` in a web browser.
 From there, follow a link to a scanner page, and click the 'update preview'
 button for a preview scan.
 
+## Optional configuration
+
+In addition to the options that may be configured through `/etc/default/airsane`, it is possible to configure 
+SANE options to be used when scanning from a certain device. Create a file `/etc/airsane/options.conf`, readable
+by user `saned`, and containing lines that either specify a SANE option and a value, or the word `device` followed
+with a regular expression that will be matched against both a scanner's SANE device name, and its make-and-model string.
+SANE options at the top of the file are applied to all scanners. If a scanner matches multiple `device` lines,
+SANE options from all of these `device` sections will be applied.
+
+To display the SANE options supported by a device, use `sudo -u saned scanimage -L` to get its SANE name, and then
+`sudo -u saned scanimage -d <device name> -A` to get a list of options.
+
+In `options.conf`, SANE options must be given without leading minus signs, and with white space between the option's name and its value. White space is removed from the beginnning and the end of the value.
+
+```
+# Example options.conf file for airsane
+# Set brightness to 10 for all scanners
+brightness 10
+
+# Set options for all scanners using the genesys backend
+device genesys:.*
+contrast -10
+swdeskew yes
+
+# Set calibration file option for a scanner "Canon LiDE 60"
+device Canon LiDE 60
+calibration-file /home/simul/some path with spaces/canon-lide-60.cal
+```
+
+
 ## Troubleshoot
 
 * Compiling fails with error: "‘png_const_bytep’ does not name a type".
