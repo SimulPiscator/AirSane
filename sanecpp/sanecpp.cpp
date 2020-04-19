@@ -42,6 +42,10 @@ double strtod_c(const std::string& s)
     iss.imbue(clocale);
     if(iss >> d)
         return d;
+    if(s == "yes" || s == "true")
+        return 1;
+    if(s == "no" || s == "false")
+        return 0;
     return std::numeric_limits<double>::quiet_NaN();
 }
 
