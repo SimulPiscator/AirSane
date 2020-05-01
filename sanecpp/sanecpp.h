@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -54,13 +54,7 @@ class option_set;
 
 class option
 {
-    friend class option_set;
-
 private:
-    option_set* m_set;
-    const SANE_Option_Descriptor* m_desc;
-    SANE_Int m_index;
-
     option(option_set*, const SANE_Option_Descriptor*, SANE_Int);
 
 public:
@@ -101,15 +95,16 @@ public:
     double max() const;
     double quant() const;
     SANE_Unit unit() const;
+
+private:
+    friend class option_set;
+    option_set* m_set;
+    const SANE_Option_Descriptor* m_desc;
+    SANE_Int m_index;
 };
 
 class option_set
 {
-    friend class option;
-    device_handle m_device;
-    std::map<std::string, option> m_options;
-    static option s_nulloption;
-
 public:
     option_set();
     option_set(device_handle);
@@ -135,6 +130,12 @@ public:
     typedef std::map<std::string, option>::const_iterator const_iterator;
     const_iterator begin() const { return m_options.begin(); }
     const_iterator end() const { return m_options.end(); }
+
+private:
+    friend class option;
+    device_handle m_device;
+    std::map<std::string, option> m_options;
+    static option s_nulloption;
 };
 
 class session

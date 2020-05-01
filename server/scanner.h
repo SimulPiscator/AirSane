@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,11 +30,12 @@ class ScanJob;
 
 class Scanner
 {
+    Scanner(const Scanner&) = delete;
+    Scanner& operator=(const Scanner&) = delete;
+
 public:
     Scanner(const sanecpp::device_info&);
     ~Scanner();
-    Scanner(const Scanner&) = delete;
-    Scanner& operator=(const Scanner&) = delete;
 
     const char* error() const;
     std::string statusString() const;
@@ -58,13 +59,11 @@ public:
     bool hasPlaten() const;
     bool hasAdf() const;
     bool hasDuplexAdf() const;
+
     std::string platenSourceName() const;
     std::string adfSourceName() const;
-
     std::string grayScanModeName() const;
     std::string colorScanModeName() const;
-
-    void setDefaultOptions(const OptionsFile::Options&);
 
     std::shared_ptr<ScanJob> createJobFromScanSettingsXml(const std::string&, bool autoselectFormat = false);
     std::shared_ptr<ScanJob> getJob(const std::string& uuid);
@@ -75,6 +74,8 @@ public:
 
     std::shared_ptr<sanecpp::session> open();
     bool isOpen() const;
+
+    void setDefaultOptions(const OptionsFile::Options&);
 
     void writeScannerCapabilitiesXml(std::ostream&) const;
     void writeScannerStatusXml(std::ostream&) const;

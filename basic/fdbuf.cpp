@@ -22,10 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstring>
 
 fdbuf::fdbuf(int fd, int putback)
-    : mFd(fd), mPutback(1), mTotalWritten(0)
+    : mFd(fd), mPutback(putback), mTotalWritten(0)
 {
     setp(mOutbuf, mOutbuf + sizeof(mOutbuf) - 1);
-    setg(0, 0, 0);
+    setg(nullptr, nullptr, nullptr);
 }
 
 fdbuf::~fdbuf()
@@ -37,7 +37,7 @@ fdbuf::~fdbuf()
 fdbuf::int_type fdbuf::overflow(int_type c)
 {
     if(c != traits_type::eof()) {
-        *pptr() = c;
+        *pptr() = char(c);
         pbump(1);
         if(sync() == 0)
             return c;

@@ -76,11 +76,11 @@ void Uuid::initFromString(const std::string& inStringData)
     auto hashfn = std::hash<std::string>();
     std::string s = sMachineId + inStringData;
     union { size_t h; char c[sizeof(h)]; } hash;
-    int pos = 0;
+    size_t pos = 0;
     while(pos < s.length())
     {
         hash.h = hashfn(s);
-        for(int i = 0; i < sizeof(hash) && pos + i < s.length(); ++i)
+        for(size_t i = 0; i < sizeof(hash) && pos + i < s.length(); ++i)
             s[pos + i] ^= hash.c[i];
         pos += sizeof(hash);
     }
@@ -91,7 +91,7 @@ void Uuid::initFromString(const std::string& inStringData)
         s += std::string(hash.c, sizeof(hash));
     }
     ::memset(mData, 0, sizeof(mData));
-    for(auto i = 0; i < s.length(); ++i)
+    for(size_t i = 0; i < s.length(); ++i)
         mData[i % sizeof(mData)] ^= s[i];
     // Report the UUID as version 5 (which is closest to our case).
     mData[6] &= 0x0f;

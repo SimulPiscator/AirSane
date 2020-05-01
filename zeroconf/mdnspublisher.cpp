@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "mdnspublisher.h"
+
 #include <avahi-common/thread-watch.h>
 #include <avahi-common/error.h>
 #include <avahi-common/malloc.h>
@@ -30,107 +31,116 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cerrno>
 #include <cstring>
 
+namespace {
+
+struct ServiceEntry
+{
+    MdnsPublisher::Service* mpService;
+    AvahiEntryGroup* mpEntryGroup;
+
+    ServiceEntry(MdnsPublisher::Service* p)
+        : mpService(p), mpEntryGroup(nullptr)
+    {
+    }
+
+    ~ServiceEntry()
+    {
+        unannounce();
+    }
+
+    bool announce(AvahiClient* pClient)
+    {
+        unannounce();
+        int err;
+        do {
+            err = doAnnounce(pClient);
+            if(err == AVAHI_ERR_COLLISION)
+                renameService();
+        } while(err == AVAHI_ERR_COLLISION);
+        if(err)
+            std::cerr << ::avahi_strerror(err) << std::endl;
+        return !err;
+    }
+
+    int doAnnounce(AvahiClient* pClient)
+    {
+        if(mpEntryGroup)
+            ::avahi_entry_group_free(mpEntryGroup);
+        mpEntryGroup = ::avahi_entry_group_new(pClient, &entryGroupCallback, this);
+        if(!mpEntryGroup)
+            return ::avahi_client_errno(pClient);
+        int err = ::avahi_entry_group_add_service(mpEntryGroup,
+              mpService->interfaceIndex(), AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0),
+              mpService->name().c_str(), mpService->type().c_str(),
+              nullptr, nullptr, mpService->port(), nullptr
+        );
+        if(!err)
+            err = ::avahi_entry_group_commit(mpEntryGroup);
+        if(!err) {
+            AvahiStringList* txt = nullptr;
+            for(const auto& entry : mpService->txtRecord())
+                txt = ::avahi_string_list_add_pair(txt, entry.first.c_str(), entry.second.c_str());
+            err = ::avahi_entry_group_update_service_txt_strlst(mpEntryGroup,
+                  mpService->interfaceIndex(), AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0),
+                  mpService->name().c_str(), mpService->type().c_str(),
+                  nullptr, txt);
+            ::avahi_string_list_free(txt);
+        }
+        return err;
+    }
+
+    void unannounce()
+    {
+        if(mpEntryGroup) {
+            ::avahi_entry_group_free(mpEntryGroup);
+            mpEntryGroup = nullptr;
+        }
+    }
+
+    void renameService()
+    {
+        char* altname = ::avahi_alternative_service_name(mpService->name().c_str());
+        mpService->setName(altname);
+        ::avahi_free(altname);
+    }
+
+    void onCollision()
+    {
+        renameService();
+        announce(::avahi_entry_group_get_client(mpEntryGroup));
+    }
+
+    void onError()
+    {
+        unannounce();
+    }
+
+    static void entryGroupCallback(AvahiEntryGroup*, AvahiEntryGroupState state, void* instance)
+    {
+        auto p = static_cast<ServiceEntry*>(instance);
+        switch(state) {
+        case AVAHI_ENTRY_GROUP_COLLISION:
+            p->onCollision();
+            break;
+        case AVAHI_ENTRY_GROUP_FAILURE:
+            p->onError();
+            break;
+        case AVAHI_ENTRY_GROUP_UNCOMMITED:
+        case AVAHI_ENTRY_GROUP_REGISTERING:
+        case AVAHI_ENTRY_GROUP_ESTABLISHED:
+            break;
+        }
+    }
+};
+
+} // namespace
+
 struct MdnsPublisher::Private
 {
     AvahiThreadedPoll* mpThread;
     AvahiClient* mpClient;
     AvahiClientState mState;
 
-    struct ServiceEntry
-    {
-        Service* mpService;
-        AvahiEntryGroup* mpEntryGroup;
-
-        ServiceEntry(Service* p)
-            : mpService(p), mpEntryGroup(nullptr)
-        {
-        }
-
-        ~ServiceEntry()
-        {
-            unannounce();
-        }
-
-        bool announce(AvahiClient* pClient)
-        {
-            unannounce();
-            int err;
-            do {
-                err = doAnnounce(pClient);
-                if(err == AVAHI_ERR_COLLISION)
-                    renameService();
-            } while(err == AVAHI_ERR_COLLISION);
-            if(err)
-                std::cerr << ::avahi_strerror(err) << std::endl;
-            return !err;
-        }
-
-        int doAnnounce(AvahiClient* pClient)
-        {
-            if(mpEntryGroup)
-                ::avahi_entry_group_free(mpEntryGroup);
-            mpEntryGroup = ::avahi_entry_group_new(pClient, &entryGroupCallback, this);
-            if(!mpEntryGroup)
-                return ::avahi_client_errno(pClient);
-            int err = ::avahi_entry_group_add_service(mpEntryGroup,
-                  mpService->interfaceIndex(), AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0),
-                  mpService->name().c_str(), mpService->type().c_str(),
-                  nullptr, nullptr, mpService->port(), nullptr
-            );
-            if(!err)
-                err = ::avahi_entry_group_commit(mpEntryGroup);
-            if(!err) {
-                AvahiStringList* txt = nullptr;
-                for(const auto& entry : mpService->txtRecord())
-                    txt = ::avahi_string_list_add_pair(txt, entry.first.c_str(), entry.second.c_str());
-                err = ::avahi_entry_group_update_service_txt_strlst(mpEntryGroup,
-                      mpService->interfaceIndex(), AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0),
-                      mpService->name().c_str(), mpService->type().c_str(),
-                      nullptr, txt);
-                ::avahi_string_list_free(txt);
-            }
-            return err;
-        }
-
-        void unannounce()
-        {
-            if(mpEntryGroup) {
-                ::avahi_entry_group_free(mpEntryGroup);
-                mpEntryGroup = nullptr;
-            }
-        }
-
-        void renameService()
-        {
-            char* altname = ::avahi_alternative_service_name(mpService->name().c_str());
-            mpService->setName(altname);
-            ::avahi_free(altname);
-        }
-
-        void onCollision()
-        {
-            renameService();
-            announce(::avahi_entry_group_get_client(mpEntryGroup));
-        }
-
-        void onError()
-        {
-            unannounce();
-        }
-
-        static void entryGroupCallback(AvahiEntryGroup* group, AvahiEntryGroupState state, void* instance)
-        {
-            auto p = static_cast<ServiceEntry*>(instance);
-            switch(state) {
-            case AVAHI_ENTRY_GROUP_COLLISION:
-                p->onCollision();
-                break;
-            case AVAHI_ENTRY_GROUP_FAILURE:
-                p->onError();
-                break;
-            }
-        }
-    };
     std::list<ServiceEntry> mServices;
 
     Private() : mpThread(nullptr), mpClient(nullptr), mState(AVAHI_CLIENT_CONNECTING)
@@ -162,14 +172,15 @@ struct MdnsPublisher::Private
         case AVAHI_CLIENT_S_RUNNING:
             p->onConnected();
             break;
-        }
-        switch(state) {
         case AVAHI_CLIENT_FAILURE:
+        case AVAHI_CLIENT_CONNECTING:
+            break;
+        }
+        if(state == AVAHI_CLIENT_FAILURE) {
             if(::avahi_client_errno(client) == AVAHI_ERR_DISCONNECTED)
                 p->onDisconnected();
             else
                 p->onError(::avahi_client_errno(client));
-            break;
         }
         p->mState = state;
     }
@@ -226,12 +237,12 @@ bool MdnsPublisher::announce(MdnsPublisher::Service *pService)
     bool ok = false;
     ::avahi_threaded_poll_lock(p->mpThread);
     auto i = std::find_if(p->mServices.begin(), p->mServices.end(),
-        [pService](const Private::ServiceEntry& e) { return e.mpService == pService; }
+        [pService](const ServiceEntry& e) { return e.mpService == pService; }
     );
     if(i != p->mServices.end()) {
         ok = true;
     } else {
-        p->mServices.push_back(Private::ServiceEntry(pService));
+        p->mServices.push_back(ServiceEntry(pService));
         ok = p->mServices.back().announce(p->mpClient);
     }
     ::avahi_threaded_poll_unlock(p->mpThread);
@@ -243,7 +254,7 @@ bool MdnsPublisher::unannounce(MdnsPublisher::Service *pService)
     bool ok = false;
     ::avahi_threaded_poll_lock(p->mpThread);
     auto i = std::find_if(p->mServices.begin(), p->mServices.end(),
-        [pService](const Private::ServiceEntry& e) { return e.mpService == pService; }
+        [pService](const ServiceEntry& e) { return e.mpService == pService; }
     );
     if(i != p->mServices.end()) {
         ok = true;
@@ -270,7 +281,9 @@ std::string MdnsPublisher::Service::name() const
 MdnsPublisher::Service &MdnsPublisher::Service::setTxt(const std::string &key, const std::string &value)
 {
     if(!key.empty()) {
-        auto i = std::find_if(mTxtRecord.begin(), mTxtRecord.end(), [key](const TxtRecord::value_type& v){return v.first == key;});
+        auto i = std::find_if(mTxtRecord.begin(), mTxtRecord.end(),
+                              [key](const TxtRecord::value_type& v)
+                              {return v.first == key;});
         if(i == mTxtRecord.end())
             mTxtRecord.push_back(std::make_pair(key, value));
         else

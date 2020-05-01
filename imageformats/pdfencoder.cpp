@@ -28,11 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <arpa/inet.h>
 
 #include "basic/uuid.h"
+#include "basic/dictionary.h"
 
 namespace {
 
 struct smanip
 {
+    virtual ~smanip() {}
     virtual void insert(std::ostream&) const = 0;
 };
 
@@ -164,7 +166,7 @@ void PdfEncoder::onImageBegin()
 #if BYTE_ORDER == LITTLE_ENDIAN
     p->mLineBuffer.clear();
     if(bitDepth() == 16)
-        p->mLineBuffer.resize(components()*width());
+        p->mLineBuffer.resize(components() * width());
 #endif
     p->mInfoDict["CreationDate"] = pdfDate(::time(nullptr));
     p->mInfoString.clear();

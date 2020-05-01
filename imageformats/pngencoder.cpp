@@ -44,7 +44,7 @@ struct PngEncoder::Private
         p->mpStream->flush();
     }
 
-    static void error(png_structp, png_const_charp msg)
+    [[noreturn]] static void error(png_structp, png_const_charp msg)
     {
         throw std::runtime_error(msg);
     }
@@ -70,7 +70,7 @@ void PngEncoder::onImageBegin()
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
     if(bitDepth() == 16)
-        p->mLineBuffer.resize(width()*components());
+        p->mLineBuffer.resize(width() * components());
     else
         p->mLineBuffer.clear();
 #endif
@@ -85,6 +85,8 @@ void PngEncoder::onImageBegin()
     p->mpStream = destination();
     int colorType = 0;
     switch(colorspace()) {
+    case Unknown:
+        break;
     case Grayscale:
         colorType = PNG_COLOR_TYPE_GRAY;
         break;
@@ -124,7 +126,7 @@ void PngEncoder::onWriteLine(const void *data)
         ::png_write_row(p->mpPng, static_cast<png_const_bytep>(data));
     else {
         const uint16_t* pData = static_cast<const uint16_t*>(data);
-        for(int i = 0; i < p->mLineBuffer.size(); ++i)
+        for(size_t i = 0; i < p->mLineBuffer.size(); ++i)
             p->mLineBuffer[i] = htons(*pData++);
         ::png_write_row(p->mpPng, reinterpret_cast<png_const_bytep>(p->mLineBuffer.data()));
     }

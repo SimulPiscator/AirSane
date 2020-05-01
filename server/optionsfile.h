@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,11 +26,11 @@ class Scanner;
 
 class OptionsFile
 {
-public:
     OptionsFile(const OptionsFile&) = delete;
     OptionsFile& operator=(const OptionsFile&) = delete;
 
-    OptionsFile(const std::string&);
+public:
+    OptionsFile(const std::string& fileName);
     ~OptionsFile();
 
     typedef std::vector<std::pair<std::string, std::string>> Options;

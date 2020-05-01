@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,15 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define PDFENCODER_H
 
 #include "imageencoder.h"
-#include "basic/dictionary.h"
+
+class Dictionary;
 
 class PdfEncoder : public ImageEncoder
 {
 public:
     PdfEncoder();
     ~PdfEncoder();
-    PdfEncoder(const PdfEncoder&) = delete;
-    PdfEncoder& operator=(const PdfEncoder&) = delete;
 
     Dictionary& documentInfo();
     const Dictionary& documentInfo() const;

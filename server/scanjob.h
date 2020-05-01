@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,20 +20,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SCANJOB_H
 
 #include <string>
-#include "basic/dictionary.h"
 
 class Scanner;
 
 class ScanJob
 {
-public:
     ScanJob(const ScanJob&) = delete;
     ScanJob& operator=(const ScanJob&) = delete;
 
+public:
     ScanJob(Scanner*, const std::string& uuid);
     ~ScanJob();
 
-    ScanJob& initWithScanSettingsXml(const std::string&, bool formatAutoselect = false);
+    ScanJob& initWithScanSettingsXml(const std::string&, bool autoselectFormat = false);
 
     int ageSeconds() const;
     int imagesToTransfer() const;
@@ -41,21 +40,28 @@ public:
     std::string uri() const;
     const std::string& uuid() const;
     const std::string& documentFormat() const;
-    void writeJobInfoXml(std::ostream&) const;
 
     bool beginTransfer();
-    ScanJob& abortTransfer();
     ScanJob& finishTransfer(std::ostream&);
+    ScanJob& abortTransfer();
     ScanJob& cancel();
 
-    typedef enum { aborted, canceled, completed, pending, processing } State;
+    typedef enum {
+        aborted, canceled,
+        completed, pending,
+        processing
+    } State;
     State state() const;
+
     std::string statusString() const;
     std::string statusReason() const;
+
     bool isPending() const;
     bool isProcessing() const;
     bool isFinished() const;
     bool isAborted() const;
+
+    void writeJobInfoXml(std::ostream&) const;
 
 private:
     struct Private;

@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -657,10 +657,13 @@ int Scanner::purgeJobs(int maxAgeSeconds)
     std::lock_guard<std::mutex> lock(p->mJobsMutex);
     for(auto i = p->mJobs.begin(); i != p->mJobs.end(); )
     {
-        if(i->second->ageSeconds() > maxAgeSeconds)
-            i = p->mJobs.erase(i), ++n;
-        else
+        if(i->second->ageSeconds() > maxAgeSeconds) {
+            i = p->mJobs.erase(i);
+            ++n;
+        }
+        else {
             ++i;
+        }
     }
     return n;
 }

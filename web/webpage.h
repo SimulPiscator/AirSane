@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ class WebPage
 {
 public:
     WebPage();
+    virtual ~WebPage() {}
     WebPage& setTitle(const std::string& s) { mTitle = s; return *this; }
     const std::string& title() const { return mTitle; }
     WebPage& clearStyle();
@@ -42,6 +43,7 @@ public:
     {
     public:
         element(const std::string& tag) : mTag(tag) {}
+        virtual ~element() {}
         element& addText(const std::string& s) { return addContent(htmlEscape(s)); }
         element& addText(double d) { return addText(numtostr(d)); }
         element& addContent(const std::string& s) { mText += s; return *this; }
@@ -52,6 +54,7 @@ public:
 
         operator std::string() const { return toString(); }
         virtual std::string toString() const;
+
     private:
         Dictionary mAttributes;
         std::string mTag, mText;
@@ -108,6 +111,7 @@ protected:
     std::ostream& out() const { return *mpOut; }
     const HttpServer::Request& request() const { return *mpRequest; }
     HttpServer::Response& response() const { return *mpResponse; }
+
 private:
     std::string mTitle, mStyle;
     std::ostream* mpOut;

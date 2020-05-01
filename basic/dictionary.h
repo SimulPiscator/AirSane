@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,18 +22,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <string>
 
-struct Dictionary
+class Dictionary
 {
+public:
     typedef std::vector<std::pair<std::string, std::string>> Storage;
 
-    bool hasKey(const std::string&) const;
-    void eraseKey(const std::string&);
+    bool hasKey(const std::string& key) const;
+    void eraseKey(const std::string& key);
 
-    const std::string& applyDefaultValue(const std::string&, const std::string&);
-    const std::string& applyDefaultValue(const std::string&, double);
+    const std::string& applyDefaultValue(const std::string& key, const std::string& value);
+    const std::string& applyDefaultValue(const std::string& key, double value);
 
-    double getNumber(const std::string&) const;
-    const std::string& getString(const std::string&) const;
+    double getNumber(const std::string& key) const;
+    const std::string& getString(const std::string& key) const;
 
     const std::string& operator[](const std::string& key) const { return getString(key); }
     std::string& operator[](const std::string& key);

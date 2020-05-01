@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -48,10 +48,10 @@ OptionsFile::OptionsFile(const std::string& fileName)
             mDeviceOptions.push_back(std::make_pair(value, Options()));
             pDeviceSection = &mDeviceOptions.back().second;
         }
-        else if(!pDeviceSection)
-            mGlobalOptions.push_back(std::make_pair(name, value));
-        else
+        else if(pDeviceSection)
             pDeviceSection->push_back(std::make_pair(name, value));
+        else
+            mGlobalOptions.push_back(std::make_pair(name, value));
     }
 }
 

@@ -86,7 +86,7 @@ struct JpegEncoder::Private
     int mQualityPercent;
     bool mCompressing;
 
-    static void throwOnError(::jpeg_common_struct* p)
+    [[noreturn]] static void throwOnError(::jpeg_common_struct* p)
     {
         char buf[JMSG_LENGTH_MAX];
         (p->err->format_message)(p, buf);
@@ -125,14 +125,14 @@ JpegEncoder::~JpegEncoder()
     delete p;
 }
 
-JpegEncoder &JpegEncoder::setGamma(float f)
+JpegEncoder &JpegEncoder::setGamma(double d)
 {
     onParamChange();
-    p->mCompressStruct.input_gamma = f;
+    p->mCompressStruct.input_gamma = d;
     return *this;
 }
 
-float JpegEncoder::gamma() const
+double JpegEncoder::gamma() const
 {
     return p->mCompressStruct.input_gamma;
 }

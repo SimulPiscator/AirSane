@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ protected:
     void onRequest(const Request&, Response&) override;
 
 private:
-    void handleScannerRequest(ScannerList::value_type&, const HttpServer::Request &, HttpServer::Response &);
+    void handleScannerRequest(ScannerList::value_type&, const HttpServer::Request&, HttpServer::Response&);
 
     MdnsPublisher mPublisher;
     ScannerList mScanners;

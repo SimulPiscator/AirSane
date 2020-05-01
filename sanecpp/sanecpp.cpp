@@ -63,8 +63,8 @@ option option_set::s_nulloption;
 
 // we call sane_exit() as frequently as possible
 // in order to minimize effects from bugs/leaks in backends
-int sane_init_refcount = 0;
-std::mutex sane_init_mutex;
+static int sane_init_refcount = 0;
+static std::mutex sane_init_mutex;
 
 void sane_init_addref()
 {
@@ -100,7 +100,7 @@ void option_set::init(device_handle h)
     m_options.clear();
     if(h) {
         const SANE_Option_Descriptor* desc = nullptr;
-        for(int i = 1; desc = ::sane_get_option_descriptor(h.get(), i); ++i) {
+        for(int i = 1; (desc = ::sane_get_option_descriptor(h.get(), i)); ++i) {
             if(desc->name && *desc->name)
                 m_options[desc->name] = option(this, desc, i);
         }
@@ -111,7 +111,7 @@ void option_set::reload()
 {
     SANE_Handle h = m_device.get();
     const SANE_Option_Descriptor* desc = nullptr;
-    for(int i = 1; desc = ::sane_get_option_descriptor(h, i); ++i) {
+    for(int i = 1; (desc = ::sane_get_option_descriptor(h, i)); ++i) {
         if(desc->name && *desc->name) {
             auto j = m_options.find(desc->name);
             if(j == m_options.end())
@@ -183,6 +183,9 @@ bool option::is_null() const
 int option::array_size() const
 {
     if(m_desc) switch(m_desc->type) {
+        case SANE_TYPE_BUTTON:
+        case SANE_TYPE_GROUP:
+            return 0;
         case SANE_TYPE_STRING:
             return 1;
         case SANE_TYPE_INT:
@@ -215,6 +218,8 @@ bool option::is_numeric() const
     case SANE_TYPE_FIXED:
     case SANE_TYPE_BOOL:
         return true;
+    default:
+        return false;
     }
     return false;
 }
@@ -365,6 +370,9 @@ double option::min() const
     double value = std::numeric_limits<double>::quiet_NaN();
     if(m_desc) {
         switch(m_desc->constraint_type) {
+        case SANE_CONSTRAINT_NONE:
+        case SANE_CONSTRAINT_STRING_LIST:
+            break;
         case SANE_CONSTRAINT_RANGE:
             value = m_desc->constraint.range->min;
             break;
@@ -385,6 +393,9 @@ double option::max() const
     double value = std::numeric_limits<double>::quiet_NaN();
     if(m_desc) {
         switch(m_desc->constraint_type) {
+        case SANE_CONSTRAINT_NONE:
+        case SANE_CONSTRAINT_STRING_LIST:
+            break;
         case SANE_CONSTRAINT_RANGE:
             value = m_desc->constraint.range->max;
             break;

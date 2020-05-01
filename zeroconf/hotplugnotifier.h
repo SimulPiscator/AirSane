@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ class HotplugNotifier
 {
 public:
     HotplugNotifier();
-    ~HotplugNotifier();
+    virtual ~HotplugNotifier();
 
     HotplugNotifier(const HotplugNotifier&) = delete;
     HotplugNotifier& operator=(const HotplugNotifier&) = delete;

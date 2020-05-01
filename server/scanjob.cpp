@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -231,7 +231,7 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
 
 const char* ScanJob::Private::statusString() const
 {
-    switch(mState) {
+    switch(mState.load()) {
     case ScanJob::aborted:
         return "Aborted";
     case ScanJob::canceled:
@@ -507,10 +507,14 @@ bool ScanJob::Private::isProcessing() const
 
 bool ScanJob::Private::isFinished() const
 {
-    switch(mState) {
+    switch(mState.load()) {
     case pending:
     case processing:
         return false;
+    case aborted:
+    case canceled:
+    case completed:
+        return true;
     }
     return true;
 }

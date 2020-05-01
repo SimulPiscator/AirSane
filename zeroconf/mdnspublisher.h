@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -33,14 +33,17 @@ public:
         ~Service() { unannounce(); }
 
         typedef std::vector<std::pair<std::string, std::string>> TxtRecord;
+
         Service& setType(const std::string& s) { mType = s; return *this; }
         const std::string& type() const { return mType; }
         Service& setName(const std::string&);
         std::string name() const;
+
         Service& setInterfaceIndex(int i) { mIfIndex = i; return *this; }
         int interfaceIndex() const { return mIfIndex; }
         Service& setPort(uint16_t p) { mPort = p; return *this; }
         uint16_t port() const { return mPort; }
+
         Service& setTxt(const std::string&, const std::string&);
         const std::string& txt(const std::string&) const;
         const TxtRecord& txtRecord() const { return mTxtRecord; }

@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ struct HotplugNotifier::Private
     std::atomic<bool> mTerminate;
 
     Private(HotplugNotifier* pNotifier)
-        : mCbHandle(0), mpContext(0), mTerminate(false)
+        : mpContext(nullptr), mCbHandle(0), mTerminate(false)
     {
         ::libusb_init(&mpContext);
         int events = LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED

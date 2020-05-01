@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,12 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class fdbuf : public std::streambuf
 {
-    static const size_t bufsize = 4096;
-    int mFd;
-    int mPutback;
-    std::streamsize mTotalWritten;
-    char mOutbuf[bufsize], mInbuf[bufsize];
-
 public:
     fdbuf(int fd, int putback = 1);
     ~fdbuf();
@@ -36,6 +30,13 @@ public:
     int_type sync() override;
     int_type underflow() override;
     std::streampos seekoff(off_type, std::ios_base::seekdir, std::ios_base::openmode) override;
+
+private:
+    static const size_t bufsize = 4096;
+    int mFd;
+    int mPutback;
+    std::streamsize mTotalWritten;
+    char mOutbuf[bufsize], mInbuf[bufsize];
 };
 
 #endif // FDBUF_H

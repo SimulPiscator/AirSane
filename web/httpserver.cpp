@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -99,10 +99,14 @@ std::string urldecode(const std::string& s)
     std::string r;
     for(size_t i = 0; i < s.size(); ++i) {
         if(s[i] == '%') {
-            if(i + 1 < s.size() && s[i+1] == '%')
-                r += '%', i += 1;
-            else if(i + 2 < s.size())
-                r += hexdecode(s.substr(i+1, 2)), i += 2;
+            if(i + 1 < s.size() && s[i+1] == '%') {
+                r += '%';
+                i += 1;
+            }
+            else if(i + 2 < s.size()) {
+                r += hexdecode(s.substr(i+1, 2));
+                i += 2;
+            }
         }
         else if(s[i] == '+') {
             r += ' ';
@@ -185,9 +189,12 @@ struct HttpServer::Private
     std::atomic<int> mPipeWriteFd;
 
     Private(HttpServer* instance)
-        : mInstance(instance), mPort(0),
-          mBacklog(SOMAXCONN), mInterfaceIndex(invalidInterface),
-          mTerminationStatus(0), mLastError(0), mRunning(false),
+        : mInstance(instance),
+          mTerminationStatus(0), mLastError(0),
+          mPort(0),
+          mInterfaceIndex(invalidInterface),
+          mBacklog(SOMAXCONN),
+          mRunning(false),
           mPipeWriteFd(-1)
     {
     }
@@ -398,8 +405,8 @@ HttpServer &HttpServer::setInterfaceName(const std::string &s)
         p->mInterfaceName = "*";
         p->mInterfaceIndex = anyInterface;
     } else {
-        int i = ::if_nametoindex(s.c_str());
-        if(i < 0) {
+        unsigned int i = ::if_nametoindex(s.c_str());
+        if(i == 0) {
             p->mInterfaceName = "<invalid>";
             p->mInterfaceIndex = invalidInterface;
         } else {
@@ -415,9 +422,15 @@ HttpServer &HttpServer::setInterfaceIndex(int i)
     if(i == anyInterface) {
         p->mInterfaceName = "*";
         p->mInterfaceIndex = anyInterface;
-    } else {
+    }
+    else if(i == invalidInterface) {
+        p->mInterfaceName = "<invalid>";
+        p->mInterfaceIndex = invalidInterface;
+    }
+    else {
+        unsigned int idx = i;
         char buf[IF_NAMESIZE] = { 0 };
-        if(!::if_indextoname(i, buf)) {
+        if(!::if_indextoname(idx, buf)) {
             p->mInterfaceName = buf;
             p->mInterfaceIndex = i;
         }
@@ -506,7 +519,7 @@ struct HttpServer::Response::Chunkstream : std::ostream
 };
 
 HttpServer::Response::Response(std::ostream &os)
-    : mStream(os), mStatus(HTTP_OK), mSent(false), mContentBegin(0), mpChunkstream(nullptr)
+    : mStream(os), mSent(false), mContentBegin(0), mStatus(HTTP_OK), mpChunkstream(nullptr)
 {
 }
 

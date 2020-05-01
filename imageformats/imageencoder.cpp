@@ -19,6 +19,89 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "imageencoder.h"
 #include <stdexcept>
 
+ImageEncoder::ImageEncoder()
+    : mWidth(0), mHeight(0), mComponents(0), mBitDepth(0),
+    mDpi(0), mBytesPerLine(0), mCurrentLine(0),
+    mColorspace(Unknown), mpDestination(nullptr)
+{}
+
+ImageEncoder &ImageEncoder::setWidth(int w)
+{
+    mWidth = w;
+    onParamChange();
+    return *this;
+}
+
+int ImageEncoder::width() const
+{
+    return mWidth;
+}
+
+ImageEncoder &ImageEncoder::setHeight(int h)
+{
+    mHeight = h;
+    onParamChange();
+    return *this;
+}
+
+int ImageEncoder::height() const
+{
+    return mHeight;
+}
+
+ImageEncoder &ImageEncoder::setBitDepth(int b)
+{
+    mBitDepth = b;
+    onParamChange();
+    return *this;
+}
+
+int ImageEncoder::bitDepth() const
+{
+    return mBitDepth;
+}
+
+ImageEncoder &ImageEncoder::setResolutionDpi(int dpi)
+{
+    mDpi = dpi;
+    onParamChange();
+    return *this;
+}
+
+int ImageEncoder::resolutionDpi() const
+{
+    return mDpi;
+}
+
+ImageEncoder &ImageEncoder::setColorspace(ImageEncoder::Colorspace cs)
+{
+    mColorspace = cs;
+    onParamChange();
+    return *this;
+}
+
+ImageEncoder::Colorspace ImageEncoder::colorspace() const
+{
+    return mColorspace;
+}
+
+int ImageEncoder::components() const
+{
+    return mComponents;
+}
+
+ImageEncoder &ImageEncoder::setDestination(std::ostream *p)
+{
+    mpDestination = p;
+    onParamChange();
+    return *this;
+}
+
+std::ostream *ImageEncoder::destination() const
+{
+    return mpDestination;
+}
+
 ImageEncoder &ImageEncoder::writeLine(const void * p)
 {
     if(mCurrentLine == 0 && mpDestination)
@@ -30,6 +113,21 @@ ImageEncoder &ImageEncoder::writeLine(const void * p)
     if(mCurrentLine == 0 && mpDestination)
         onImageEnd();
     return *this;
+}
+
+int ImageEncoder::bytesPerLine()
+{
+    return mBytesPerLine;
+}
+
+int ImageEncoder::linesLeftInCurrentImage() const
+{
+    return mHeight - mCurrentLine;
+}
+
+int ImageEncoder::encodedSize() const
+{
+    return onEncodedSize();
 }
 
 void ImageEncoder::onParamChange()
@@ -46,5 +144,5 @@ void ImageEncoder::onParamChange()
     default:
         mComponents = 1;
     }
-    mBytesPerLine = (mComponents*mWidth*mBitDepth)/8;
+    mBytesPerLine = (mComponents * mWidth * mBitDepth) / 8;
 }

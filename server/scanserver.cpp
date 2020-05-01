@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ namespace {
     struct Notifier : HotplugNotifier
     {
         ScanServer& server;
-        Notifier(ScanServer& s) : server(s) {}
+        explicit Notifier(ScanServer& s) : server(s) {}
         void onHotplugEvent(Event ev) override
         {
             switch(ev) {
@@ -49,6 +49,8 @@ namespace {
                 std::clog << "hotplug event, reloading configuration" << std::endl;
                 server.terminate(SIGHUP);
                 break;
+            case other:
+                break;
             }
         }
     };
@@ -56,7 +58,7 @@ namespace {
 
 
 ScanServer::ScanServer(int argc, char** argv)
-    : mDoRun(true), mHotplug(true), mAnnounce(true), mLocalonly(true)
+    : mAnnounce(true), mLocalonly(true), mHotplug(true), mDoRun(true)
 {
     std::string port, interface, accesslog, hotplug, announce,
         localonly, optionsfile, debug;
@@ -163,7 +165,7 @@ bool ScanServer::run()
                 pService->setTxt("txtvers", "1");
                 pService->setTxt("vers", "2.0");
                 std::string s;
-                for(const auto f : pScanner->documentFormats())
+                for(const auto& f : pScanner->documentFormats())
                     s += "," + f;
                 if(!s.empty())
                   pService->setTxt("pdl", s.substr(1));
@@ -171,7 +173,7 @@ bool ScanServer::run()
                 pService->setTxt("uuid", pScanner->uuid());
                 pService->setTxt("rs", pScanner->uri().substr(1));
                 s.clear();
-                for(const auto cs : pScanner->colorSpaces())
+                for(const auto& cs : pScanner->colorSpaces())
                     s += "," + cs;
                 if(!s.empty())
                   pService->setTxt("cs", s.substr(1));
@@ -199,7 +201,8 @@ bool ScanServer::run()
             std::clog << "received SIGTERM, exiting" << std::endl;
             done = true;
         } else {
-            ok = false, done = true;
+            ok = false;
+            done = true;
         }
     } while(!done);
     if(ok) {

@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,33 +23,39 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class ImageEncoder
 {
+    ImageEncoder(const ImageEncoder&) = delete;
+    ImageEncoder& operator=(const ImageEncoder&) = delete;
+
 public:
-    ImageEncoder() : mWidth(0), mHeight(0), mComponents(0), mBitDepth(0), mDpi(0),
-        mBytesPerLine(0), mColorspace(Unknown), mpDestination(nullptr), mCurrentLine(0)
-    {}
+    ImageEncoder();
     virtual ~ImageEncoder() {}
 
-    ImageEncoder& setWidth(int w) { mWidth = w; onParamChange(); return *this; }
-    int width() const { return mWidth; }
-    ImageEncoder& setHeight(int h) { mHeight = h; onParamChange(); return *this; }
-    int height() const { return mHeight; }
-    ImageEncoder& setBitDepth(int b) { mBitDepth = b; onParamChange(); return *this; }
-    int bitDepth() const { return mBitDepth; }
-    ImageEncoder& setResolutionDpi(int dpi) { mDpi = dpi; onParamChange(); return *this; }
-    int resolutionDpi() const { return mDpi; }
-    enum Colorspace { Unknown, Grayscale, RGB };
-    ImageEncoder& setColorspace(Colorspace cs) { mColorspace = cs; onParamChange(); return *this; }
-    Colorspace colorspace() const { return mColorspace; }
-    int components() const { return mComponents; }
+    ImageEncoder& setWidth(int w);
+    int width() const;
 
-    ImageEncoder& setDestination(std::ostream* p) { mpDestination = p; onParamChange(); return *this; }
-    std::ostream* destination() const { return mpDestination; }
+    ImageEncoder& setHeight(int h);
+    int height() const;
+
+    ImageEncoder& setBitDepth(int b);
+    int bitDepth() const;
+
+    ImageEncoder& setResolutionDpi(int dpi);
+    int resolutionDpi() const;
+
+    enum Colorspace { Unknown, Grayscale, RGB };
+    ImageEncoder& setColorspace(Colorspace cs);
+    Colorspace colorspace() const;
+
+    int components() const;
+
+    ImageEncoder& setDestination(std::ostream* p);
+    std::ostream* destination() const;
 
     ImageEncoder& writeLine(const void*);
-    int bytesPerLine() { return mBytesPerLine; }
-    int linesLeftInCurrentImage() const { return mHeight - mCurrentLine; }
+    int bytesPerLine();
+    int linesLeftInCurrentImage() const;
 
-    int encodedSize() const { return onEncodedSize(); }
+    int encodedSize() const;
 
 protected:
     virtual int onEncodedSize() const { return -1; }
@@ -60,7 +66,8 @@ protected:
     void onParamChange();
 
 private:
-    int mHeight, mWidth, mComponents, mBitDepth, mDpi, mBytesPerLine, mCurrentLine;
+    int mWidth, mHeight, mComponents, mBitDepth, mDpi;
+    int mBytesPerLine, mCurrentLine;
     Colorspace mColorspace;
     std::ostream* mpDestination;
 };
