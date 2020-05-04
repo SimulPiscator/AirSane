@@ -26,14 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "scanner.h"
 #include "scanjob.h"
+#include "mainpage.h"
 #include "scannerpage.h"
 #include "optionsfile.h"
 #include "zeroconf/hotplugnotifier.h"
-
-extern const char* GIT_COMMIT_HASH;
-extern const char* GIT_BRANCH;
-extern const char* GIT_REVISION_NUMBER;
-extern const char* BUILD_TIME_STAMP;
 
 namespace {
 
@@ -216,54 +212,12 @@ bool ScanServer::run()
     return ok;
 }
 
-namespace {
-struct Homepage : WebPage
-{
-    const ScannerList& mScanners;
-    Homepage(const ScannerList& scanners) : mScanners(scanners) {}
-    void onRender() override {
-        out() << heading(1).addText(title()) << std::endl;
-        out() << heading(2).addText("Scanners");
-        if(mScanners.empty()) {
-            out() << paragraph().addText("No scanners available");
-        } else {
-            list scannersList;
-            for(const auto& s : mScanners) {
-                auto name = s.second ? s.second->name() : s.first->makeAndModel();
-                scannersList.addItem(anchor(s.first->uri()).addText(name));
-                scannersList.addContent("\n");
-            }
-            out() << scannersList << std::endl;
-        }
-        out() << heading(2).addText("Build");
-        list version;
-        version.addItem(paragraph().addText(
-          std::string("date: ") + BUILD_TIME_STAMP
-        ));
-        version.addContent("\n");
-        version.addItem(paragraph().addText(
-          std::string("commit: ") + GIT_COMMIT_HASH
-          + " (branch " + GIT_BRANCH
-          + ", revision " + GIT_REVISION_NUMBER + ")"
-        ));
-        version.addContent("\n");
-        out() << version << std::endl;
-
-        out() << heading(2).addText("Server Maintenance");
-        list maintenance;
-        maintenance.addItem(anchor("/reset").addText("Reset"));
-        maintenance.addContent("\n");
-        out() << maintenance << std::endl;
-    }
-};
-}
-
 void ScanServer::onRequest(const Request& request, Response& response)
 {
     if(request.uri() == "/") {
         response.setStatus(HttpServer::HTTP_OK);
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
-        Homepage(mScanners)
+        MainPage(mScanners)
                 .setTitle("AirSane Server on " + hostname())
                 .render(request, response);
     }

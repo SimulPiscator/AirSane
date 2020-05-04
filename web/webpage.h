@@ -30,12 +30,16 @@ class WebPage
 public:
     WebPage();
     virtual ~WebPage() {}
+
     WebPage& setTitle(const std::string& s) { mTitle = s; return *this; }
     const std::string& title() const { return mTitle; }
-    WebPage& clearStyle();
+
     WebPage& addStyle(const std::string&);
     const std::string& style() const { return mStyle; }
+    WebPage& clearStyle();
+
     WebPage& render(const HttpServer::Request&, HttpServer::Response&);
+
     static std::string htmlEscape(const std::string&);
     static std::string numtostr(double);
 
@@ -90,6 +94,8 @@ public:
         formField& setLabel(const std::string& s) { mLabel = s; return *this; }
         std::string toString() const override;
         std::string labelHtml() const;
+
+    private:
         std::string mLabel;
     };
     struct formInput : formField
@@ -103,6 +109,7 @@ public:
         formSelect& addOptions(const Dictionary&);
         formSelect& addOptions(const std::vector<std::string>&);
         std::string toString() const override;
+    private:
         Dictionary mOptions;
     };
 

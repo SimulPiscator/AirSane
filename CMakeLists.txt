@@ -25,6 +25,7 @@ add_executable(${PROJECT_NAME}
     server/main.cpp
     server/optionsfile.cpp
     server/scanserver.cpp
+    server/mainpage.cpp
     server/scanner.cpp
     server/scanjob.cpp
     server/scannerpage.cpp

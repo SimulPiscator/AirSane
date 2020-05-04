@@ -1,6 +1,6 @@
 /*
 AirSane Imaging Daemon
-Copyright (C) 2018 Simul Piscator
+Copyright (C) 2018-2020 Simul Piscator
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,10 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace {
 
+// locale-independent number/string conversion
+std::locale clocale("C");
+
 std::string numtostr(double num)
 {
     std::ostringstream oss;
-    oss.imbue(std::locale("C"));
+    oss.imbue(clocale);
     oss << num;
     return oss.str();
 }
@@ -35,7 +38,7 @@ std::string numtostr(double num)
 double strtonum(const std::string& s)
 {
     std::istringstream iss(s);
-    iss.imbue(std::locale("C"));
+    iss.imbue(clocale);
     double num = std::numeric_limits<double>::quiet_NaN();
     iss >> num;
     return num;
@@ -45,12 +48,18 @@ const std::string emptystring;
 
 Dictionary::Storage::iterator find(Dictionary::Storage& s, const std::string& key)
 {
-  return std::find_if(s.begin(), s.end(), [key](const Dictionary::Storage::value_type& v){ return v.first == key; });
+    return std::find_if(s.begin(), s.end(),
+        [key](const Dictionary::Storage::value_type& v)
+        { return v.first == key; }
+    );
 }
 
 Dictionary::Storage::const_iterator find(const Dictionary::Storage& s, const std::string& key)
 {
-  return std::find_if(s.begin(), s.end(), [key](const Dictionary::Storage::value_type& v){ return v.first == key; });
+    return std::find_if(s.begin(), s.end(),
+        [key](const Dictionary::Storage::value_type& v)
+        { return v.first == key; }
+    );
 }
 
 }

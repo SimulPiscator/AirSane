@@ -86,6 +86,7 @@ public:
         const std::istream& stream() const { return mStream; }
         std::string& logInfo() { return mLogInfo; }
         std::ostream& print(std::ostream&) const;
+
     private:
         std::istream& mStream;
         bool mValid;
@@ -110,6 +111,7 @@ public:
         bool sent() const { return mSent; }
         std::streampos contentBegin() const { return mContentBegin; }
         std::ostream& print(std::ostream&) const;
+
     private:
         std::ostream& sendHeaders();
         std::ostream& mStream;

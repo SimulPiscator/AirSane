@@ -37,7 +37,6 @@ public:
     const char* data() const;
 
 private:
-    char mData[16];
     void initFromString(const std::string&);
     static const std::string& makeString(const std::string& s) { return s; }
     template<typename T> static std::string makeString(const T& t)
@@ -45,6 +44,7 @@ private:
     template<typename T, typename... Args> static std::string makeString(const T& t, Args... args)
         { return makeString(t) + makeString(args...); }
 
+    char mData[16];
 };
 
 #endif // UUID_H
