@@ -114,6 +114,11 @@ WebPage::list &WebPage::list::addItem(const std::string &s)
     return *this;
 }
 
+WebPage::list &WebPage::list::addItem(const WebPage::element& el)
+{
+    return addItem(el.toString());
+}
+
 WebPage::formSelect &WebPage::formSelect::addOption(const std::string &value, const std::string &text)
 {
     mOptions[value] = text.empty() ? value : text;

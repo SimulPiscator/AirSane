@@ -21,12 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class HotplugNotifier
 {
+    HotplugNotifier(const HotplugNotifier&) = delete;
+    HotplugNotifier& operator=(const HotplugNotifier&) = delete;
+
 public:
     HotplugNotifier();
     virtual ~HotplugNotifier();
-
-    HotplugNotifier(const HotplugNotifier&) = delete;
-    HotplugNotifier& operator=(const HotplugNotifier&) = delete;
 
 protected:
     enum Event { other, deviceArrived, deviceLeft };

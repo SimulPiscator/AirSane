@@ -62,7 +62,7 @@ std::ostream &Uuid::print(std::ostream &os) const
     return os;
 }
 
-Uuid::operator std::string() const
+std::string Uuid::toString() const
 {
     std::ostringstream oss;
     print(oss);

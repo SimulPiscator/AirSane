@@ -25,11 +25,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class MdnsPublisher
 {
+    MdnsPublisher(const MdnsPublisher&) = delete;
+    MdnsPublisher& operator=(const MdnsPublisher&) = delete;
+
+public:
+    MdnsPublisher();
+    ~MdnsPublisher();
+
+    class Service;
+    bool announce(Service*);
+    bool unannounce(Service*);
+
 public:
     class Service
     {
     public:
-        Service(MdnsPublisher* p) : mpPublisher(p), mPort(0), mIfIndex(-1) {}
+        explicit Service(MdnsPublisher* p) : mpPublisher(p), mPort(0), mIfIndex(-1) {}
         ~Service() { unannounce(); }
 
         typedef std::vector<std::pair<std::string, std::string>> TxtRecord;
@@ -59,11 +70,6 @@ public:
         TxtRecord mTxtRecord;
         mutable std::mutex mNameMutex;
     };
-
-    MdnsPublisher();
-    ~MdnsPublisher();
-    bool announce(Service*);
-    bool unannounce(Service*);
 
 private:
     struct Private;

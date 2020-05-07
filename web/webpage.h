@@ -27,6 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class WebPage
 {
+    WebPage(const WebPage&) = delete;
+    WebPage& operator=(const WebPage&) = delete;
+
 public:
     WebPage();
     virtual ~WebPage() {}
@@ -46,7 +49,7 @@ public:
     class element
     {
     public:
-        element(const std::string& tag) : mTag(tag) {}
+        explicit element(const std::string& tag) : mTag(tag) {}
         virtual ~element() {}
         element& addText(const std::string& s) { return addContent(htmlEscape(s)); }
         element& addText(double d) { return addText(numtostr(d)); }
@@ -56,7 +59,6 @@ public:
 
         const Dictionary& attributes() const { return mAttributes; }
 
-        operator std::string() const { return toString(); }
         virtual std::string toString() const;
 
     private:
@@ -70,7 +72,7 @@ public:
     };
     struct heading : element
     {
-        heading(int level) : element("h" + numtostr(level)) {}
+        explicit heading(int level) : element("h" + numtostr(level)) {}
     };
     struct paragraph : element
     {
@@ -81,14 +83,15 @@ public:
     {
         list() : element("ul") {}
         list& addItem(const std::string&);
+        list& addItem(const element&);
     };
     struct anchor : element
     {
-        anchor(const std::string& href = "") : element("a") { setAttribute("href", href); }
+        explicit anchor(const std::string& href = "") : element("a") { setAttribute("href", href); }
     };
     struct formField : element
     {
-        formField(const std::string& tag) : element(tag) {}
+        explicit formField(const std::string& tag) : element(tag) {}
         formField& setName(const std::string& s) { setAttribute("name", s); return *this; }
         formField& setValue(const std::string& s) { setAttribute("value", s); return *this; }
         formField& setLabel(const std::string& s) { mLabel = s; return *this; }
@@ -100,7 +103,7 @@ public:
     };
     struct formInput : formField
     {
-        formInput(const std::string& type) : formField("input") { setAttribute("type", type); }
+        explicit formInput(const std::string& type) : formField("input") { setAttribute("type", type); }
     };
     struct formSelect : formField
     {
@@ -127,6 +130,6 @@ private:
 };
 
 inline std::ostream& operator<<(std::ostream& os, const WebPage::element& el)
-{ return os << el.operator std::string(); }
+{ return os << el.toString(); }
 
 #endif // WEBPAGE_H

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class fdbuf : public std::streambuf
 {
 public:
-    fdbuf(int fd, int putback = 1);
+    explicit fdbuf(int fd, int putback = 1);
     ~fdbuf();
     int_type overflow(int_type c) override;
     int_type sync() override;

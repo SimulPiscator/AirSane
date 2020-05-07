@@ -244,7 +244,7 @@ void PdfEncoder::onImageEnd()
         << pdfunits_per_px * height() << " 0 0 cm\n"
         << "/strip0 Do\n";
     std::string pagedef = oss.str();
-    std::string fileid = Uuid(p->mInfoString, ::time(nullptr));
+    std::string fileid = Uuid(p->mInfoString, ::time(nullptr)).toString();
     for(size_t pos = fileid.find('-'); pos < fileid.length(); pos = fileid.find('-'))
         fileid = fileid.substr(0, pos) + fileid.substr(pos + 1);
 

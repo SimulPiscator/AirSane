@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class MainPage : public WebPage
 {
 public:
-    MainPage(const ScannerList&);
+    explicit MainPage(const ScannerList&);
 
 protected:
     void onRender() override;

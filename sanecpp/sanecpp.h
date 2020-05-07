@@ -105,11 +105,12 @@ private:
 
 class option_set
 {
-public:
-    option_set();
-    option_set(device_handle);
     option_set(const option_set&) = delete;
     option_set& operator=(const option_set&) = delete;
+
+public:
+    option_set();
+    explicit option_set(device_handle);
 
     void init(device_handle);
     void reload();
@@ -155,6 +156,7 @@ public:
 
 private:
     void init();
+
     device_handle m_device;
     option_set m_options;
     SANE_Status m_status;

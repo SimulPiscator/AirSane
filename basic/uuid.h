@@ -26,11 +26,10 @@ class Uuid
 {
 public:
     Uuid();
-    Uuid(const std::string& s) { initFromString(s); }
-    template<typename... Args> Uuid(Args... args) { initFromString(makeString(args...)); }
+    template<typename... Args> explicit Uuid(Args... args) { initFromString(makeString(args...)); }
 
     std::ostream& print(std::ostream&) const;
-    operator std::string() const;
+    std::string toString() const;
 
     size_t size() const;
     char* data();
@@ -38,7 +37,7 @@ public:
 
 private:
     void initFromString(const std::string&);
-    static const std::string& makeString(const std::string& s) { return s; }
+    static std::string makeString(const std::string& s) { return s; }
     template<typename T> static std::string makeString(const T& t)
         { std::ostringstream oss; oss << t; return oss.str(); }
     template<typename T, typename... Args> static std::string makeString(const T& t, Args... args)
@@ -46,5 +45,10 @@ private:
 
     char mData[16];
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Uuid& uuid)
+{
+    return uuid.print(os);
+}
 
 #endif // UUID_H

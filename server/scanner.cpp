@@ -292,7 +292,7 @@ std::shared_ptr<ScanJob> Scanner::Private::createJob()
     std::lock_guard<std::mutex> lock(mJobsMutex);
     std::string jobUuid;
     do {
-        jobUuid = Uuid(mUuid, ::time(nullptr), ::rand());
+        jobUuid = Uuid(mUuid, ::time(nullptr), ::rand()).toString();
     } while(mJobs.find(jobUuid) != mJobs.end());
     auto job = std::make_shared<ScanJob>(p, jobUuid);
     mJobs[jobUuid] = job;
@@ -335,7 +335,7 @@ const char* Scanner::Private::init(const sanecpp::device_info& info)
 {
     mMakeAndModel = info.vendor + " " + info.model;
     mSaneName = info.name;
-    mUuid = Uuid(mMakeAndModel, mSaneName);
+    mUuid = Uuid(mMakeAndModel, mSaneName).toString();
     mUri = "/" + mUuid;
 
     auto device = sanecpp::open(info);

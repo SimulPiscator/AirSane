@@ -30,7 +30,7 @@ class OptionsFile
     OptionsFile& operator=(const OptionsFile&) = delete;
 
 public:
-    OptionsFile(const std::string& fileName);
+    explicit OptionsFile(const std::string& fileName);
     ~OptionsFile();
 
     typedef std::vector<std::pair<std::string, std::string>> Options;

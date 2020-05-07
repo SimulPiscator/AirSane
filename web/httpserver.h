@@ -72,7 +72,7 @@ public:
     class Request
     {
     public:
-        Request(std::istream&);
+        explicit Request(std::istream&);
         bool isValid() const { return mValid; }
         const std::string& uri() const { return mUri; }
         const std::string& method() const { return mMethod; }
@@ -99,7 +99,7 @@ public:
     class Response
     {
     public:
-        Response(std::ostream&);
+        explicit Response(std::ostream&);
         ~Response();
         Response& setStatus(int status) { mStatus = status; return *this; }
         int status() const { return mStatus; }
