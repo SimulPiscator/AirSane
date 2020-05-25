@@ -30,6 +30,12 @@ When opening Apple Image Capture or similar applications, scanners exported
 by AirSane should be immediately available.
 In 'Printers and Scanners', exported scanners will be listed with a type of 
 'Bonjour Scanner'.
+### Mopria client on Android (broken)
+Until version 1.2.8 of the Mopria client, AirSane scanners would be detected and 
+were available to scan. Since version 1.2.8, AirSane scanners are no longer
+displayed. 
+With the current version 1.3.4, it is no longer possible to manually enter
+the URL of an AirSane scanner.
 
 ## Build for OpenWRT
 
