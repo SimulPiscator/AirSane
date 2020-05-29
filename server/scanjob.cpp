@@ -71,6 +71,9 @@ struct ScanSettingsXml
 struct ScanJob::Private
 {
     void init(const ScanSettingsXml&, bool autoselectFormat);
+    void applyDeviceOptions(const OptionsFile::Options&);
+    void initGammaTable(const std::string& gamma);
+    void applyGamma(std::vector<char>&);
     const char* statusString() const;
     bool atomicTransition(State from, State to);
     void updateStatus(SANE_Status);
@@ -92,11 +95,14 @@ struct ScanJob::Private
 
     std::string mScanSource, mIntent, mDocumentFormat, mColorMode;
     int mBitDepth, mRes_dpi;
+    bool mColorScan;
     double mLeft_px, mTop_px, mWidth_px, mHeight_px;
 
     int mImagesToTransfer, mImagesCompleted;
     std::shared_ptr<sanecpp::session> mpSession;
 
+    OptionsFile::Options mDeviceOptions;
+    std::vector<uint16_t> mGammaTable;
 };
 
 ScanJob::ScanJob(Scanner* scanner, const std::string& uuid)
@@ -117,6 +123,12 @@ ScanJob::~ScanJob()
 ScanJob &ScanJob::initWithScanSettingsXml(const std::string &xml, bool autoselect)
 {
     p->init(ScanSettingsXml(xml), autoselect);
+    return *this;
+}
+
+ScanJob &ScanJob::applyDeviceOptions(const OptionsFile::Options& options)
+{
+    p->applyDeviceOptions(options);
     return *this;
 }
 
@@ -196,10 +208,12 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
         auto c = m[1].str();
         if(c == "RGB") {
             mColorMode = mpScanner->colorScanModeName();
+            mColorScan = true;
             mBitDepth = esclBpp/3;
         }
         else if(c == "Grayscale") {
             mColorMode = mpScanner->grayScanModeName();
+            mColorScan = false;
             mBitDepth = esclBpp;
         }
     }
@@ -230,6 +244,58 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
     } else {
         mState = pending;
         mStateReason = PWG_JOB_QUEUED;
+    }
+}
+
+void ScanJob::Private::applyDeviceOptions(const OptionsFile::Options& options)
+{
+    mDeviceOptions.clear();
+    mGammaTable.clear();
+    for(const auto& option : options) {
+        if (option.first == "gray-gamma" || option.first == "grey-gamma") {
+            if (!mColorScan) {
+                std::cerr << "using gray gamma of " << option.second << std::endl;
+                initGammaTable(option.second);
+            }
+        }
+        else if(option.first == "color-gamma") {
+            if (mColorScan) {
+                std::cerr << "using color gamma of " << option.second << std::endl;
+                initGammaTable(option.second);
+            }
+        }
+        else {
+            mDeviceOptions.push_back(option);
+        }
+    }
+}
+
+void ScanJob::Private::initGammaTable(const std::string& gamma)
+{
+    float gammaVal = ::atof(gamma.c_str());
+    mGammaTable.clear();
+    int size = 1L << mBitDepth;
+    float scale = 1.0f / (size - 1), invscale = size - 1;
+    mGammaTable.resize(size);
+    for(int i = 0; i < size; ++i) {
+        float f = i * scale;
+        f = ::pow(f, gammaVal);
+        f *= invscale;
+        f = ::floor(f + 0.5);
+        mGammaTable[i] = f;
+    }
+}
+
+void ScanJob::Private::applyGamma(std::vector<char>& ioData)
+{
+    union { char* c; uint8_t* b; uint16_t* s; } data = { ioData.data() };
+    if(mGammaTable.size() == 1 << 8) {
+        for(int i = 0; i < ioData.size(); ++i)
+            data.b[i] = mGammaTable[data.b[i]];
+    }
+    else if(mGammaTable.size() == 1 << 16) {
+        for(int i = 0; i < ioData.size()/2; ++i)
+            data.s[i] = mGammaTable[data.s[i]];
     }
 }
 
@@ -433,6 +499,7 @@ void ScanJob::Private::finishTransfer(std::ostream &os)
         SANE_Status status = SANE_STATUS_GOOD;
         while(status == SANE_STATUS_GOOD && os && isProcessing()) {
             status = mpSession->read(buffer).status();
+            applyGamma(buffer);
             if(status == SANE_STATUS_GOOD) try {
                 pEncoder->writeLine(buffer.data());
                 if(!os.flush())

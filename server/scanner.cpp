@@ -610,9 +610,6 @@ std::shared_ptr<sanecpp::session> Scanner::open()
 {
     auto session = std::make_shared<sanecpp::session>(p->mSaneName);
     p->mpSession = session;
-    auto& sessionOptions = session->options();
-    for(const auto& option : p->mDeviceOptions)
-        sessionOptions[option.first] = option.second;
     return session;
 }
 
@@ -631,6 +628,7 @@ std::shared_ptr<ScanJob> Scanner::createJobFromScanSettingsXml(const std::string
 {
     auto job = p->createJob();
     job->initWithScanSettingsXml(xml, autoselectFormat);
+    job->applyDeviceOptions(p->mDeviceOptions);
     return job;
 }
 

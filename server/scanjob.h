@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <string>
 
+#include "optionsfile.h"
+
 class Scanner;
 
 class ScanJob
@@ -33,6 +35,7 @@ public:
     ~ScanJob();
 
     ScanJob& initWithScanSettingsXml(const std::string&, bool autoselectFormat = false);
+    ScanJob& applyDeviceOptions(const OptionsFile::Options&);
 
     int ageSeconds() const;
     int imagesToTransfer() const;
