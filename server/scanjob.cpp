@@ -207,10 +207,14 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
         err = PWG_INVALID_SCAN_TICKET;
 
     mIntent = settings.getString("Intent");
+
     mDocumentFormat = settings.getString("DocumentFormat");
+    std::cerr << "document format requested: " << mDocumentFormat << "\n";
     if(autoselectFormat && mDocumentFormat == HttpServer::MIME_TYPE_JPEG
             && (mRes_dpi > 75 && mBitDepth > 8))
         mDocumentFormat = HttpServer::MIME_TYPE_PNG;
+    std::cerr << "document format used: " << mDocumentFormat << "\n";
+
     mImagesToTransfer = 1;
     mImagesCompleted = 0;
 

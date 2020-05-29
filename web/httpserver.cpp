@@ -502,18 +502,26 @@ struct HttpServer::Response::Chunkstream : std::ostream
     struct chunkbuf : std::stringbuf
     {
       std::ostream& mStream;
+      std::streampos mTotalWritten;
       explicit chunkbuf(std::ostream& os) : mStream(os) {}
       ~chunkbuf() { pubsync(); mStream << "0\r\n\r\n" << std::flush; }
       int sync() override {
           std::stringbuf::sync();
           std::string s = str();
           if(!s.empty()) {
+              mTotalWritten += s.length();
               str("");
               mStream << std::noshowbase << std::hex << s.size() << "\r\n";
               mStream.write(s.data(), s.size());
               mStream << "\r\n" << std::flush;
           }
           return !!mStream ? 0 : -1;
+      }
+      std::streampos seekoff(off_type offset, std::ios_base::seekdir dir, std::ios_base::openmode mode) override
+      {
+          if(offset == 0 && dir == std::ios_base::cur && mode == std::ios_base::out)
+              return mTotalWritten + std::stringbuf::seekoff(offset, dir, mode);
+          return -1;
       }
     } mBuf;
 };
