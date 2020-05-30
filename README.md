@@ -104,30 +104,55 @@ button for a preview scan.
 ## Optional configuration
 
 In addition to the options that may be configured through `/etc/default/airsane`, it is possible to configure 
-SANE options to be used when scanning from a certain device. Create a file `/etc/airsane/options.conf`, readable
-by user `saned`, and containing lines that either specify a SANE option and a value, or the word `device` followed
-with a regular expression that will be matched against both a scanner's SANE device name, and its make-and-model string.
-SANE options at the top of the file are applied to all scanners. If a scanner matches multiple `device` lines,
-SANE options from all of these `device` sections will be applied.
+options to be used when scanning from a certain device.
+To specify such options, create a file `/etc/airsane/options.conf`, readable by user `saned`.  
+This file may contain the following kinds of lines:
+* Empty lines, and comment lines starting with #,  
+  will be ignored.
+* Lines beginning with the word `device`, followed with a regular expression,   
+  will begin a device section that applies to all devices with SANE device name or make-and-model string matching 
+  the regular expression.
+* Lines beginning with an option name, and an option value separated by white space,
+  will define an option.  
+  Options at the top of the file are applied to all scanners. If a scanner matches multiple `device` lines,  
+  options from all of these `device` sections will be applied.  
+  Options may be SANE backend options, or AirSane device options (see below).
 
-To display the SANE options supported by a device, use `sudo -u saned scanimage -L` to get its SANE name, and then
-`sudo -u saned scanimage -d <device name> -A` to get a list of options.
+### SANE backend options
+To display the SANE options supported by a device, use `sudo -u saned scanimage -L` to get its SANE name, and
+then `sudo -u saned scanimage -d <device name> -A` to get a list of options.  
+In `options.conf`, SANE options must be given without leading minus signs, and with white space between the 
+option's name and its value. White space is removed from the beginnning and the end of the value.
 
-In `options.conf`, SANE options must be given without leading minus signs, and with white space between the option's name and its value. White space is removed from the beginnning and the end of the value.
+### AirSane device options
+#### gray-gamma
+A gamma value that is applied to grayscale image data before transmission. The gamma value is given as a floating-point value.
+#### color-gamma
+A gamma value that is applied to color image data before transmission, using identical gamma values for all components.
+#### synthesize-gray
+A value of `yes` or `no`. If set to `yes`, AirSane will always request color data from the SANE backend, even if the user
+requests a grayscale scan. In this case, grayscale values will be computed from RGB component data after gamma correction, 
+using weights as suited for sRGB data:  
+`Y = 0.2126 * R + 0.7152 * G + 0.0722 * B`  
+This is useful for backends that do not allow true grayscale scanning or incorrectly return a single color component even if
+true gray is requested.
 
+### Example
 ```
 # Example options.conf file for airsane
-# Set brightness to 10 for all scanners
+# Set SANE brightness to 10 for all scanners
 brightness 10
 
 # Set options for all scanners using the genesys backend
 device genesys:.*
-contrast -10
-swdeskew yes
+synthesize-gray yes
 
 # Set calibration file option for a scanner "Canon LiDE 60"
 device Canon LiDE 60
 calibration-file /home/simul/some path with spaces/canon-lide-60.cal
+# Compensate for OS-side gamma correction with gamma = 1.8 = 1/0.555555
+gray-gamma 0.555555
+color-gamma 0.555555
 ```
 
 
