@@ -267,10 +267,17 @@ void ScanJob::Private::applyDeviceOptions(const OptionsFile::Options& options)
             }
         }
         else if(option.first == "synthesize-gray") {
-            if (!mColorScan && option.second == "yes") {
-                std::cerr << "synthesizing grayscale from RGB" << std::endl;
-                mSynthesizedGray = true;
-                mColorMode = mpScanner->colorScanModeName();
+            if (!mColorScan) {
+                if (option.second == "yes") {
+                    std::cerr << "synthesizing grayscale from RGB" << std::endl;
+                    mSynthesizedGray = true;
+                    mColorMode = mpScanner->colorScanModeName();
+                }
+                else {
+                    std::cerr << "requesting grayscale from backend" << std::endl;
+                    mSynthesizedGray = false;
+                    mColorMode = mpScanner->grayScanModeName();
+                }
             }
         }
         else {
