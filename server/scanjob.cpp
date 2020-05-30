@@ -225,8 +225,7 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
 
     mDocumentFormat = settings.getString("DocumentFormat");
     std::cerr << "document format requested: " << mDocumentFormat << "\n";
-    if(autoselectFormat && mDocumentFormat == HttpServer::MIME_TYPE_JPEG
-            && (mRes_dpi > 75 && mBitDepth > 8))
+    if(autoselectFormat && mDocumentFormat == HttpServer::MIME_TYPE_JPEG)
         mDocumentFormat = HttpServer::MIME_TYPE_PNG;
     std::cerr << "document format used: " << mDocumentFormat << "\n";
 
