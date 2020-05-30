@@ -74,6 +74,7 @@ struct ScanJob::Private
     void applyDeviceOptions(const OptionsFile::Options&);
     void initGammaTable(const std::string& gamma);
     void applyGamma(std::vector<char>&);
+    void synthesizeGray(std::vector<char>&);
     const char* statusString() const;
     bool atomicTransition(State from, State to);
     void updateStatus(SANE_Status);
@@ -95,7 +96,7 @@ struct ScanJob::Private
 
     std::string mScanSource, mIntent, mDocumentFormat, mColorMode;
     int mBitDepth, mRes_dpi;
-    bool mColorScan;
+    bool mColorScan, mSynthesizedGray;
     double mLeft_px, mTop_px, mWidth_px, mHeight_px;
 
     int mImagesToTransfer, mImagesCompleted;
@@ -251,10 +252,11 @@ void ScanJob::Private::applyDeviceOptions(const OptionsFile::Options& options)
 {
     mDeviceOptions.clear();
     mGammaTable.clear();
+    mSynthesizedGray = false;
     for(const auto& option : options) {
-        if (option.first == "gray-gamma" || option.first == "grey-gamma") {
+        if (option.first == "gray-gamma") {
             if (!mColorScan) {
-                std::cerr << "using gray gamma of " << option.second << std::endl;
+                std::cerr << "using grayscale gamma of " << option.second << std::endl;
                 initGammaTable(option.second);
             }
         }
@@ -262,6 +264,13 @@ void ScanJob::Private::applyDeviceOptions(const OptionsFile::Options& options)
             if (mColorScan) {
                 std::cerr << "using color gamma of " << option.second << std::endl;
                 initGammaTable(option.second);
+            }
+        }
+        else if(option.first == "synthesize-gray") {
+            if (!mColorScan && option.second == "yes") {
+                std::cerr << "synthesizing grayscale from RGB" << std::endl;
+                mSynthesizedGray = true;
+                mColorMode = mpScanner->colorScanModeName();
             }
         }
         else {
@@ -296,6 +305,36 @@ void ScanJob::Private::applyGamma(std::vector<char>& ioData)
     else if(mGammaTable.size() == 1 << 16) {
         for(int i = 0; i < ioData.size()/2; ++i)
             data.s[i] = mGammaTable[data.s[i]];
+    }
+}
+
+void ScanJob::Private::synthesizeGray(std::vector<char>& ioData)
+{
+    // sRGB spectral weightings
+    static const float rweight = 0.2126f,
+        gweight = 0.7152f,
+        bweight = 0.0722f;
+    union { char* c; uint8_t* b; uint16_t* s; } in = { ioData.data() },
+      out = in;
+    if(mBitDepth == 8) {
+        while(in.c < ioData.data() + ioData.size()) {
+            float f = rweight * in.b[0] + gweight * in.b[1] + bweight * in.b[2];
+            f += 0.5f;
+            f = std::min(255.0f, f);
+            *out.b = f;
+            in.b += 3;
+            out.b += 1;
+        }
+    }
+    else if(mBitDepth == 16) {
+        while(in.c < ioData.data() + ioData.size()) {
+            float f = rweight * in.s[0] + gweight * in.s[1] + bweight * in.s[2];
+            f += 0.5f;
+            f = std::min(255.0f, f);
+            *out.s = f;
+            in.s += 3;
+            out.s += 1;
+        }
     }
 }
 
@@ -475,16 +514,25 @@ void ScanJob::Private::finishTransfer(std::ostream &os)
     }
     if(isProcessing()) {
         pEncoder->setResolutionDpi(mRes_dpi);
-        if(mColorMode == mpScanner->colorScanModeName())
+        if(mColorScan)
             pEncoder->setColorspace(ImageEncoder::RGB);
-        else if(mColorMode == mpScanner->grayScanModeName())
+        else
             pEncoder->setColorspace(ImageEncoder::Grayscale);
         auto p = mpSession->parameters();
         pEncoder->setWidth(p->pixels_per_line);
         pEncoder->setHeight(p->lines);
         pEncoder->setBitDepth(p->depth);
         pEncoder->setDestination(&os);
-        if(pEncoder->bytesPerLine() != p->bytes_per_line) {
+        if(mSynthesizedGray && pEncoder->bytesPerLine() != p->bytes_per_line/3) {
+            std::cerr << __FILE__ << ", line " << __LINE__
+                      << ": encoder bytesPerLine (" << pEncoder->bytesPerLine()
+                      << ") differs from SANE bytes_per_line/3 ("
+                      << p->bytes_per_line/3 << ")"
+                      << std::endl;
+            mState = aborted;
+            mStateReason = PWG_ERRORS_DETECTED;
+        }
+        else if(!mSynthesizedGray && pEncoder->bytesPerLine() != p->bytes_per_line) {
             std::cerr << __FILE__ << ", line " << __LINE__
                       << ": encoder bytesPerLine (" << pEncoder->bytesPerLine()
                       << ") differs from SANE bytes_per_line ("
@@ -500,6 +548,8 @@ void ScanJob::Private::finishTransfer(std::ostream &os)
         while(status == SANE_STATUS_GOOD && os && isProcessing()) {
             status = mpSession->read(buffer).status();
             applyGamma(buffer);
+            if(mSynthesizedGray)
+                synthesizeGray(buffer);
             if(status == SANE_STATUS_GOOD) try {
                 pEncoder->writeLine(buffer.data());
                 if(!os.flush())
