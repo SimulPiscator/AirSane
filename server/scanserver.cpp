@@ -169,7 +169,7 @@ bool ScanServer::run()
                 pService->setTxt("uuid", pScanner->uuid());
                 pService->setTxt("rs", pScanner->uri().substr(1));
                 s.clear();
-                for(const auto& cs : pScanner->colorSpaces())
+                for(const auto& cs : pScanner->txtColorSpaces())
                     s += "," + cs;
                 if(!s.empty())
                   pService->setTxt("cs", s.substr(1));

@@ -46,7 +46,7 @@ public:
     const std::string& saneName() const;
 
     const std::vector<std::string>& documentFormats() const;
-    const std::vector<std::string>& colorSpaces() const;
+    const std::vector<std::string>& txtColorSpaces() const;
     const std::vector<std::string>& colorModes() const;
     const std::vector<std::string>& supportedIntents() const;
     const std::vector<std::string>& inputSources() const;

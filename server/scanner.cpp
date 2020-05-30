@@ -170,7 +170,7 @@ struct Scanner::Private
     int mMinResDpi, mMaxResDpi, mResStepDpi;
     double mMaxWidthPx300dpi, mMaxHeightPx300dpi;
     std::vector<double> mDiscreteResolutions;
-    std::vector<std::string> mDocumentFormats, mColorSpaces,
+    std::vector<std::string> mDocumentFormats, mTxtColorSpaces,
         mColorModes, mSupportedIntents, mInputSources;
     struct InputSource
     {
@@ -245,14 +245,13 @@ void Scanner::Private::writeSettingProfile(int bits, std::ostream& os) const
     os <<
     "<scan:SettingProfile name='" << mCurrentProfile++ << "'>\r\n"
     "<scan:ColorModes>\r\n";
-    for(const auto& cs : mColorSpaces)
+    for(const auto& cs : mTxtColorSpaces)
         for(int i = 8; i <= bits; i += 8)
             os << "<scan:ColorMode>" << colorMode(cs, i) << "</scan:ColorMode>\r\n";
     os <<
     "</scan:ColorModes>\r\n"
     "<scan:ColorSpaces>\r\n";
-    for(const auto& cs : mColorSpaces)
-        os << "<scan:ColorSpace>" << cs << "</scan:ColorSpace>\r\n";
+    os << "<scan:ColorSpace>" << "sRGB" << "</scan:ColorSpace>\r\n";
     os <<
     "</scan:ColorSpaces>\r\n"
     "<scan:SupportedResolutions>\r\n";
@@ -376,11 +375,11 @@ const char* Scanner::Private::init(const sanecpp::device_info& info)
         mGrayScanModeName = "Gray"; // make sure we have at least one scan mode
     }
     if(!mGrayScanModeName.empty()) {
-        mColorSpaces.push_back("grayscale");
+        mTxtColorSpaces.push_back("grayscale");
         mColorModes.push_back("Grayscale8");
     }
     if(!mColorScanModeName.empty()) {
-        mColorSpaces.push_back("color");
+        mTxtColorSpaces.push_back("color");
         mColorModes.push_back("RGB24");
     }
 
@@ -526,9 +525,9 @@ const std::vector<std::string> &Scanner::documentFormats() const
     return p->mDocumentFormats;
 }
 
-const std::vector<std::string> &Scanner::colorSpaces() const
+const std::vector<std::string> &Scanner::txtColorSpaces() const
 {
-    return p->mColorSpaces;
+    return p->mTxtColorSpaces;
 }
 
 const std::vector<std::string> &Scanner::colorModes() const
