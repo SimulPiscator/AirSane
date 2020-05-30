@@ -104,8 +104,9 @@ button for a preview scan.
 ## Optional configuration
 
 In addition to the options that may be configured through `/etc/default/airsane`, it is possible to configure 
-options to be used when scanning from a certain device. To specify options, create a file `/etc/airsane/options.conf`,
-readable by user `saned`. This file may contain the following kinds of lines:
+options to be used when scanning from a certain device.
+To specify such options, create a file `/etc/airsane/options.conf`, readable by user `saned`.  
+This file may contain the following kinds of lines:
 * Empty lines, and comment lines starting with #,  
   will be ignored.
 * Lines beginning with the word `device`, followed with a regular expression,   
