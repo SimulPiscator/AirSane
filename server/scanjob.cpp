@@ -46,7 +46,10 @@ namespace {
 
 struct ScanSettingsXml
 {
-    ScanSettingsXml(const std::string& s) : xml(s) {}
+    ScanSettingsXml(const std::string& s) : xml(s)
+    {
+        std::cerr << s << std::endl;
+    }
 
     std::string getString(const std::string& name) const
     {   // scan settings xml is simple enough to avoid using a parser
@@ -499,6 +502,7 @@ void ScanJob::Private::finishTransfer(std::ostream &os)
     if(isProcessing()) {
         if(mDocumentFormat == HttpServer::MIME_TYPE_JPEG) {
             auto jpegEncoder = new JpegEncoder;
+            jpegEncoder->setGamma(1.0);
             jpegEncoder->setQualityPercent(90);
             pEncoder.reset(jpegEncoder);
         }

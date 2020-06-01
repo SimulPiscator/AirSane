@@ -251,7 +251,7 @@ void Scanner::Private::writeSettingProfile(int bits, std::ostream& os) const
     os <<
     "</scan:ColorModes>\r\n"
     "<scan:ColorSpaces>\r\n";
-    os << "<scan:ColorSpace>" << "sRGB" << "</scan:ColorSpace>\r\n";
+    os << "<scan:ColorSpace>" << "RGB" << "</scan:ColorSpace>\r\n";
     os <<
     "</scan:ColorSpaces>\r\n"
     "<scan:SupportedResolutions>\r\n";

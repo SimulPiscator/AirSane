@@ -99,10 +99,6 @@ void PngEncoder::onImageBegin()
        width(), height(), bitDepth(), colorType,
        PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE
     );
-    ::png_set_sRGB(
-       p->mpPng, p->mpInfo,
-       PNG_sRGB_INTENT_PERCEPTUAL
-    );
     uint32_t px_per_m = resolutionDpi()*10000/254;
     ::png_set_pHYs(
        p->mpPng, p->mpInfo,
