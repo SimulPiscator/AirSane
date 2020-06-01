@@ -143,6 +143,10 @@ true gray is requested.
 # Set SANE brightness to 10 for all scanners
 brightness 10
 
+# Compensate for OS-side gamma correction with gamma = 1.8 = 1/0.555555
+gray-gamma 0.555555
+color-gamma 0.555555
+
 # Set options for all scanners using the genesys backend
 device genesys:.*
 synthesize-gray yes
@@ -150,11 +154,24 @@ synthesize-gray yes
 # Set calibration file option for a scanner "Canon LiDE 60"
 device Canon LiDE 60
 calibration-file /home/simul/some path with spaces/canon-lide-60.cal
-# Compensate for OS-side gamma correction with gamma = 1.8 = 1/0.555555
-gray-gamma 0.555555
-color-gamma 0.555555
 ```
 
+## Color Management (Gamma Correction)
+
+Although not stated explicitly, it seems that SANE backends try to perform color and gamma correction such as
+to return image data in a linear color space.
+
+When receiving scan data from an AirScan scanner, macOS seems to ignore all color space related information from the
+transmitted image files, and interprets color and gray levels according to standard scanner color profiles.
+Using ColorSync Utility, one can see that these color profiles are called `Scanner RGB Profile.icc` and `Scanner Gray Profile.icc`, located at `/System/Library/Frameworks/ICADevices.framework/Resources`.
+Unfortunately, it is not possible to permanently assign a different color profile to an AirScan scanner using ColorSync Utility: The specified color profile is not used, and the profile setting is reverted to the original standard profile.
+
+The macOS standard profiles assume a gamma value of 1.8, which does not match the linear data coming from SANE.
+As a result, scanned images appear darker than the original, with fewer details in darker areas.
+
+Using the gamma options of AirSane, you will be able to neutralize the gamma value of 1.8 in the macOS scanner profile.
+Apply the inverse of 1.8 as a `gray-gamma` and `color-gamma` value in your AirSane configuration file, as shown in the example 
+above.
 
 ## Troubleshoot
 
