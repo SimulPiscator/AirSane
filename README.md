@@ -136,6 +136,8 @@ using weights as suited for sRGB data:
 `Y = 0.2126 * R + 0.7152 * G + 0.0722 * B`  
 This is useful for backends that do not allow true grayscale scanning or incorrectly return a single color component even if
 true gray is requested.
+#### icon
+Full path to a png file that should be used as the scanner's icon. The image should have a size of 256x256 or 128x128 pixels and an alpha channel for transparency.
 
 ### Example
 ```
@@ -151,8 +153,9 @@ color-gamma 0.555555
 device genesys:.*
 synthesize-gray yes
 
-# Set calibration file option for a scanner "Canon LiDE 60"
+# Set icon and calibration file option for a scanner "Canon LiDE 60"
 device Canon LiDE 60
+icon /etc/airsane/CanonLiDE60.png
 calibration-file /home/simul/some path with spaces/canon-lide-60.cal
 ```
 
