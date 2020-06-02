@@ -45,7 +45,7 @@ https://github.com/tbaela/AirSane-openwrt
 ## Build on Debian/Ubuntu/Raspbian
 ```
 sudo apt install libsane-dev libjpeg-dev libpng-dev
-sudo apt install libavahi-client-dev libusb-1.*-dev
+sudo apt install libavahi-client-dev libusb-1.*-dev libmagic-dev
 sudo apt install git cmake g++
 git clone https://github.com/SimulPiscator/AirSane.git
 mkdir AirSane-build && cd AirSane-build
