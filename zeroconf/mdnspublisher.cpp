@@ -140,6 +140,7 @@ struct MdnsPublisher::Private
     AvahiThreadedPoll* mpThread;
     AvahiClient* mpClient;
     AvahiClientState mState;
+    std::string mHostNameFqdn;
 
     std::list<ServiceEntry> mServices;
 
@@ -190,6 +191,7 @@ struct MdnsPublisher::Private
         destroyClient();
         const AvahiPoll* pPoll = ::avahi_threaded_poll_get(mpThread);
         mpClient = ::avahi_client_new(pPoll, AVAHI_CLIENT_NO_FAIL, &clientCallback, this, nullptr);
+        mHostNameFqdn = ::avahi_client_get_host_name_fqdn(mpClient);
     }
 
     void destroyClient()
@@ -200,6 +202,7 @@ struct MdnsPublisher::Private
             ::avahi_client_free(mpClient);
         }
         mpClient = nullptr;
+        mHostNameFqdn.clear();
     }
 
     void onConnected()
@@ -230,6 +233,11 @@ MdnsPublisher::MdnsPublisher()
 MdnsPublisher::~MdnsPublisher()
 {
     delete p;
+}
+
+const std::string& MdnsPublisher::hostNameFqdn() const
+{
+    return p->mHostNameFqdn;
 }
 
 bool MdnsPublisher::announce(MdnsPublisher::Service *pService)
