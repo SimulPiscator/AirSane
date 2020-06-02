@@ -45,6 +45,12 @@ public:
     const std::string& makeAndModel() const;
     const std::string& saneName() const;
 
+    void setAdminUrl(const std::string&);
+    const std::string& adminUrl() const;
+    void setIconUrl(const std::string&);
+    const std::string& iconUrl() const;
+    const std::string& iconFile() const;
+
     const std::vector<std::string>& documentFormats() const;
     const std::vector<std::string>& txtColorSpaces() const;
     const std::vector<std::string>& colorModes() const;
@@ -75,7 +81,7 @@ public:
     std::shared_ptr<sanecpp::session> open();
     bool isOpen() const;
 
-    void setDefaultOptions(const OptionsFile::Options&);
+    void setDeviceOptions(const OptionsFile::Options&);
 
     void writeScannerCapabilitiesXml(std::ostream&) const;
     void writeScannerStatusXml(std::ostream&) const;

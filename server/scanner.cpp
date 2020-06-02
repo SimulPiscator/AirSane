@@ -164,9 +164,9 @@ std::vector<double> discretizeResolutions(double min, double max, double step)
 struct Scanner::Private
 {
     Scanner* p;
-    std::string mUri, mSaneName;
+    std::string mUri, mSaneName, mIconFile;
 
-    std::string mUuid, mAdminUri, mIconUri, mMakeAndModel;
+    std::string mUuid, mAdminUrl, mIconUrl, mMakeAndModel;
     int mMinResDpi, mMaxResDpi, mResStepDpi;
     double mMaxWidthPx300dpi, mMaxHeightPx300dpi;
     std::vector<double> mDiscreteResolutions;
@@ -218,10 +218,10 @@ void Scanner::Private::writeScannerCapabilitiesXml(std::ostream& os) const
     "<pwg:Version>2.0</pwg:Version>\r\n"
     "<pwg:MakeAndModel>" << xmlEscape(mMakeAndModel) << "</pwg:MakeAndModel>\r\n"
     "<scan:UUID>" << mUuid << "</scan:UUID>\r\n";
-    if(!mAdminUri.empty())
-        os << "<scan:AdminURI>" << mAdminUri << "</scan:AdminURI>\r\n";
-    if(!mIconUri.empty())
-        os << "<scan:IconURI>" << mIconUri << "</scan:IconURI>\r\n";
+    if(!mAdminUrl.empty())
+        os << "<scan:AdminURI>" << mAdminUrl << "</scan:AdminURI>\r\n";
+    if(!mIconUrl.empty())
+        os << "<scan:IconURI>" << mIconUrl << "</scan:IconURI>\r\n";
     if(mpPlaten) {
         os << "<scan:Platen>\r\n<scan:PlatenInputCaps>\r\n";
         mpPlaten->writeCapabilitiesXml(os);
@@ -520,6 +520,31 @@ const std::string &Scanner::saneName() const
     return p->mSaneName;
 }
 
+void Scanner::setAdminUrl(const std::string& url)
+{
+    p->mAdminUrl = url;
+}
+
+const std::string &Scanner::adminUrl() const
+{
+    return p->mAdminUrl;
+}
+
+const std::string &Scanner::iconFile() const
+{
+    return p->mIconFile;
+}
+
+void Scanner::setIconUrl(const std::string& url)
+{
+    p->mIconUrl = url;
+}
+
+const std::string &Scanner::iconUrl() const
+{
+    return p->mIconUrl;
+}
+
 const std::vector<std::string> &Scanner::documentFormats() const
 {
     return p->mDocumentFormats;
@@ -600,9 +625,15 @@ std::string Scanner::colorScanModeName() const
     return p->mColorScanModeName;
 }
 
-void Scanner::setDefaultOptions(const OptionsFile::Options& opt)
+void Scanner::setDeviceOptions(const OptionsFile::Options& options)
 {
-    p->mDeviceOptions = opt;
+    p->mDeviceOptions.clear();
+    for(const auto& option : options) {
+        if(option.first == "icon")
+            p->mIconFile = option.second;
+        else
+            p->mDeviceOptions.push_back(option);
+    }
 }
 
 std::shared_ptr<sanecpp::session> Scanner::open()

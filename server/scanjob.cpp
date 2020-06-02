@@ -48,7 +48,6 @@ struct ScanSettingsXml
 {
     ScanSettingsXml(const std::string& s) : xml(s)
     {
-        std::cerr << s << std::endl;
     }
 
     std::string getString(const std::string& name) const
@@ -227,10 +226,10 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
     mIntent = settings.getString("Intent");
 
     mDocumentFormat = settings.getString("DocumentFormat");
-    std::cerr << "document format requested: " << mDocumentFormat << "\n";
+    std::clog << "document format requested: " << mDocumentFormat << "\n";
     if(autoselectFormat && mDocumentFormat == HttpServer::MIME_TYPE_JPEG)
         mDocumentFormat = HttpServer::MIME_TYPE_PNG;
-    std::cerr << "document format used: " << mDocumentFormat << "\n";
+    std::clog << "document format used: " << mDocumentFormat << "\n";
 
     mImagesToTransfer = 1;
     mImagesCompleted = 0;
@@ -258,25 +257,25 @@ void ScanJob::Private::applyDeviceOptions(const OptionsFile::Options& options)
     for(const auto& option : options) {
         if (option.first == "gray-gamma") {
             if (!mColorScan) {
-                std::cerr << "using grayscale gamma of " << option.second << std::endl;
+                std::clog << "using grayscale gamma of " << option.second << std::endl;
                 initGammaTable(option.second);
             }
         }
         else if(option.first == "color-gamma") {
             if (mColorScan) {
-                std::cerr << "using color gamma of " << option.second << std::endl;
+                std::clog << "using color gamma of " << option.second << std::endl;
                 initGammaTable(option.second);
             }
         }
         else if(option.first == "synthesize-gray") {
             if (!mColorScan) {
                 if (option.second == "yes") {
-                    std::cerr << "synthesizing grayscale from RGB" << std::endl;
+                    std::clog << "synthesizing grayscale from RGB" << std::endl;
                     mSynthesizedGray = true;
                     mColorMode = mpScanner->colorScanModeName();
                 }
                 else {
-                    std::cerr << "requesting grayscale from backend" << std::endl;
+                    std::clog << "requesting grayscale from backend" << std::endl;
                     mSynthesizedGray = false;
                     mColorMode = mpScanner->grayScanModeName();
                 }

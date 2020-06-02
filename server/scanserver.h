@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <fstream>
 #include <memory>
+#include <magic.h>
 
 typedef std::vector<std::pair<
     std::shared_ptr<Scanner>,
@@ -35,6 +36,7 @@ class ScanServer : public HttpServer
 {
 public:
     ScanServer(int argc, char** argv);
+    ~ScanServer();
     bool run();
 
 protected:
@@ -49,6 +51,7 @@ private:
     bool mAnnounce, mLocalonly, mHotplug;
     std::string mOptionsfile;
     bool mDoRun;
+    magic_t mMagicCookie;
 };
 
 #endif // SCANSERVER_H

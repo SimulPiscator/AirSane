@@ -56,6 +56,9 @@ namespace {
 ScanServer::ScanServer(int argc, char** argv)
     : mAnnounce(true), mLocalonly(true), mHotplug(true), mDoRun(true)
 {
+    mMagicCookie = ::magic_open(MAGIC_SYMLINK|MAGIC_MIME_TYPE);
+    ::magic_load(mMagicCookie, nullptr);
+
     std::string port, interface, accesslog, hotplug, announce,
         localonly, optionsfile, debug;
     struct { const std::string name, def, info; std::string& value; } options[] = {
@@ -125,6 +128,11 @@ ScanServer::ScanServer(int argc, char** argv)
     }
 }
 
+ScanServer::~ScanServer()
+{
+    ::magic_close(mMagicCookie);
+}
+
 bool ScanServer::run()
 {
     if(!mDoRun)
@@ -149,7 +157,18 @@ bool ScanServer::run()
 
             if(!pScanner->error()) {
                 auto options = optionsfile.scannerOptions(pScanner.get());
-                pScanner->setDefaultOptions(options);
+                pScanner->setDeviceOptions(options);
+
+                std::ostringstream url;
+                url << "http://"
+                    <<  mPublisher.hostNameFqdn()
+                    <<  ":" << port() << "/"
+                    <<  pScanner->uuid();
+                pScanner->setAdminUrl(url.str());
+                if(!pScanner->iconFile().empty()) {
+                    url << "/ScannerIcon";
+                    pScanner->setIconUrl(url.str());
+                }
             }
 
             std::shared_ptr<MdnsPublisher::Service> pService;
@@ -181,6 +200,11 @@ bool ScanServer::run()
                 if(!s.empty())
                   pService->setTxt("is", s.substr(1));
                 pService->setTxt("duplex", pScanner->hasDuplexAdf() ? "T" : "F");
+
+                if(!pScanner->adminUrl().empty())
+                    pService->setTxt("adminurl", pScanner->adminUrl());
+                if(!pScanner->iconUrl().empty())
+                    pService->setTxt("representation", pScanner->iconUrl());
 
                 if(!pService->announce())
                     pService.reset();
@@ -268,6 +292,24 @@ void ScanServer::handleScannerRequest(ScannerList::value_type& s, const HttpServ
     if(res == "/ScannerStatus" && request.method() == HttpServer::HTTP_GET) {
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/xml");
         s.first->writeScannerStatusXml(response.send());
+        return;
+    }
+    if(res == "/ScannerIcon" && request.method() == HttpServer::HTTP_GET) {
+        const char* filename = s.first->iconFile().c_str();
+        const char* mimetype = ::magic_file(mMagicCookie, filename);
+        if(mimetype) {
+            response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, mimetype);
+            std::ifstream file(s.first->iconFile());
+            response.send() << file.rdbuf() << std::flush;
+        }
+        else {
+            const char* error = ::magic_error(mMagicCookie);
+            if(error)
+                std::clog << "libmagic error for file "
+                          << filename << ": " << error << std::endl;
+            response.setStatus(HttpServer::HTTP_NOT_FOUND);
+            response.send();
+        }
         return;
     }
     const std::string ScanJobsDir = "/ScanJobs";
