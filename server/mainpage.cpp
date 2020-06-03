@@ -39,7 +39,7 @@ void MainPage::onRender()
         list scannersList;
         for(const auto& s : mScanners) {
             auto name = s.second ? s.second->name() : s.first->makeAndModel();
-            scannersList.addItem(anchor(s.first->uri()).addText(name));
+            scannersList.addItem(anchor("/" + s.first->uuid()).addText(name));
             scannersList.addContent("\n");
         }
         out() << scannersList << std::endl;

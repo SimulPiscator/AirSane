@@ -262,7 +262,13 @@ void ScanServer::onRequest(const Request& request, Response& response)
     }
     for(auto& s : mScanners) {
         if(request.uri().find(s.first->uri()) == 0) {
-            handleScannerRequest(s, request, response);
+            std::string res = request.uri().substr(s.first->uri().length());
+            handleScannerRequest(s, res, request, response);
+            return;
+        }
+        else if(request.uri().find("/" + s.first->uuid()) == 0) {
+            std::string res = request.uri().substr(s.first->uuid().length() + 1);
+            handleScannerRequest(s, res, request, response);
             return;
         }
     }
@@ -274,27 +280,26 @@ static bool clientIsAirscan(const HttpServer::Request& req)
     return req.header(HttpServer::HTTP_HEADER_USER_AGENT).find("AirScanScanner") != std::string::npos;
 }
 
-void ScanServer::handleScannerRequest(ScannerList::value_type& s, const HttpServer::Request &request, HttpServer::Response &response)
+void ScanServer::handleScannerRequest(ScannerList::value_type& s, const std::string& uriRemainder, const HttpServer::Request &request, HttpServer::Response &response)
 {
     response.setStatus(HttpServer::HTTP_OK);
-    std::string res = request.uri().substr(s.first->uri().length());
-    if(res.empty() || res == "/") {
+    if(uriRemainder.empty() || uriRemainder == "/") {
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
         auto name = s.second ? s.second->name() : s.first->makeAndModel();
         ScannerPage(*s.first).setTitle(name + " on " + hostname()).render(request, response);
         return;
     }
-    if(res == "/ScannerCapabilities" && request.method() == HttpServer::HTTP_GET) {
+    if(uriRemainder == "/ScannerCapabilities" && request.method() == HttpServer::HTTP_GET) {
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/xml");
         s.first->writeScannerCapabilitiesXml(response.send());
         return;
     }
-    if(res == "/ScannerStatus" && request.method() == HttpServer::HTTP_GET) {
+    if(uriRemainder == "/ScannerStatus" && request.method() == HttpServer::HTTP_GET) {
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/xml");
         s.first->writeScannerStatusXml(response.send());
         return;
     }
-    if(res == "/ScannerIcon" && request.method() == HttpServer::HTTP_GET) {
+    if(uriRemainder == "/ScannerIcon" && request.method() == HttpServer::HTTP_GET) {
         const char* filename = s.first->iconFile().c_str();
         const char* mimetype = ::magic_file(mMagicCookie, filename);
         if(mimetype) {
@@ -313,7 +318,7 @@ void ScanServer::handleScannerRequest(ScannerList::value_type& s, const HttpServ
         return;
     }
     const std::string ScanJobsDir = "/ScanJobs";
-    if(res == ScanJobsDir && request.method() == HttpServer::HTTP_POST) {
+    if(uriRemainder == ScanJobsDir && request.method() == HttpServer::HTTP_POST) {
         bool autoselectFormat = clientIsAirscan(request);
         std::shared_ptr<ScanJob> job = s.first->createJobFromScanSettingsXml(request.content(), autoselectFormat);
         if(job) {
@@ -323,9 +328,9 @@ void ScanServer::handleScannerRequest(ScannerList::value_type& s, const HttpServ
             return;
         }
     }
-    if(res.find(ScanJobsDir) != 0)
+    if(uriRemainder.find(ScanJobsDir) != 0)
         return;
-    res = res.substr(ScanJobsDir.length());
+    std::string res = uriRemainder.substr(ScanJobsDir.length());
     if(res.empty() || res.front() != '/')
         return;
     res = res.substr(1);

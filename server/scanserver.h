@@ -43,7 +43,7 @@ protected:
     void onRequest(const Request&, Response&) override;
 
 private:
-    void handleScannerRequest(ScannerList::value_type&, const HttpServer::Request&, HttpServer::Response&);
+    void handleScannerRequest(ScannerList::value_type&, const std::string& uriRemainder, const HttpServer::Request&, HttpServer::Response&);
 
     MdnsPublisher mPublisher;
     ScannerList mScanners;
