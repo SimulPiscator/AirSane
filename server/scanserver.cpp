@@ -162,8 +162,8 @@ bool ScanServer::run()
                 std::ostringstream url;
                 url << "http://"
                     <<  mPublisher.hostNameFqdn()
-                    <<  ":" << port() << "/"
-                    <<  pScanner->uuid();
+                    <<  ":" << port()
+                    <<  pScanner->uri();
                 pScanner->setAdminUrl(url.str());
                 if(!pScanner->iconFile().empty()) {
                     url << "/ScannerIcon";

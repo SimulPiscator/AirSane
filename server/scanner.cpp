@@ -163,6 +163,8 @@ std::vector<double> discretizeResolutions(double min, double max, double step)
 
 struct Scanner::Private
 {
+    static int sInstanceCount;
+
     Scanner* p;
     std::string mUri, mSaneName, mIconFile;
 
@@ -172,6 +174,7 @@ struct Scanner::Private
     std::vector<double> mDiscreteResolutions;
     std::vector<std::string> mDocumentFormats, mTxtColorSpaces,
         mColorModes, mSupportedIntents, mInputSources;
+    
     struct InputSource
     {
         Private* p;
@@ -196,8 +199,8 @@ struct Scanner::Private
 
     const char* mError;
 
-    Private(Scanner* p) : p(p), mpPlaten(nullptr), mpAdf(nullptr), mDuplex(false), mError(nullptr) {}
-    ~Private() { delete mpPlaten; delete mpAdf; }
+    Private(Scanner*);
+    ~Private();
     const char* init(const sanecpp::device_info&);
     void writeScannerCapabilitiesXml(std::ostream&) const;
     void writeSettingProfile(int bits, std::ostream&) const;
@@ -206,6 +209,21 @@ struct Scanner::Private
     bool isOpen() const;
     const char* statusString() const;
 };
+
+int Scanner::Private::sInstanceCount = 0;
+
+Scanner::Private::Private(Scanner* p)
+: p(p), mpPlaten(nullptr), mpAdf(nullptr), mDuplex(false), mError(nullptr)
+{
+    ++sInstanceCount;
+}
+
+Scanner::Private::~Private()
+{
+    delete mpPlaten;
+    delete mpAdf;
+    --sInstanceCount;
+}
 
 void Scanner::Private::writeScannerCapabilitiesXml(std::ostream& os) const
 {
@@ -335,7 +353,10 @@ const char* Scanner::Private::init(const sanecpp::device_info& info)
     mMakeAndModel = info.vendor + " " + info.model;
     mSaneName = info.name;
     mUuid = Uuid(mMakeAndModel, mSaneName).toString();
-    mUri = "/" + mUuid;
+    if(sInstanceCount == 1)
+        mUri = "/eSCL";
+    else
+        mUri = "/" + mUuid;
 
     auto device = sanecpp::open(info);
     if(!device)
