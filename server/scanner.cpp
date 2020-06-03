@@ -109,9 +109,9 @@ std::string findAdfDuplexName(const std::vector<std::string>& names)
 
 std::string findGrayName(const std::vector<std::string>& names)
 {
-    auto i = std::find(names.begin(), names.end(), "Gray");
+    auto i = std::find(names.begin(), names.end(), "True Gray");
     if(i == names.end())
-      i = std::find(names.begin(), names.end(), "True Gray");
+      i = std::find(names.begin(), names.end(), "Gray");
     if(i == names.end())
       for(i = names.begin(); i != names.end(); ++i)
         if(i->find("Gray") != std::string::npos)
