@@ -63,7 +63,6 @@ public:
     option& operator=(const std::string&);
     option& operator=(double);
 
-    operator bool() const;
     operator std::string() const;
     operator double() const;
 
