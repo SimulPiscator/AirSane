@@ -37,16 +37,17 @@ displayed. It is still possible to use an AirSane scanner by manually entering
 address and port of the AirSane server (e.g., 10.0.1.5:8090). If you have multiple scanners
 attached to a single server, only the first one will be seen by the Mopria client.
 
-## Packages for Synology NAS
+## Installation
+### Packages for Synology NAS
 Pre-built packages for Synology are available here: 
 https://search.synopackage.com/sources/pcloadletter
 
-## Build for OpenWRT
-
+### Build for OpenWRT
 Build files and instructions for OpenWRT have been published here:
 https://github.com/tbaela/AirSane-openwrt
 
-## Build on Debian/Ubuntu/Raspbian
+### Build and install from source on Debian/Ubuntu/Raspbian
+#### Build
 ```
 sudo apt install libsane-dev libjpeg-dev libpng-dev
 sudo apt install libavahi-client-dev libusb-1.*-dev libmagic-dev
@@ -56,8 +57,7 @@ mkdir AirSane-build && cd AirSane-build
 cmake ../AirSane
 make
 ```
-## Install
-
+#### Install
 The provided systemd service file assumes that user and group
 'saned' exist and have permission to access scanners.
 Installing the sane-utils package is a convenient way to set up a user 'saned'
@@ -141,7 +141,9 @@ using weights as suited for sRGB data:
 This is useful for backends that do not allow true grayscale scanning or incorrectly return a single color component even if
 true gray is requested.
 #### icon
-Full path to a png file that should be used as the scanner's icon. The image should have a size of 256x256 or 128x128 pixels and an alpha channel for transparency.
+Full path to a png file that should be used as the scanner's icon. The image should have a size of 512x512, 256x256 or 
+128x128 pixels and an alpha channel for transparency. If pixel dimensions are not powers of two, the image will not be
+accepted by macOS.
 
 ### Example
 ```
@@ -170,8 +172,10 @@ to return image data in a linear color space.
 
 When receiving scan data from an AirScan scanner, macOS seems to ignore all color space related information from the
 transmitted image files, and interprets color and gray levels according to standard scanner color profiles.
-Using ColorSync Utility, one can see that these color profiles are called `Scanner RGB Profile.icc` and `Scanner Gray Profile.icc`, located at `/System/Library/Frameworks/ICADevices.framework/Resources`.
-Unfortunately, it is not possible to permanently assign a different color profile to an AirScan scanner using ColorSync Utility: The specified color profile is not used, and the profile setting is reverted to the original standard profile.
+Using ColorSync Utility, one can see that these color profiles are called `Scanner RGB Profile.icc` and 
+`Scanner Gray Profile.icc`, located at `/System/Library/Frameworks/ICADevices.framework/Resources`.
+Unfortunately, it is not possible to permanently assign a different color profile to an AirScan scanner using 
+ColorSync Utility: the specified color profile is not used, and the profile setting is reverted to the original standard profile.
 
 The macOS standard profiles assume a gamma value of 1.8, which does not match the linear data coming from SANE.
 As a result, scanned images appear darker than the original, with fewer details in darker areas.
