@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sane/saneopts.h>
 
 #include <sstream>
+#include <set>
 #include <algorithm>
 #include <mutex>
 #include <cstring>
@@ -163,18 +164,19 @@ std::vector<double> discretizeResolutions(double min, double max, double step)
 
 struct Scanner::Private
 {
-    static int sInstanceCount;
+    static std::set<Scanner::Private*> sInstances;
 
     Scanner* p;
-    std::string mUri, mSaneName, mIconFile;
 
-    std::string mUuid, mAdminUrl, mIconUrl, mMakeAndModel;
+    std::string mSaneName, mMakeAndModel, mStableUniqueName, mUuid;
+    std::string mUri, mAdminUrl, mIconUrl, mIconFile;
+
     int mMinResDpi, mMaxResDpi, mResStepDpi;
     double mMaxWidthPx300dpi, mMaxHeightPx300dpi;
     std::vector<double> mDiscreteResolutions;
     std::vector<std::string> mDocumentFormats, mTxtColorSpaces,
         mColorModes, mSupportedIntents, mInputSources;
-    
+
     struct InputSource
     {
         Private* p;
@@ -202,6 +204,7 @@ struct Scanner::Private
     Private(Scanner*);
     ~Private();
     const char* init(const sanecpp::device_info&);
+    void generateStableUniqueName();
     void writeScannerCapabilitiesXml(std::ostream&) const;
     void writeSettingProfile(int bits, std::ostream&) const;
     mutable int mCurrentProfile;
@@ -210,19 +213,19 @@ struct Scanner::Private
     const char* statusString() const;
 };
 
-int Scanner::Private::sInstanceCount = 0;
+std::set<Scanner::Private*> Scanner::Private::sInstances;
 
 Scanner::Private::Private(Scanner* p)
 : p(p), mpPlaten(nullptr), mpAdf(nullptr), mDuplex(false), mError(nullptr)
 {
-    ++sInstanceCount;
+    sInstances.insert(this);
 }
 
 Scanner::Private::~Private()
 {
     delete mpPlaten;
     delete mpAdf;
-    --sInstanceCount;
+    sInstances.erase(this);
 }
 
 void Scanner::Private::writeScannerCapabilitiesXml(std::ostream& os) const
@@ -347,13 +350,38 @@ void Scanner::Private::InputSource::writeCapabilitiesXml(std::ostream& os) const
     "</scan:SupportedIntents>\r\n";
 }
 
+void Scanner::Private::generateStableUniqueName()
+{
+    // We construct a name that is stable with regard to USB renumbering,
+    // and addition or removal of other scanners.
+    std::string s;
+    size_t pos = mSaneName.find(':');
+    if(pos == std::string::npos)
+        s = mSaneName + ':';
+    else
+        s = mSaneName.substr(0, pos + 1);
+    s += mMakeAndModel + ':';
+    int i = 0;
+    std::ostringstream oss;
+    bool found = false;
+    do {
+        oss.str("");
+        oss << s << ++i;
+        found = false;
+        for(auto p : sInstances)
+            if(p != this && p->mStableUniqueName == oss.str())
+                found = true;
+    } while(found);
+    mStableUniqueName = oss.str();
+}
 
 const char* Scanner::Private::init(const sanecpp::device_info& info)
 {
     mMakeAndModel = info.vendor + " " + info.model;
     mSaneName = info.name;
-    mUuid = Uuid(mMakeAndModel, mSaneName).toString();
-    if(sInstanceCount == 1)
+    generateStableUniqueName();
+    mUuid = Uuid(mStableUniqueName).toString();
+    if(sInstances.size() == 1)
         mUri = "/eSCL";
     else
         mUri = "/" + mUuid;
@@ -539,6 +567,11 @@ const std::string &Scanner::makeAndModel() const
 const std::string &Scanner::saneName() const
 {
     return p->mSaneName;
+}
+
+const std::string &Scanner::stableUniqueName() const
+{
+    return p->mStableUniqueName;
 }
 
 void Scanner::setAdminUrl(const std::string& url)

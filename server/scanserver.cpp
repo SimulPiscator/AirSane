@@ -152,8 +152,10 @@ bool ScanServer::run()
             auto pScanner = std::make_shared<Scanner>(s);
             if(pScanner->error())
                 std::clog << "error: " << pScanner->error() << std::endl;
-            else
+            else {
+                std::clog << "stable unique name: " << pScanner->stableUniqueName() << std::endl;
                 std::clog << "uuid: " << pScanner->uuid() << std::endl;
+            }
 
             if(!pScanner->error()) {
                 auto options = optionsfile.scannerOptions(pScanner.get());
