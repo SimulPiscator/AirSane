@@ -35,6 +35,7 @@ add_executable(${PROJECT_NAME}
     basic/fdbuf.cpp
     web/httpserver.cpp
     web/webpage.cpp
+    web/errorpage.cpp
     imageformats/imageencoder.cpp
     imageformats/jpegencoder.cpp
     imageformats/pdfencoder.cpp

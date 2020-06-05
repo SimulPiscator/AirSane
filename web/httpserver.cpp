@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pthread.h>
 
 #include "basic/fdbuf.h"
+#include "errorpage.h"
 
 const char* HttpServer::HTTP_GET = "GET";
 const char* HttpServer::HTTP_POST = "POST";
@@ -57,19 +58,6 @@ const char* HttpServer::MIME_TYPE_PDF = "application/pdf";
 const char* HttpServer::MIME_TYPE_PNG = "image/png";
 
 namespace {
-
-const char* statusReason(int status)
-{
-    switch(status) {
-    case HttpServer::HTTP_OK: return "OK";
-    case HttpServer::HTTP_CREATED: return "Created";
-    case HttpServer::HTTP_BAD_REQUEST: return "Bad Request";
-    case HttpServer::HTTP_NOT_FOUND: return "Not Found";
-    case HttpServer::HTTP_METHOD_NOT_ALLOWED: return "Method Not Allowed";
-    case HttpServer::HTTP_SERVICE_UNAVAILABLE: return "Service Unavailable";
-    }
-    return "Unknown Reason";
-}
 
 const std::locale clocale = std::locale("C");
 std::string ctolower(const std::string& s)
@@ -340,13 +328,16 @@ struct HttpServer::Private
         Response response(os);
         if(!request.isValid())
         {
-             response.setStatus(HTTP_BAD_REQUEST).send();
+             response.setStatus(HTTP_BAD_REQUEST);
+             ErrorPage(HTTP_BAD_REQUEST).render(request, response);
         }
         else
         {
             mInstance->onRequest(request, response);
-            if(!response.sent())
-                response.setStatus(HTTP_NOT_FOUND).send();
+            if(!response.sent()) {
+                response.setStatus(HTTP_NOT_FOUND);
+                ErrorPage(HTTP_NOT_FOUND).render(request, response);
+            }
         }
         os.flush();
 
@@ -368,6 +359,19 @@ struct HttpServer::Private
         }
     }
 };
+
+std::string HttpServer::statusReason(int status)
+{
+    switch(status) {
+    case HttpServer::HTTP_OK: return "OK";
+    case HttpServer::HTTP_CREATED: return "Created";
+    case HttpServer::HTTP_BAD_REQUEST: return "Bad Request";
+    case HttpServer::HTTP_NOT_FOUND: return "Not Found";
+    case HttpServer::HTTP_METHOD_NOT_ALLOWED: return "Method Not Allowed";
+    case HttpServer::HTTP_SERVICE_UNAVAILABLE: return "Service Unavailable";
+    }
+    return "Unknown Reason";
+}
 
 std::string HttpServer::fileExtension(const std::string &mimeType)
 {
@@ -491,8 +495,6 @@ int HttpServer::lastError() const
 
 void HttpServer::onRequest(const HttpServer::Request &, HttpServer::Response &response)
 {
-    response.setStatus(HTTP_NOT_FOUND);
-    response.send();
 }
 
 

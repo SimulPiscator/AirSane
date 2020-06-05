@@ -36,6 +36,7 @@ public:
 
         HTTP_SERVICE_UNAVAILABLE = 503,
     };
+    static std::string statusReason(int status);
     static const char *HTTP_GET, *HTTP_POST, *HTTP_DELETE;
     static const char
         *HTTP_HEADER_CONTENT_LENGTH, *HTTP_HEADER_CONTENT_TYPE,
