@@ -48,7 +48,7 @@ private:
     MdnsPublisher mPublisher;
     ScannerList mScanners;
     std::filebuf mLogfile;
-    bool mAnnounce, mLocalonly, mHotplug;
+    bool mAnnounce, mLocalonly, mHotplug, mRandomUuids;
     std::string mOptionsfile;
     bool mDoRun;
     magic_t mMagicCookie;

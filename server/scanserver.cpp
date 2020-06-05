@@ -54,13 +54,14 @@ namespace {
 
 
 ScanServer::ScanServer(int argc, char** argv)
-    : mAnnounce(true), mLocalonly(true), mHotplug(true), mDoRun(true)
+    : mAnnounce(true), mLocalonly(true), mHotplug(true),
+      mRandomUuids(false), mDoRun(true)
 {
     mMagicCookie = ::magic_open(MAGIC_SYMLINK|MAGIC_MIME_TYPE);
     ::magic_load(mMagicCookie, nullptr);
 
     std::string port, interface, accesslog, hotplug, announce,
-        localonly, optionsfile, debug;
+        localonly, optionsfile, randomuuids, debug;
     struct { const std::string name, def, info; std::string& value; } options[] = {
     { "listen-port", "8090", "listening port", port },
     { "interface", "", "listen on named interface only", interface },
@@ -69,6 +70,7 @@ ScanServer::ScanServer(int argc, char** argv)
     { "mdns-announce", "true", "announce scanners via mDNS (avahi)", announce },
     { "local-scanners-only", "true", "ignore SANE network scanners", localonly },
     { "options-file", "/etc/airsane/options.conf", "location of device options file", optionsfile },
+    { "random-uuids", "false", "generate random UUIDs on startup", randomuuids },
     { "debug", "false", "log debug information to stderr", debug },
     };
     for(auto& opt : options)
@@ -104,6 +106,7 @@ ScanServer::ScanServer(int argc, char** argv)
     mAnnounce = (announce == "true");
     mLocalonly = (localonly == "true");
     mOptionsfile = optionsfile;
+    mRandomUuids = (randomuuids == "true");
 
     uint16_t port_ = 0;
     if(!(std::istringstream(port) >> port_)) {
@@ -149,7 +152,7 @@ bool ScanServer::run()
         auto scanners = sanecpp::enumerate_devices(mLocalonly);
         for(const auto& s : scanners) {
             std::clog << "found: " << s.name << " (" << s.vendor << " " << s.model << ")" << std::endl;
-            auto pScanner = std::make_shared<Scanner>(s);
+            auto pScanner = std::make_shared<Scanner>(s, mRandomUuids);
             if(pScanner->error())
                 std::clog << "error: " << pScanner->error() << std::endl;
             else {
@@ -162,10 +165,10 @@ bool ScanServer::run()
                 pScanner->setDeviceOptions(options);
 
                 std::ostringstream url;
-                url << "http://"
+                url << /*"http://"
                     <<  mPublisher.hostNameFqdn()
                     <<  ":" << port()
-                    <<  pScanner->uri();
+                    << */ pScanner->uri();
                 pScanner->setAdminUrl(url.str());
                 if(!pScanner->iconFile().empty()) {
                     url << "/ScannerIcon";

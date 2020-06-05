@@ -203,7 +203,7 @@ struct Scanner::Private
 
     Private(Scanner*);
     ~Private();
-    const char* init(const sanecpp::device_info&);
+    const char* init(const sanecpp::device_info&, bool);
     void generateStableUniqueName();
     void writeScannerCapabilitiesXml(std::ostream&) const;
     void writeSettingProfile(int bits, std::ostream&) const;
@@ -216,7 +216,8 @@ struct Scanner::Private
 std::set<Scanner::Private*> Scanner::Private::sInstances;
 
 Scanner::Private::Private(Scanner* p)
-: p(p), mpPlaten(nullptr), mpAdf(nullptr), mDuplex(false), mError(nullptr)
+: p(p), mpPlaten(nullptr), mpAdf(nullptr),
+  mDuplex(false), mError(nullptr)
 {
     sInstances.insert(this);
 }
@@ -375,12 +376,16 @@ void Scanner::Private::generateStableUniqueName()
     mStableUniqueName = oss.str();
 }
 
-const char* Scanner::Private::init(const sanecpp::device_info& info)
+const char* Scanner::Private::init(const sanecpp::device_info& info, bool randomUuid)
 {
     mMakeAndModel = info.vendor + " " + info.model;
     mSaneName = info.name;
     generateStableUniqueName();
-    mUuid = Uuid(mStableUniqueName).toString();
+    if(randomUuid)
+        mUuid = Uuid(::time(nullptr), ::rand()).toString();
+    else
+        mUuid = Uuid(mStableUniqueName).toString();
+
     if(sInstances.size() == 1)
         mUri = "/eSCL";
     else
@@ -528,10 +533,10 @@ const char* Scanner::Private::InputSource::init(const sanecpp::option_set& opt)
     return nullptr;
 }
 
-Scanner::Scanner(const sanecpp::device_info& info)
+Scanner::Scanner(const sanecpp::device_info& info, bool randomUuid)
     : p(new Private(this))
 {
-    p->mError = p->init(info);
+    p->mError = p->init(info, randomUuid);
 }
 
 Scanner::~Scanner()

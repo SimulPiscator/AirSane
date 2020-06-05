@@ -34,7 +34,7 @@ class Scanner
     Scanner& operator=(const Scanner&) = delete;
 
 public:
-    explicit Scanner(const sanecpp::device_info&);
+    explicit Scanner(const sanecpp::device_info&, bool randomUuid = false);
     ~Scanner();
 
     const char* error() const;
