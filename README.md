@@ -37,9 +37,13 @@ displayed. It is still possible to use an AirSane scanner by manually entering
 address and port of the AirSane server (e.g., 10.0.1.5:8090). If you have multiple scanners
 attached to a single server, only the first one will be seen by the Mopria client.
 
+## Packages for Synology NAS
+Pre-built packages for Synology are available here: 
+https://search.synopackage.com/sources/pcloadletter
+
 ## Build for OpenWRT
 
-Build files and instructions have been published here:
+Build files and instructions for OpenWRT have been published here:
 https://github.com/tbaela/AirSane-openwrt
 
 ## Build on Debian/Ubuntu/Raspbian
