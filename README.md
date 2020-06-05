@@ -139,7 +139,7 @@ requests a grayscale scan. In this case, grayscale values will be computed from 
 using weights as suited for sRGB data:  
 `Y = 0.2126 * R + 0.7152 * G + 0.0722 * B`  
 This is useful for backends that do not allow true grayscale scanning or incorrectly return a single color component even if
-true gray is requested.
+true gray is requested ([observed](https://gitlab.com/sane-project/backends/-/issues/308) with the SANE genesys backend).
 #### icon
 Full path to a png file that should be used as the scanner's icon. The image should have a size of 512x512, 256x256 or 
 128x128 pixels and an alpha channel for transparency. If pixel dimensions are not powers of two, the image will not be
