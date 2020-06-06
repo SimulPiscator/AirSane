@@ -33,6 +33,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace {
 
+class AvahiThreadedPollGuard
+{
+public:
+    explicit AvahiThreadedPollGuard(AvahiThreadedPoll* pThread)
+      : mpThread(pThread)
+    {
+        ::avahi_threaded_poll_lock(mpThread);
+    }
+    ~AvahiThreadedPollGuard()
+    {
+        ::avahi_threaded_poll_unlock(mpThread);
+    }
+private:
+    AvahiThreadedPoll* mpThread;
+};
+
 struct ServiceEntry
 {
     MdnsPublisher::Service* mpService;
@@ -223,6 +239,15 @@ struct MdnsPublisher::Private
         destroyClient();
     }
 
+    std::list<ServiceEntry>::iterator findService(const Service* pService)
+    {
+        auto i = std::find_if(mServices.begin(), mServices.end(),
+            [pService](const ServiceEntry& entry) {
+                return entry.mpService == pService;
+             });
+        return i;
+    }
+
 };
 
 MdnsPublisher::MdnsPublisher()
@@ -242,34 +267,28 @@ const std::string& MdnsPublisher::hostNameFqdn() const
 
 bool MdnsPublisher::announce(MdnsPublisher::Service *pService)
 {
+    AvahiThreadedPollGuard guard(p->mpThread);
     bool ok = false;
-    ::avahi_threaded_poll_lock(p->mpThread);
-    auto i = std::find_if(p->mServices.begin(), p->mServices.end(),
-        [pService](const ServiceEntry& e) { return e.mpService == pService; }
-    );
+    auto i = p->findService(pService);
     if(i != p->mServices.end()) {
         ok = true;
     } else {
         p->mServices.push_back(ServiceEntry(pService));
         ok = p->mServices.back().announce(p->mpClient);
     }
-    ::avahi_threaded_poll_unlock(p->mpThread);
     return ok;
 }
 
 bool MdnsPublisher::unannounce(MdnsPublisher::Service *pService)
 {
+    AvahiThreadedPollGuard guard(p->mpThread);
     bool ok = false;
-    ::avahi_threaded_poll_lock(p->mpThread);
-    auto i = std::find_if(p->mServices.begin(), p->mServices.end(),
-        [pService](const ServiceEntry& e) { return e.mpService == pService; }
-    );
+    auto i = p->findService(pService);
     if(i != p->mServices.end()) {
         ok = true;
         i->unannounce();
         p->mServices.erase(i);
     }
-    ::avahi_threaded_poll_unlock(p->mpThread);
     return ok;
 }
 
