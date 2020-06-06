@@ -80,7 +80,7 @@ ScanServer::ScanServer(int argc, char** argv)
         std::string option = argv[i];
         bool found = false;
         for(auto& opt : options) {
-            if(option.find("--" + opt.name + "=") == 0) {
+            if(option.rfind("--" + opt.name + "=", 0) == 0) {
                 found = true;
                 opt.value = option.substr(option.find('=') + 1);
                 break;
@@ -337,7 +337,7 @@ void ScanServer::handleScannerRequest(ScannerList::value_type& s, const std::str
             return;
         }
     }
-    if(uriRemainder.find(ScanJobsDir) != 0)
+    if(uriRemainder.rfind(ScanJobsDir, 0) != 0)
         return;
     std::string res = uriRemainder.substr(ScanJobsDir.length());
     if(res.empty() || res.front() != '/')

@@ -81,6 +81,7 @@ fdbuf::int_type fdbuf::underflow()
             n = egptr() - start;
         else
             return traits_type::eof();
+
         int read = ::read(mFd, start, n);
         if(read == 0)
             return traits_type::eof();

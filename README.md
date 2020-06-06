@@ -43,15 +43,15 @@ attached to a single server, only the first one will be seen by the Mopria clien
 ## Installation
 ### Packages for Synology NAS
 Pre-built packages for Synology are available here: 
-https://search.synopackage.com/sources/pcloadletter
+<https://search.synopackage.com/sources/pcloadletter>
 
 ### Build for OpenWRT
 Build files and instructions for OpenWRT have been published here:
-https://github.com/tbaela/AirSane-openwrt
+<https://github.com/tbaela/AirSane-openwrt>
 
 ### Build and install from source on Debian/Ubuntu/Raspbian
 #### Build
-```
+```sh
 sudo apt install libsane-dev libjpeg-dev libpng-dev
 sudo apt install libavahi-client-dev libusb-1.*-dev libmagic-dev
 sudo apt install git cmake g++
@@ -65,12 +65,12 @@ The provided systemd service file assumes that user and group
 'saned' exist and have permission to access scanners.
 Installing the sane-utils package is a convenient way to set up a user 'saned'
 with proper permissions:
-```
+```sh
 sudo apt install sane-utils
 ```
 Make sure that ```sudo scanimage -L``` lists all scanners attached to your machine.
 Listing scanners as user 'saned' should show all scanners as well:
-```
+```sh
 sudo -u saned scanimage -L
 ```
 If all scanners are listed for 'root' but none for 'saned,' you might have hit
@@ -83,7 +83,7 @@ Unplug and re-plug all scanners. ```sudo -u saned scanimage -L``` should now lis
 of them.
 
 To install AirSane:
-```
+```sh
 sudo apt install avahi-daemon
 sudo make install
 sudo systemctl enable airsaned
@@ -91,16 +91,16 @@ sudo systemctl start airsaned
 sudo systemctl status airsaned
 ```
 Disable saned if you are not using it:
-```
+```sh
 sudo systemctl disable saned
 ```
 Disable unused scanner backends to speed up device search:
-```
+```sh
 sudo nano /etc/sane.d/dll.conf
 ```
 The server's listening port, and other configuration details, may be changed
 by editing '/etc/default/airsane'. For options, and their meanings, run
-```
+```sh
 airsaned --help
 ```
 By default, the server listens on all local addresses, and port 8090.
@@ -114,8 +114,7 @@ In addition to the options that may be configured through `/etc/default/airsane`
 options to be used when scanning from a certain device.
 To specify such options, create a file `/etc/airsane/options.conf`, readable by user `saned`.  
 This file may contain the following kinds of lines:
-* Empty lines, and comment lines starting with #,  
-  will be ignored.
+* Empty lines, and comment lines starting with #, will be ignored.
 * Lines beginning with the word `device`, followed with a regular expression,   
   will begin a device section that applies to all devices with SANE device name or make-and-model string matching 
   the regular expression.

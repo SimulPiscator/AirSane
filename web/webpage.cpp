@@ -46,6 +46,7 @@ std::string WebPage::numtostr(double d)
 }
 
 WebPage::WebPage()
+ : mpResponse(nullptr), mpRequest(nullptr), mpOut(nullptr)
 {
     addStyle("body { font-family:sans-serif }");
 }

@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <regex>
 
 OptionsFile::OptionsFile(const std::string& fileName)
+: mFileName(fileName)
 {
-    mFileName = fileName;
     std::ifstream file(fileName);
     if(file.is_open())
         std::clog << "reading device options from '" << fileName << "'" << std::endl;

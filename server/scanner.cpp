@@ -184,7 +184,7 @@ struct Scanner::Private
         double mMinWidth, mMaxWidth, mMinHeight, mMaxHeight,
                mMaxPhysicalWidth, mMaxPhysicalHeight;
         int mMaxBits;
-        InputSource(Private* p) : p(p) {}
+        explicit InputSource(Private* p) : p(p) {}
         const char* init(const sanecpp::option_set&);
         void writeCapabilitiesXml(std::ostream&) const;
     } *mpPlaten, *mpAdf;
