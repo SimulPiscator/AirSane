@@ -115,7 +115,9 @@ std::string ipString(Sockaddr address)
         ::inet_ntop(AF_INET, &address.in.sin_addr, buf, sizeof(buf));
         break;
     case AF_INET6:
-        ::inet_ntop(AF_INET6, &address.in6.sin6_addr, buf, sizeof(buf));
+        ::strcpy(buf, "[");
+        ::inet_ntop(AF_INET6, &address.in6.sin6_addr, buf + 1, sizeof(buf) - 2);
+        ::strcat(buf, "]");
         break;
     }
     return buf;
