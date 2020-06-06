@@ -20,7 +20,8 @@ You may be interested in [phpSANE](https://sourceforge.net/projects/phpsane) ins
 AirSane has been developed by reverse-engineering the communication protocol
 implemented in Apple's AirScanScanner client
 (macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`), using a 
-[Disassembler](https://www.hopperapp.com/) able to reconstruct much of the original Objective-C source code.
+[Disassembler](https://www.hopperapp.com/) able to reconstruct much of the original 
+Objective-C source code.
 
 Initially helpful was [David Poole's blog entry about communicating with an eSCL scanner](http://testcluster.blogspot.com/2014/03/scanning-from-escl-device-using-command.html).
 
@@ -51,7 +52,7 @@ Build files and instructions for OpenWRT have been published here:
 
 ### Build and install from source on Debian/Ubuntu/Raspbian
 #### Build
-```sh
+```
 sudo apt install libsane-dev libjpeg-dev libpng-dev
 sudo apt install libavahi-client-dev libusb-1.*-dev libmagic-dev
 sudo apt install git cmake g++
@@ -65,12 +66,12 @@ The provided systemd service file assumes that user and group
 'saned' exist and have permission to access scanners.
 Installing the sane-utils package is a convenient way to set up a user 'saned'
 with proper permissions:
-```sh
+```
 sudo apt install sane-utils
 ```
 Make sure that ```sudo scanimage -L``` lists all scanners attached to your machine.
 Listing scanners as user 'saned' should show all scanners as well:
-```sh
+```
 sudo -u saned scanimage -L
 ```
 If all scanners are listed for 'root' but none for 'saned,' you might have hit
@@ -83,7 +84,7 @@ Unplug and re-plug all scanners. ```sudo -u saned scanimage -L``` should now lis
 of them.
 
 To install AirSane:
-```sh
+```
 sudo apt install avahi-daemon
 sudo make install
 sudo systemctl enable airsaned
@@ -91,16 +92,16 @@ sudo systemctl start airsaned
 sudo systemctl status airsaned
 ```
 Disable saned if you are not using it:
-```sh
+```
 sudo systemctl disable saned
 ```
 Disable unused scanner backends to speed up device search:
-```sh
+```
 sudo nano /etc/sane.d/dll.conf
 ```
 The server's listening port, and other configuration details, may be changed
 by editing '/etc/default/airsane'. For options, and their meanings, run
-```sh
+```
 airsaned --help
 ```
 By default, the server listens on all local addresses, and port 8090.
