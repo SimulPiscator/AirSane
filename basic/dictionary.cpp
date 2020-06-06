@@ -56,10 +56,7 @@ Dictionary::Storage::iterator find(Dictionary::Storage& s, const std::string& ke
 
 Dictionary::Storage::const_iterator find(const Dictionary::Storage& s, const std::string& key)
 {
-    return std::find_if(s.begin(), s.end(),
-        [key](const Dictionary::Storage::value_type& v)
-        { return v.first == key; }
-    );
+    return find(const_cast<Dictionary::Storage&>(s), key);
 }
 
 }
