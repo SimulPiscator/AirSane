@@ -12,14 +12,16 @@ Apple's Image Capture.
 Images are encoded on-the-fly during acquisition, keeping memory/storage
 demands low. Thus, AirSane will run fine on a Raspberry Pi or similar device.
 
-AirSane has been developed by reverse-engineering the communication protocol
-implemented in Apple's AirScanScanner client
-(macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`).
-
 Authentication and secure communication are not supported.
 
 If you are looking for a powerful SANE web frontend, AirSane may not be for you.
 You may be interested in [phpSANE](https://sourceforge.net/projects/phpsane) instead.
+
+AirSane has been developed by reverse-engineering the communication protocol
+implemented in Apple's AirScanScanner client
+(macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`).
+
+Very helpful initially was [David Poole's blog entry about communicating with an eSCL scanner](http://testcluster.blogspot.com/2014/03/scanning-from-escl-device-using-command.html).
 
 ## Usage
 ### Web interface
