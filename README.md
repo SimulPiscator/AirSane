@@ -19,9 +19,10 @@ You may be interested in [phpSANE](https://sourceforge.net/projects/phpsane) ins
 
 AirSane has been developed by reverse-engineering the communication protocol
 implemented in Apple's AirScanScanner client
-(macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`).
+(macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`), using a 
+[Disassembler](https://www.hopperapp.com/) able to reconstruct much of the original Objective-C source code.
 
-Very helpful initially was [David Poole's blog entry about communicating with an eSCL scanner](http://testcluster.blogspot.com/2014/03/scanning-from-escl-device-using-command.html).
+Initially helpful was [David Poole's blog entry about communicating with an eSCL scanner](http://testcluster.blogspot.com/2014/03/scanning-from-escl-device-using-command.html).
 
 ## Usage
 ### Web interface
