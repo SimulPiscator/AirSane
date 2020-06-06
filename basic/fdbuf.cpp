@@ -20,10 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <cstring>
+#include <cassert>
 
 fdbuf::fdbuf(int fd, int putback)
     : mFd(fd), mPutback(putback), mTotalWritten(0)
 {
+    assert(mPutback < sizeof(mInbuf));
     setp(mOutbuf, mOutbuf + sizeof(mOutbuf) - 1);
     setg(nullptr, nullptr, nullptr);
 }
@@ -65,20 +67,22 @@ fdbuf::int_type fdbuf::underflow()
 {
     if(gptr() >= egptr())
     {
-        char* start = mInbuf;
+        char* start = mInbuf, *endbuf = mInbuf + sizeof(mInbuf);
         if(eback() == mInbuf)
         { // not first call
             ::memmove(mInbuf, gptr() - mPutback, mPutback);
             start = mInbuf + mPutback;
         }
+        assert(start < endbuf);
+
         int n;
         if(!::ioctl(mFd, FIONREAD, &n))
         {
-            n = std::min<int>(n, egptr() - start);
+            n = std::min<int>(n, endbuf - start);
             n = std::max(n, 1);
         }
         else if(errno == ENOTTY)
-            n = egptr() - start;
+            n = endbuf - start;
         else
             return traits_type::eof();
 
