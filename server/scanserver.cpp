@@ -158,9 +158,7 @@ bool ScanServer::run()
             else {
                 std::clog << "stable unique name: " << pScanner->stableUniqueName() << std::endl;
                 std::clog << "uuid: " << pScanner->uuid() << std::endl;
-            }
 
-            if(!pScanner->error()) {
                 auto options = optionsfile.scannerOptions(pScanner.get());
                 pScanner->setDeviceOptions(options);
 
@@ -179,42 +177,11 @@ bool ScanServer::run()
             std::shared_ptr<MdnsPublisher::Service> pService;
             if(mAnnounce && !pScanner->error())
             {
-                pService = std::make_shared<MdnsPublisher::Service>(&mPublisher);
-                pService->setType("_uscan._tcp.").setName(pScanner->makeAndModel());
-                pService->setInterfaceIndex(interfaceIndex()).setPort(port());
-                pService->setTxt("txtvers", "1");
-                pService->setTxt("vers", "2.0");
-                std::string s;
-                for(const auto& f : pScanner->documentFormats())
-                    s += "," + f;
-                if(!s.empty())
-                  pService->setTxt("pdl", s.substr(1));
-                pService->setTxt("ty", pScanner->makeAndModel());
-                pService->setTxt("uuid", pScanner->uuid());
-                pService->setTxt("rs", pScanner->uri().substr(1));
-                s.clear();
-                for(const auto& cs : pScanner->txtColorSpaces())
-                    s += "," + cs;
-                if(!s.empty())
-                  pService->setTxt("cs", s.substr(1));
-                s.clear();
-                if(pScanner->hasPlaten())
-                    s += ",platen";
-                if(pScanner->hasAdf())
-                    s += ",adf";
-                if(!s.empty())
-                  pService->setTxt("is", s.substr(1));
-                pService->setTxt("duplex", pScanner->hasDuplexAdf() ? "T" : "F");
-
-                if(!pScanner->adminUrl().empty())
-                    pService->setTxt("adminurl", pScanner->adminUrl());
-                if(!pScanner->iconUrl().empty())
-                    pService->setTxt("representation", pScanner->iconUrl());
-
-                if(!pService->announce())
-                    pService.reset();
-                if(pService)
+                pService = buildMdnsService(pScanner.get());
+                if(pService->announce())
                     std::clog << "published as '" << pService->name() << "'" << std::endl;
+                else
+                    pService.reset();
             }
             mScanners.push_back(std::make_pair(pScanner, pService));
         }
@@ -239,6 +206,43 @@ bool ScanServer::run()
                   << std::endl;
     }
     return ok;
+}
+
+std::shared_ptr<MdnsPublisher::Service> ScanServer::buildMdnsService(const Scanner* pScanner)
+{
+    auto pService = std::make_shared<MdnsPublisher::Service>(&mPublisher);
+    pService->setType("_uscan._tcp.").setName(pScanner->makeAndModel());
+    pService->setInterfaceIndex(interfaceIndex()).setPort(port());
+    pService->setTxt("txtvers", "1");
+    pService->setTxt("vers", "2.0");
+    std::string s;
+    for(const auto& f : pScanner->documentFormats())
+        s += "," + f;
+    if(!s.empty())
+        pService->setTxt("pdl", s.substr(1));
+    pService->setTxt("ty", pScanner->makeAndModel());
+    pService->setTxt("uuid", pScanner->uuid());
+    pService->setTxt("rs", pScanner->uri().substr(1));
+    s.clear();
+    for(const auto& cs : pScanner->txtColorSpaces())
+        s += "," + cs;
+    if(!s.empty())
+        pService->setTxt("cs", s.substr(1));
+    s.clear();
+    if(pScanner->hasPlaten())
+        s += ",platen";
+    if(pScanner->hasAdf())
+        s += ",adf";
+    if(!s.empty())
+        pService->setTxt("is", s.substr(1));
+    pService->setTxt("duplex", pScanner->hasDuplexAdf() ? "T" : "F");
+
+    if(!pScanner->adminUrl().empty())
+        pService->setTxt("adminurl", pScanner->adminUrl());
+    if(!pScanner->iconUrl().empty())
+        pService->setTxt("representation", pScanner->iconUrl());
+
+    return pService;
 }
 
 void ScanServer::onRequest(const Request& request, Response& response)
