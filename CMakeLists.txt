@@ -65,3 +65,13 @@ install(FILES systemd/airsaned.default
     RENAME airsane
 )
 
+install(CODE "
+    if(NOT EXISTS /etc/airsane/options.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/options.conf DESTINATION /etc/airsane)
+    endif()
+")
+install(CODE "
+    if(NOT EXISTS /etc/airsane/Gnome-scanner.png)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/Gnome-scanner.png DESTINATION /etc/airsane)
+    endif()
+")
