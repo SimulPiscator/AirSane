@@ -23,7 +23,7 @@ implemented in Apple's AirScanScanner client
 [Disassembler](https://www.hopperapp.com/) able to reconstruct much of the original 
 Objective-C source code.
 
-Initially helpful was [David Poole's blog entry about communicating with an eSCL scanner](http://testcluster.blogspot.com/2014/03/scanning-from-escl-device-using-command.html).
+Regarding the mdns announcement, and the basic working of the eSCL protocol, [David Poole's blog](http://testcluster.blogspot.com/2014/03) was very helpful.
 
 ## Usage
 ### Web interface
@@ -31,14 +31,14 @@ Open `http://machine-name:8090/` in a web browser, and follow a scanner
 link from the main page.
 
 ### macOS
-When opening Apple Image Capture or similar applications, scanners exported
-by AirSane should be immediately available.
+When opening 'Image Capture', 'Preview', or other applications using the
+ImageKit framework, scanners exported by AirSane should be immediately available.
 In 'Printers and Scanners', exported scanners will be listed with a type of 
 'Bonjour Scanner'.
 
 If you defined a custom icon for your scanner (see below), note that you will
-have to use the scanner through Apple Image Capture once before it will be
-shown with the icon in 'Printers and Scanners'. This seems to be a bug in macOS.
+have to use the scanner through 'Image Capture' once before it will be
+shown with this icon in 'Printers and Scanners'. This seems to be a bug in macOS.
 
 ### Mopria client on Android
 Until version 1.2.8 of the Mopria client, AirSane scanners would be detected and 
