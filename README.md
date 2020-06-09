@@ -34,6 +34,9 @@ When opening Apple Image Capture or similar applications, scanners exported
 by AirSane should be immediately available.
 In 'Printers and Scanners', exported scanners will be listed with a type of 
 'Bonjour Scanner'.
+If you defined a custom icon for your scanner (see below), note that you will
+have to use the scanner through Apple Image Capture once before it will be
+shown with the icon in 'Printers and Scanners'. This seems to be a bug in macOS.
 ### Mopria client on Android
 Until version 1.2.8 of the Mopria client, AirSane scanners would be detected and 
 were available to scan. Since version 1.2.8, AirSane scanners are no longer
