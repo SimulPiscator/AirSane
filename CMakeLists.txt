@@ -52,7 +52,6 @@ target_link_libraries(
     avahi-client
     avahi-common
     usb-1.0
-    magic
 )
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin

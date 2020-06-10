@@ -57,9 +57,6 @@ ScanServer::ScanServer(int argc, char** argv)
     : mAnnounce(true), mLocalonly(true), mHotplug(true),
       mRandomUuids(false), mDoRun(true)
 {
-    mMagicCookie = ::magic_open(MAGIC_SYMLINK|MAGIC_MIME_TYPE);
-    ::magic_load(mMagicCookie, nullptr);
-
     std::string port, interface, accesslog, hotplug, announce,
         localonly, optionsfile, randomuuids, debug;
     struct { const std::string name, def, info; std::string& value; } options[] = {
@@ -133,7 +130,6 @@ ScanServer::ScanServer(int argc, char** argv)
 
 ScanServer::~ScanServer()
 {
-    ::magic_close(mMagicCookie);
 }
 
 bool ScanServer::run()
@@ -309,18 +305,14 @@ void ScanServer::handleScannerRequest(ScannerList::value_type& s, const std::str
         return;
     }
     if(uriRemainder == "/ScannerIcon" && request.method() == HttpServer::HTTP_GET) {
-        const char* filename = s.first->iconFile().c_str();
-        const char* mimetype = ::magic_file(mMagicCookie, filename);
-        if(mimetype) {
-            response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, mimetype);
-            std::ifstream file(s.first->iconFile());
+        std::ifstream file(s.first->iconFile());
+        if(file.is_open()) {
+            response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, HttpServer::MIME_TYPE_PNG);
             response.send() << file.rdbuf() << std::flush;
         }
         else {
-            const char* error = ::magic_error(mMagicCookie);
-            if(error)
-                std::clog << "libmagic error for file "
-                          << filename << ": " << error << std::endl;
+            std::clog << "could not open " << s.first->iconFile()
+                      << " for reading" << std::endl;
             response.setStatus(HttpServer::HTTP_NOT_FOUND);
             response.send();
         }

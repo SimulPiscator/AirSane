@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <fstream>
 #include <memory>
-#include <magic.h>
 
 typedef std::vector<std::pair<
     std::shared_ptr<Scanner>,
@@ -52,7 +51,6 @@ private:
     bool mAnnounce, mLocalonly, mHotplug, mRandomUuids;
     std::string mOptionsfile;
     bool mDoRun;
-    magic_t mMagicCookie;
 };
 
 #endif // SCANSERVER_H
