@@ -41,11 +41,9 @@ have to use the scanner through 'Image Capture' once before it will be
 shown with this icon in 'Printers and Scanners'. This seems to be a bug in macOS.
 
 ### Mopria client on Android
-Until version 1.2.8 of the Mopria client, AirSane scanners would be detected and 
-were available to scan. Since version 1.2.8, AirSane scanners are no longer
-displayed. It is still possible to use an AirSane scanner by manually entering
-address and port of the AirSane server (e.g., 10.0.1.5:8090). If you have multiple scanners
-attached to a single server, only the first one will be seen by the Mopria client.
+As of version 1.3.7, the Mopria Scan App will display all AirSane scanners and
+display them with name and icon. After choosing scan options, you will be able
+to scan to your android device.
 
 ## Installation
 ### Packages for Synology NAS
