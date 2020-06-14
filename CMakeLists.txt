@@ -13,13 +13,19 @@ add_custom_command(
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -Wreturn-type")
-set(CMAKE_CXX_FLAGS_MINSIZEREL  "${CMAKE_CXX_FLAGS_MINSIZEREL} -s")
+set(LINK_FLAGS_MINSIZEREL  "${LINK_FLAGS_MINSIZEREL} -s")
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE MinSizeRel CACHE STRING "Build type" FORCE)
 endif()
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+
 include_directories(.)
+if(APPLE)
+  include_directories(/usr/local/include /opt/local/include)
+  link_directories(/usr/local/lib /opt/local/lib)
+endif()
 add_executable(${PROJECT_NAME}
     ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
     server/main.cpp

@@ -20,7 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <libpng/png.h>
 #include <stdexcept>
 #include <vector>
-#include <endian.h>
+#if __APPLE__
+#  include <machine/endian.h>
+#else
+#  include <endian.h>
+#endif
 #include <arpa/inet.h>
 
 struct PngEncoder::Private

@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     pServer = &server;
     bool ok = true;
     struct sigaction action = { 0 };
-    ::sigemptyset(&action.sa_mask);
+    sigemptyset(&action.sa_mask);
     action.sa_handler = &onSignal;
     ::sigaction(SIGTERM, &action, nullptr);
     ::sigaction(SIGHUP, &action, nullptr);
