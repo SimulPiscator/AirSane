@@ -43,7 +43,8 @@ shown with this icon in 'Printers and Scanners'. This seems to be a bug in macOS
 ### Mopria client on Android
 As of version 1.3.7, the Mopria Scan App will display all AirSane scanners and
 display them with name and icon. After choosing scan options, you will be able
-to scan to your android device.
+to scan to your android device. Note that the Mopria Scan App will only detect
+scanners that have an icon defined in `/etc/airsane/options.conf` (see below).
 
 ## Installation
 ### Packages for Synology NAS
