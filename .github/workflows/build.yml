@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
-      run: sudo apt install libsane-dev libjpeg-dev libpng-dev libavahi-client-dev libusb-1.*-dev libmagic-dev
+      run: sudo apt update && sudo apt install libsane-dev libjpeg-dev libpng-dev libavahi-client-dev libusb-1.*-dev
     - name: set up directories
       run: mkdir ./build
     - name: configure
