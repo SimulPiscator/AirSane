@@ -158,6 +158,8 @@ accepted by macOS.
 # Example options.conf file for airsane
 # Set SANE brightness to 10 for all scanners
 brightness 10
+# Set a default icon for all scanners
+icon /etc/airsane/Gnome-scanner.png
 
 # Compensate for OS-side gamma correction with gamma = 1.8 = 1/0.555555
 gray-gamma 0.555555
