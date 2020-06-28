@@ -143,6 +143,7 @@ class session
 public:
     explicit session(const std::string& devicename);
     explicit session(device_handle);
+    ~session();
 
     option_set& options() { return m_options; }
     const option_set& options() const { return m_options; }
