@@ -220,7 +220,8 @@ std::set<Scanner::Private*> Scanner::Private::sInstances;
 
 Scanner::Private::Private(Scanner* p)
 : p(p), mpPlaten(nullptr), mpAdf(nullptr),
-  mDuplex(false), mError(nullptr)
+  mDuplex(false), mError(nullptr),
+  mTemporaryAdfStatus(SANE_STATUS_GOOD)
 {
     sInstances.insert(this);
 }
