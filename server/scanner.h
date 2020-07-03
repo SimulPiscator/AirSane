@@ -78,6 +78,7 @@ public:
     int purgeJobs(int maxAgeSeconds);
     typedef std::vector<std::shared_ptr<ScanJob>> JobList;
     JobList jobs() const;
+    void setTemporaryAdfStatus(SANE_Status);
 
     std::shared_ptr<sanecpp::session> open();
     bool isOpen() const;

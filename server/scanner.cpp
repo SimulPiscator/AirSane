@@ -199,6 +199,8 @@ struct Scanner::Private
 
     std::weak_ptr<sanecpp::session> mpSession;
 
+    SANE_Status mTemporaryAdfStatus;
+
     const char* mError;
 
     Private(Scanner*);
@@ -211,6 +213,7 @@ struct Scanner::Private
     std::shared_ptr<ScanJob> createJob();
     bool isOpen() const;
     const char* statusString() const;
+    const char* temporaryAdfStatusString();
 };
 
 std::set<Scanner::Private*> Scanner::Private::sInstances;
@@ -328,6 +331,23 @@ bool Scanner::Private::isOpen() const
 const char *Scanner::Private::statusString() const
 {
     return isOpen() ? "Processing" : "Idle";
+}
+
+const char *Scanner::Private::temporaryAdfStatusString()
+{
+    SANE_Status adfStatus = mTemporaryAdfStatus;
+    mTemporaryAdfStatus = SANE_STATUS_GOOD;
+    switch(adfStatus) {
+    case SANE_STATUS_GOOD:
+        return "ScannerAdfLoaded";
+    case SANE_STATUS_JAMMED:
+        return "ScannerAdfJam";
+    case SANE_STATUS_COVER_OPEN:
+        return "ScannerAdfDoorOpen";
+    case SANE_STATUS_NO_DOCS:
+        return "ScannerAdfEmpty";
+    }
+    return "";
 }
 
 void Scanner::Private::InputSource::writeCapabilitiesXml(std::ostream& os) const
@@ -554,6 +574,11 @@ std::string Scanner::statusString() const
     return p->statusString();
 }
 
+void Scanner::setTemporaryAdfStatus(SANE_Status status)
+{
+    p->mTemporaryAdfStatus = status;
+}
+
 const std::string &Scanner::uuid() const
 {
     return p->mUuid;
@@ -772,10 +797,16 @@ void Scanner::writeScannerStatusXml(std::ostream &os) const
     " xmlns:scan='http://schemas.hp.com/imaging/escl/2011/05/03'>\r\n"
     "<pwg:Version>2.0</pwg:Version>\r\n"
     "<pwg:State>" << p->statusString() << "</pwg:State>\r\n"
-    "<pwg:StateReasons>\r\n<pwg:StateReason>None</pwg:StateReason>\r\n</pwg:StateReasons>\r\n"
+    "<pwg:StateReasons>\r\n<pwg:StateReason>None</pwg:StateReason>\r\n</pwg:StateReasons>\r\n";
+
+    if(p->mpAdf)
+        os << "<scan:AdfState>" << p->temporaryAdfStatusString() << "</scan:AdfState>\r\n";
+
+    os <<
     "<scan:Jobs>\r\n";
     std::lock_guard<std::mutex> lock(p->mJobsMutex);
     for(const auto& job : p->mJobs)
         job.second->writeJobInfoXml(os);
+
     os << "</scan:Jobs>\r\n</scan:ScannerStatus>\r\n" << std::flush;
 }

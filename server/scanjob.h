@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <string>
 
+#include "sanecpp/sanecpp.h"
 #include "optionsfile.h"
 
 class Scanner;
@@ -63,6 +64,8 @@ public:
     bool isProcessing() const;
     bool isFinished() const;
     bool isAborted() const;
+
+    SANE_Status adfStatus() const;
 
     void writeJobInfoXml(std::ostream&) const;
 

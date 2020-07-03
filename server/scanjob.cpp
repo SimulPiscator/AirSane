@@ -95,6 +95,7 @@ struct ScanJob::Private
     ::time_t mCreated;
     std::atomic<State> mState;
     std::atomic<const char*> mStateReason;
+    SANE_Status mAdfStatus;
 
     std::string mScanSource, mIntent, mDocumentFormat, mColorMode;
     int mBitDepth, mRes_dpi;
@@ -116,6 +117,7 @@ ScanJob::ScanJob(Scanner* scanner, const std::string& uuid)
     p->mUuid = uuid;
     p->mState = pending;
     p->mStateReason = PWG_NONE;
+    p->mAdfStatus = SANE_STATUS_GOOD;
 }
 
 ScanJob::~ScanJob()
@@ -163,6 +165,11 @@ const std::string& ScanJob::uuid() const
 const std::string &ScanJob::documentFormat() const
 {
     return p->mDocumentFormat;
+}
+
+SANE_Status ScanJob::adfStatus() const
+{
+    return p->mAdfStatus;
 }
 
 void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat)
@@ -370,6 +377,7 @@ bool ScanJob::Private::atomicTransition(State from, State to)
 
 void ScanJob::Private::updateStatus(SANE_Status status)
 {
+    mAdfStatus = SANE_STATUS_GOOD;
     switch(status) {
     case SANE_STATUS_GOOD:
         mState = processing;
@@ -393,6 +401,12 @@ void ScanJob::Private::updateStatus(SANE_Status status)
         mStateReason = PWG_DOCUMENT_PERMISSION_ERROR;
         break;
     case SANE_STATUS_NO_DOCS:
+    case SANE_STATUS_JAMMED:
+    case SANE_STATUS_COVER_OPEN:
+        mState = aborted;
+        mStateReason = PWG_RESOURCES_ARE_NOT_READY;
+        mAdfStatus = status;
+        break;
     case SANE_STATUS_EOF:
         if(mImagesCompleted == mImagesToTransfer) {
             mState = completed;

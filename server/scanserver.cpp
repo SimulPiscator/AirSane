@@ -351,6 +351,10 @@ void ScanServer::handleScannerRequest(ScannerList::value_type& s, const std::str
                     response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, job->documentFormat());
                     response.setHeader(HttpServer::HTTP_HEADER_TRANSFER_ENCODING, "chunked");
                     job->finishTransfer(response.send());
+                } else if(job->adfStatus() != SANE_STATUS_GOOD) {
+                    s.first->setTemporaryAdfStatus(job->adfStatus());
+                    response.setStatus(HttpServer::HTTP_CONFLICT);
+                    response.send();
                 } else {
                     response.setStatus(HttpServer::HTTP_SERVICE_UNAVAILABLE);
                     response.send();
