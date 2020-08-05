@@ -456,41 +456,46 @@ void ScanJob::Private::start()
 {
     assert(!mpSession);
     mpSession = mpScanner->open();
-    auto& opt = mpSession->options();
+    SANE_Status status = mpSession->status();
+    if(status == SANE_STATUS_GOOD) {
 
-    if(mIntent == "Preview")
-        opt[SANE_NAME_PREVIEW] = 1;
-    opt[SANE_NAME_BIT_DEPTH] = mBitDepth;
-    opt[SANE_NAME_SCAN_MODE] = mColorMode;
-    opt[SANE_NAME_SCAN_SOURCE] = mScanSource;
-    bool ok = opt[SANE_NAME_SCAN_RESOLUTION].set_numeric_value(mRes_dpi);
-    if(!ok)
-       ok = opt[SANE_NAME_SCAN_X_RESOLUTION].set_numeric_value(mRes_dpi)
-                || opt[SANE_NAME_SCAN_Y_RESOLUTION].set_numeric_value(mRes_dpi);
+      auto& opt = mpSession->options();
 
-    double left = mLeft_px, top = mTop_px,
-            right = mLeft_px + mWidth_px,
-            bottom = mTop_px + mHeight_px;
+      if(mIntent == "Preview")
+          opt[SANE_NAME_PREVIEW] = 1;
+      opt[SANE_NAME_BIT_DEPTH] = mBitDepth;
+      opt[SANE_NAME_SCAN_MODE] = mColorMode;
+      opt[SANE_NAME_SCAN_SOURCE] = mScanSource;
+      bool ok = opt[SANE_NAME_SCAN_RESOLUTION].set_numeric_value(mRes_dpi);
+      if(!ok)
+         ok = opt[SANE_NAME_SCAN_X_RESOLUTION].set_numeric_value(mRes_dpi)
+                  || opt[SANE_NAME_SCAN_Y_RESOLUTION].set_numeric_value(mRes_dpi);
 
-    switch(opt[SANE_NAME_SCAN_TL_X].unit()) {
-    case SANE_UNIT_PIXEL:
-        break;
-    case SANE_UNIT_MM:
-        for(auto p : { &left, &right, &top, &bottom })
-            *p *= 25.4/mRes_dpi;
-        break;
-    default:
-        ok = false;
+      double left = mLeft_px, top = mTop_px,
+             right = mLeft_px + mWidth_px,
+             bottom = mTop_px + mHeight_px;
+
+      switch(opt[SANE_NAME_SCAN_TL_X].unit()) {
+      case SANE_UNIT_PIXEL:
+          break;
+      case SANE_UNIT_MM:
+          for(auto p : { &left, &right, &top, &bottom })
+              *p *= 25.4/mRes_dpi;
+          break;
+      default:
+          ok = false;
+      }
+      for(auto p : { &left, &right, &top, &bottom })
+          *p = ::floor(*p + 0.5);
+      opt[SANE_NAME_SCAN_TL_X] = left;
+      opt[SANE_NAME_SCAN_TL_Y] = top;
+      opt[SANE_NAME_SCAN_BR_X] = right;
+      opt[SANE_NAME_SCAN_BR_Y] = bottom;
+
+      if(!ok)
+          status = SANE_STATUS_INVAL;
     }
-    for(auto p : { &left, &right, &top, &bottom })
-        *p = ::floor(*p + 0.5);
-    opt[SANE_NAME_SCAN_TL_X] = left;
-    opt[SANE_NAME_SCAN_TL_Y] = top;
-    opt[SANE_NAME_SCAN_BR_X] = right;
-    opt[SANE_NAME_SCAN_BR_Y] = bottom;
-
-    SANE_Status status = SANE_STATUS_INVAL;
-    if(ok)
+    if(status == SANE_STATUS_GOOD)
         status = mpSession->start().status();
     updateStatus(status);
 }
