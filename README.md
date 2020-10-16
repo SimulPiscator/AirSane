@@ -177,9 +177,6 @@ calibration-file /home/simul/some path with spaces/canon-lide-60.cal
 
 ## Color Management (Gamma Correction)
 
-Although not stated explicitly, it seems that SANE backends try to perform color and gamma correction such as
-to return image data in a linear color space.
-
 When receiving scan data from an AirScan scanner, macOS seems to ignore all color space related information from the
 transmitted image files, and interprets color and gray levels according to standard scanner color profiles.
 Using ColorSync Utility, one can see that these color profiles are called `Scanner RGB Profile.icc` and 
@@ -187,12 +184,15 @@ Using ColorSync Utility, one can see that these color profiles are called `Scann
 Unfortunately, it is not possible to permanently assign a different color profile to an AirScan scanner using 
 ColorSync Utility: the specified color profile is not used, and the profile setting is reverted to the original standard profile.
 
-The macOS standard profiles assume a gamma value of 1.8, which does not match the linear data coming from SANE.
-As a result, scanned images appear darker than the original, with fewer details in darker areas.
+The SANE standard does not prescribe a certain gamma of backend output.
+
+The macOS standard profiles assume a gamma value of 1.8, which does not necessarily match the data coming from the SANE backend.
+As a result, scanned images may appear darker than the original, with fewer details in darker areas, or brighter, with fewer
+details in brighter areas.
 
 Using the gamma options of AirSane, you will be able to neutralize the gamma value of 1.8 in the macOS scanner profile.
 Apply the inverse of 1.8 as a `gray-gamma` and `color-gamma` value in your AirSane configuration file, as shown in the example 
-above.
+above. By multiplying with another factor between 0.45 and 2.2, you can correct for the gamma value returned from the SANE backend.
 
 ## Troubleshoot
 
