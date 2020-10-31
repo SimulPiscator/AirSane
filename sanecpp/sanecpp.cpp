@@ -496,10 +496,12 @@ session::session(device_handle h)
 
 session::~session()
 {
-    log << "sane_cancel(" << m_device.get() << ")" << std::endl;
-    // SANE API documentation says that sane_cancel() must be called
-    // when scanning is finished.
-    ::sane_cancel(m_device.get());
+    if(m_device) {
+      log << "sane_cancel(" << m_device.get() << ")" << std::endl;
+      // SANE API documentation says that sane_cancel() must be called
+      // when scanning is finished.
+      ::sane_cancel(m_device.get());
+    }
 }
 
 session &session::start()
