@@ -223,3 +223,7 @@ airsaned as user saned vs running as root:
   sudo -u saned airsaned --debug=true --access-log=-
   sudo airsaned --debug=true --access-log=-
 ```
+
+* Scan appears **too dark** or **too bright**. See notes about color management (gamma correction)
+above. Start out with the suggested factor of 0.55. Try settings between 0.45 and 2.2 until scan
+quality appears good.
