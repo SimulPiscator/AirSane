@@ -207,7 +207,8 @@ bool ScanServer::run()
 std::shared_ptr<MdnsPublisher::Service> ScanServer::buildMdnsService(const Scanner* pScanner)
 {
     auto pService = std::make_shared<MdnsPublisher::Service>(&mPublisher);
-    pService->setType("_uscan._tcp.").setName(pScanner->makeAndModel());
+    pService->setType("_uscan._tcp.");
+    pService->setName(pScanner->makeAndModel());
     pService->setInterfaceIndex(interfaceIndex()).setPort(port());
     pService->setTxt("txtvers", "1");
     pService->setTxt("vers", "2.0");
@@ -217,6 +218,7 @@ std::shared_ptr<MdnsPublisher::Service> ScanServer::buildMdnsService(const Scann
     if(!s.empty())
         pService->setTxt("pdl", s.substr(1));
     pService->setTxt("ty", pScanner->makeAndModel());
+    pService->setTxt("note", hostname());
     pService->setTxt("uuid", pScanner->uuid());
     pService->setTxt("rs", pScanner->uri().substr(1));
     s.clear();
