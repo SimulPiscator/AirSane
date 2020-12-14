@@ -575,17 +575,19 @@ void ScanJob::Private::finishTransfer(std::ostream &os)
         SANE_Status status = SANE_STATUS_GOOD;
         while(status == SANE_STATUS_GOOD && os && isProcessing()) {
             status = mpSession->read(buffer).status();
-            applyGamma(buffer);
-            if(mSynthesizedGray)
-                synthesizeGray(buffer);
-            if(status == SANE_STATUS_GOOD) try {
-                pEncoder->writeLine(buffer.data());
-                if(!os.flush())
-                    abortTransfer();
-            } catch(const std::runtime_error& e) {
-                std::cerr << e.what() << ", aborting" << std::endl;
-                mState = aborted;
-                mStateReason = PWG_ERRORS_DETECTED;
+            if(status == SANE_STATUS_GOOD) {
+                applyGamma(buffer);
+                if(mSynthesizedGray)
+                    synthesizeGray(buffer);
+                try {
+                    pEncoder->writeLine(buffer.data());
+                    if(!os.flush())
+                        abortTransfer();
+                } catch(const std::runtime_error& e) {
+                    std::cerr << e.what() << ", aborting" << std::endl;
+                    mState = aborted;
+                    mStateReason = PWG_ERRORS_DETECTED;
+                }
             }
         }
         if(isProcessing()) {
