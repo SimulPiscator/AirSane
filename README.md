@@ -83,8 +83,9 @@ If all scanners are listed for 'root' but none for 'saned,' you might have hit
 a [bug in libsane](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=918358).
 As a workaround, create a file ```/etc/udev/rules.d/65-libsane.rules``` with this content:
 ```
-ENV{libsane_matched}=="yes", RUN+="/bin/setfacl -m g:scanner:rw $env{DEVNAME}"
+ENV{libsane_matched}=="yes", RUN+="/usr/bin/setfacl -m g:scanner:rw $env{DEVNAME}"
 ```
+Double-check the location of the `setfacl` binary using `which setfacl`, adapt the line if necessary.
 Unplug and re-plug all scanners. ```sudo -u saned scanimage -L``` should now list all
 of them.
 
