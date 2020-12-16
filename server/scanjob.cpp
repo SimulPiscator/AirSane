@@ -407,6 +407,10 @@ void ScanJob::Private::updateStatus(SANE_Status status)
         mStateReason = PWG_RESOURCES_ARE_NOT_READY;
         mAdfStatus = status;
         break;
+    case SANE_STATUS_CANCELLED:
+        mState = aborted;
+        mStateReason = PWG_JOB_CANCELED_BY_USER;
+        break;
     case SANE_STATUS_EOF:
         if(mImagesCompleted == mImagesToTransfer) {
             mState = completed;
@@ -502,6 +506,8 @@ void ScanJob::Private::start()
 
 void ScanJob::Private::abortTransfer()
 {
+    if(mpSession)
+        mpSession->cancel();
     if(atomicTransition(processing, pending)) {
         mStateReason = PWG_NONE;
         mpSession.reset();

@@ -152,6 +152,7 @@ public:
     const SANE_Parameters* parameters() const { return &m_parameters; }
 
     session& start();
+    session& cancel();
     session& read(std::vector<char> &);
 
 private:
