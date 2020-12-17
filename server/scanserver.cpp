@@ -287,7 +287,7 @@ static bool clientIsAirscan(const HttpServer::Request& req)
     return req.header(HttpServer::HTTP_HEADER_USER_AGENT).find("AirScanScanner") != std::string::npos;
 }
 
-void ScanServer::handleScannerRequest(ScannerList::value_type& s, const std::string& uriRemainder, const HttpServer::Request &request, HttpServer::Response &response)
+void ScanServer::handleScannerRequest(ScannerList::value_type s, const std::string& uriRemainder, const HttpServer::Request &request, HttpServer::Response &response)
 {
     response.setStatus(HttpServer::HTTP_OK);
     if(uriRemainder.empty() || uriRemainder == "/") {

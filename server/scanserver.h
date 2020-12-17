@@ -43,7 +43,9 @@ protected:
 
 private:
     std::shared_ptr<MdnsPublisher::Service> buildMdnsService(const Scanner*);
-    void handleScannerRequest(ScannerList::value_type&, const std::string& uriRemainder, const HttpServer::Request&, HttpServer::Response&);
+    // must pass ScannerList element by value to achieve protection during
+    // request
+    void handleScannerRequest(ScannerList::value_type, const std::string& uriRemainder, const HttpServer::Request&, HttpServer::Response&);
 
     MdnsPublisher mPublisher;
     ScannerList mScanners;
