@@ -184,7 +184,8 @@ struct Scanner::Private
         double mMinWidth, mMaxWidth, mMinHeight, mMaxHeight,
                mMaxPhysicalWidth, mMaxPhysicalHeight;
         int mMaxBits;
-        explicit InputSource(Private* p) : p(p) {}
+
+        explicit InputSource(Private* p);
         const char* init(const sanecpp::option_set&);
         void writeCapabilitiesXml(std::ostream&) const;
     } *mpPlaten, *mpAdf;
@@ -349,6 +350,11 @@ const char *Scanner::Private::temporaryAdfStatusString()
         return "ScannerAdfEmpty";
     }
     return "";
+}
+
+Scanner::Private::InputSource::InputSource(Private* p)
+: p(p)
+{
 }
 
 void Scanner::Private::InputSource::writeCapabilitiesXml(std::ostream& os) const
