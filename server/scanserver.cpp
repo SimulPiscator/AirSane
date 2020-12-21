@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <csignal>
 #include <cstring>
 #include <algorithm>
+#include <regex>
 
 #include "scanner.h"
 #include "scanjob.h"
@@ -32,6 +33,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "zeroconf/hotplugnotifier.h"
 
 namespace {
+
+    const char* ignoreList[] =
+    {
+        // Avoid device detection loops from escl backends.
+        "escl:.*", "airscan:.*",
+    };
+    bool applyIgnoreList(const sanecpp::device_info& info)
+    {
+        for(const auto pattern : ignoreList)
+            if(std::regex_match(info.name, std::regex(pattern)))
+                return true;
+        return false;
+    }
 
     struct Notifier : HotplugNotifier
     {
@@ -148,6 +162,8 @@ bool ScanServer::run()
         auto scanners = sanecpp::enumerate_devices(mLocalonly);
         for(const auto& s : scanners) {
             std::clog << "found: " << s.name << " (" << s.vendor << " " << s.model << ")" << std::endl;
+            if(applyIgnoreList(s))
+                std::clog << "ignoring " << s.name << std::endl;
             auto pScanner = std::make_shared<Scanner>(s, mRandomUuids);
             if(pScanner->error())
                 std::clog << "error: " << pScanner->error() << std::endl;
