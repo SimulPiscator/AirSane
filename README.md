@@ -234,3 +234,6 @@ This is a known [bug in the genesys backend](https://bugs.launchpad.net/ubuntu/+
 present in libsane versions 1.0.26 and 1.0.27. The solution is to remove the libsane package, and install
 SANE from source.
    
+* Apple Image Capture fails to connect to the scanner (shows an error 21345)
+Enable IPv6 in your local network, and on the machine running AirSane.
+After rebooting the machine running AirSane, you will be able to scan from Apple Image Capture.
