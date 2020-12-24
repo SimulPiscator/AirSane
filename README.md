@@ -58,9 +58,9 @@ Build files and instructions for OpenWRT have been published here:
 ### Build and install from source on Debian/Ubuntu/Raspbian
 #### Build
 ```
-sudo apt install libsane-dev libjpeg-dev libpng-dev
-sudo apt install libavahi-client-dev libusb-1.*-dev
-sudo apt install git cmake g++
+sudo apt-get install libsane-dev libjpeg-dev libpng-dev
+sudo apt-get install libavahi-client-dev libusb-1.*-dev
+sudo apt-get install git cmake g++
 git clone https://github.com/SimulPiscator/AirSane.git
 mkdir AirSane-build && cd AirSane-build
 cmake ../AirSane
@@ -72,7 +72,7 @@ The provided systemd service file assumes that user and group
 Installing the sane-utils package is a convenient way to set up a user 'saned'
 with proper permissions:
 ```
-sudo apt install sane-utils
+sudo apt-get install sane-utils
 ```
 Make sure that ```sudo scanimage -L``` lists all scanners attached to your machine.
 Listing scanners as user 'saned' should show all scanners as well:
@@ -91,7 +91,7 @@ of them.
 
 To install AirSane:
 ```
-sudo apt install avahi-daemon
+sudo apt-get install avahi-daemon
 sudo make install
 sudo systemctl enable airsaned
 sudo systemctl start airsaned
@@ -234,3 +234,6 @@ This is a known [bug in the genesys backend](https://bugs.launchpad.net/ubuntu/+
 present in libsane versions 1.0.26 and 1.0.27. The solution is to remove the libsane package, and install
 SANE from source.
    
+* Apple Image Capture fails to connect to the scanner (shows an **"error 21345"**).
+Enable IPv6 in your local network, and on the machine running AirSane.
+After rebooting the machine running AirSane, you will be able to scan from Apple Image Capture.
