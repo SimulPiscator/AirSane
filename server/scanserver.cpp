@@ -162,8 +162,10 @@ bool ScanServer::run()
         auto scanners = sanecpp::enumerate_devices(mLocalonly);
         for(const auto& s : scanners) {
             std::clog << "found: " << s.name << " (" << s.vendor << " " << s.model << ")" << std::endl;
-            if(applyIgnoreList(s))
+            if(applyIgnoreList(s)) {
                 std::clog << "ignoring " << s.name << std::endl;
+                continue;
+            }
             auto pScanner = std::make_shared<Scanner>(s, mRandomUuids);
             if(pScanner->error())
                 std::clog << "error: " << pScanner->error() << std::endl;
