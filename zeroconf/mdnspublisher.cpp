@@ -73,8 +73,11 @@ struct ServiceEntry
             if(err == AVAHI_ERR_COLLISION)
                 renameService();
         } while(err == AVAHI_ERR_COLLISION);
-        if(err)
-            std::cerr << ::avahi_strerror(err) << std::endl;
+        if(err) {
+            std::cerr << "Avahi error when adding service: " 
+                      << ::avahi_strerror(err) << " (" << err << ")" 
+                      << std::endl;
+        }
         return !err;
     }
 
@@ -207,7 +210,17 @@ struct MdnsPublisher::Private
         destroyClient();
         const AvahiPoll* pPoll = ::avahi_threaded_poll_get(mpThread);
         mpClient = ::avahi_client_new(pPoll, AVAHI_CLIENT_NO_FAIL, &clientCallback, this, nullptr);
-        mHostNameFqdn = ::avahi_client_get_host_name_fqdn(mpClient);
+        const char* hostName = ::avahi_client_get_host_name_fqdn(mpClient);
+        if(!hostName) {
+            int err = ::avahi_client_errno(mpClient);
+            std::cerr << "avahi_client_get_host_name_fqdn(): "
+                      << ::avahi_strerror(err) << " (" << err << ")"
+                      << std::endl;
+            mHostNameFqdn = "<unknown>";
+        }
+        else {
+            mHostNameFqdn = hostName;
+        }
     }
 
     void destroyClient()
