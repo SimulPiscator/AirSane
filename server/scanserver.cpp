@@ -30,22 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mainpage.h"
 #include "scannerpage.h"
 #include "optionsfile.h"
+#include "basic/hostname.h"
 #include "zeroconf/hotplugnotifier.h"
 
 namespace {
-
-    const char* ignoreList[] =
-    {
-        // Avoid device detection loops from escl backends.
-        "escl:.*", "airscan:.*",
-    };
-    bool applyIgnoreList(const sanecpp::device_info& info)
-    {
-        for(const auto pattern : ignoreList)
-            if(std::regex_match(info.name, std::regex(pattern)))
-                return true;
-        return false;
-    }
 
     struct Notifier : HotplugNotifier
     {
@@ -72,15 +60,16 @@ ScanServer::ScanServer(int argc, char** argv)
       mRandomUuids(false), mDoRun(true)
 {
     std::string port, interface, accesslog, hotplug, announce,
-        localonly, optionsfile, randomuuids, debug;
+        localonly, optionsfile, ignorelist, randomuuids, debug;
     struct { const std::string name, def, info; std::string& value; } options[] = {
-    { "listen-port", "8090", "listening port", port },
+    { "base-port", "8090", "base listening port", port },
     { "interface", "", "listen on named interface only", interface },
     { "access-log", "", "HTTP access log, - for stdout", accesslog },
     { "hotplug", "true", "reload scanner list on hotplug event", hotplug },
-    { "mdns-announce", "true", "announce scanners via mDNS (avahi)", announce },
+    { "mdns-announce", "true", "announce scanners via mDNS", announce },
     { "local-scanners-only", "true", "ignore SANE network scanners", localonly },
     { "options-file", "/etc/airsane/options.conf", "location of device options file", optionsfile },
+    { "ignore-list", "/etc/airsane/ignore.conf", "location of device ignore list", ignorelist },
     { "random-uuids", "false", "generate random UUIDs on startup", randomuuids },
     { "debug", "false", "log debug information to stderr", debug },
     };
@@ -117,6 +106,7 @@ ScanServer::ScanServer(int argc, char** argv)
     mAnnounce = (announce == "true");
     mLocalonly = (localonly == "true");
     mOptionsfile = optionsfile;
+    mIgnorelist = ignorelist;
     mRandomUuids = (randomuuids == "true");
 
     uint16_t port_ = 0;
@@ -160,9 +150,10 @@ bool ScanServer::run()
         OptionsFile optionsfile(mOptionsfile);
         std::clog << "enumerating " << (mLocalonly ? "local " : " ") << "devices..." << std::endl;
         auto scanners = sanecpp::enumerate_devices(mLocalonly);
+        uint16_t port = ScanServer::port();
         for(const auto& s : scanners) {
             std::clog << "found: " << s.name << " (" << s.vendor << " " << s.model << ")" << std::endl;
-            if(applyIgnoreList(s)) {
+            if(matchIgnorelist(s)) {
                 std::clog << "ignoring " << s.name << std::endl;
                 continue;
             }
@@ -176,10 +167,11 @@ bool ScanServer::run()
                 auto options = optionsfile.scannerOptions(pScanner.get());
                 pScanner->setDeviceOptions(options);
 
+                //++port;
                 std::ostringstream url;
                 url << "http://"
-                    << mPublisher.hostNameFqdn()
-                    << ":" << port()
+                    << hostnameFqdn()
+                    << ":" << port
                     << pScanner->uri();
                 pScanner->setAdminUrl(url.str());
                 if(!pScanner->iconFile().empty()) {
@@ -192,6 +184,7 @@ bool ScanServer::run()
             if(mAnnounce && !pScanner->error())
             {
                 pService = buildMdnsService(pScanner.get());
+                pService->setPort(port);
                 if(pService->announce())
                     std::clog << "published as '" << pService->name() << "'" << std::endl;
                 else
@@ -222,12 +215,29 @@ bool ScanServer::run()
     return ok;
 }
 
+bool ScanServer::matchIgnorelist(const sanecpp::device_info& info) const
+{
+    std::ifstream file(mIgnorelist);
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.find('#') == 0)
+            continue;
+        if (line.find("//") == 0)
+            continue;
+        if (line.find(' ') == 0)
+            continue;
+        if (std::regex_match(info.name, std::regex(line)))
+            return true;
+    }
+    return false;
+}
+
 std::shared_ptr<MdnsPublisher::Service> ScanServer::buildMdnsService(const Scanner* pScanner)
 {
     auto pService = std::make_shared<MdnsPublisher::Service>(&mPublisher);
     pService->setType("_uscan._tcp.");
     pService->setName(pScanner->makeAndModel());
-    pService->setInterfaceIndex(interfaceIndex()).setPort(port());
+    pService->setInterfaceIndex(interfaceIndex());
     pService->setTxt("txtvers", "1");
     pService->setTxt("vers", "2.0");
     std::string s;

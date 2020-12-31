@@ -25,6 +25,26 @@ include_directories(.)
 if(APPLE)
   include_directories(/usr/local/include /opt/local/include)
   link_directories(/usr/local/lib /opt/local/lib)
+  set(BASIC_FILES
+    basic/hostname-macos.mm
+  )
+  set(ZEROCONF_FILES
+    zeroconf/mdnspublisher-dnssd.cpp
+  )
+  set(ZEROCONF_LIBS
+    "-framework IOKit"
+  )
+else()
+  set(BASIC_FILES
+    basic/hostname.cpp
+  )
+  set(ZEROCONF_FILES
+    zeroconf/mdnspublisher-avahi.cpp
+  )
+  set(ZEROCONF_LIBS
+    avahi-client
+    avahi-common
+  )
 endif()
 add_executable(${PROJECT_NAME}
     ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
@@ -48,6 +68,8 @@ add_executable(${PROJECT_NAME}
     imageformats/pngencoder.cpp
     zeroconf/mdnspublisher.cpp
     zeroconf/hotplugnotifier.cpp
+    ${BASIC_FILES}
+    ${ZEROCONF_FILES}
 )
 target_link_libraries(
     ${PROJECT_NAME}
@@ -55,8 +77,7 @@ target_link_libraries(
     sane
     jpeg
     png
-    avahi-client
-    avahi-common
+    ${ZEROCONF_LIBS}
     usb-1.0
 )
 install(TARGETS ${PROJECT_NAME}
@@ -70,6 +91,11 @@ install(FILES systemd/airsaned.default
     RENAME airsane
 )
 
+install(CODE "
+    if(NOT EXISTS /etc/airsane/ignore.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/ignore.conf DESTINATION /etc/airsane)
+    endif()
+")
 install(CODE "
     if(NOT EXISTS /etc/airsane/options.conf)
         file(INSTALL ${CMAKE_SOURCE_DIR}/etc/options.conf DESTINATION /etc/airsane)

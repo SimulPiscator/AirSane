@@ -42,6 +42,7 @@ protected:
     void onRequest(const Request&, Response&) override;
 
 private:
+    bool matchIgnorelist(const sanecpp::device_info&) const;
     std::shared_ptr<MdnsPublisher::Service> buildMdnsService(const Scanner*);
     // must pass ScannerList element by value to achieve protection during
     // request
@@ -51,7 +52,7 @@ private:
     ScannerList mScanners;
     std::filebuf mLogfile;
     bool mAnnounce, mLocalonly, mHotplug, mRandomUuids;
-    std::string mOptionsfile;
+    std::string mOptionsfile, mIgnorelist;
     bool mDoRun;
 };
 
