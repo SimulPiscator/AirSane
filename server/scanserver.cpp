@@ -65,7 +65,7 @@ ScanServer::ScanServer(int argc, char** argv)
     { "base-port", "8090", "base listening port", port },
     { "interface", "", "listen on named interface only", interface },
     { "access-log", "", "HTTP access log, - for stdout", accesslog },
-    { "hotplug", "true", "reload scanner list on hotplug event", hotplug },
+    { "hotplug", "true", "repeat scanner search on hotplug event", hotplug },
     { "mdns-announce", "true", "announce scanners via mDNS", announce },
     { "local-scanners-only", "true", "ignore SANE network scanners", localonly },
     { "options-file", "/etc/airsane/options.conf", "location of device options file", optionsfile },
@@ -226,8 +226,12 @@ bool ScanServer::matchIgnorelist(const sanecpp::device_info& info) const
             continue;
         if (line.find(' ') == 0)
             continue;
-        if (std::regex_match(info.name, std::regex(line)))
+        if (std::regex_match(info.name, std::regex(line))) {
+            std::clog << mIgnorelist << ": regex '" << line << "'"
+                      << " matches device name '" << info.name << "'" 
+                      << std::endl;
             return true;
+        }
     }
     return false;
 }
