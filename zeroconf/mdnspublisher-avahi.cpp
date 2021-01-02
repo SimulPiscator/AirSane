@@ -83,6 +83,10 @@ struct ServiceEntry
 
     int doAnnounce(AvahiClient* pClient)
     {
+        if (!pClient) {
+            std::cerr << "No avahi client instance available, not registering service" << std::endl;
+            return AVAHI_ERR_FAILURE;
+        }
         if(mpEntryGroup)
             ::avahi_entry_group_free(mpEntryGroup);
         mpEntryGroup = ::avahi_entry_group_new(pClient, &entryGroupCallback, this);
@@ -208,7 +212,11 @@ struct MdnsPublisher::Private
     {
         destroyClient();
         const AvahiPoll* pPoll = ::avahi_threaded_poll_get(mpThread);
-        mpClient = ::avahi_client_new(pPoll, AVAHI_CLIENT_NO_FAIL, &clientCallback, this, nullptr);
+        int err = 0;
+        mpClient = ::avahi_client_new(pPoll, AVAHI_CLIENT_NO_FAIL, &clientCallback, this, &err);
+        if (!mpClient) {
+            std::cerr << "Failed to create avahi client: " << ::avahi_strerror(err) << " (" << err << ")" << std::endl;
+        }
     }
 
     void destroyClient()
