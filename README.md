@@ -237,3 +237,12 @@ SANE from source.
 * Apple Image Capture fails to connect to the scanner (shows an **"error 21345"**).
 Enable IPv6 in your local network, and on the machine running AirSane.
 After rebooting the machine running AirSane, you will be able to scan from Apple Image Capture.
+
+* Scanners are not advertised, and in the debug log, you seen an avahi error **"Bad State (-2)"**.
+Most likely, the avahi-daemon package is not installed, or avahi-daemon is not running/enabled:
+```
+  sudo install avahi-daemon
+  sudo systemctl enable avahi-daemon
+  sudo systemclt start avahi-damon
+
+```
