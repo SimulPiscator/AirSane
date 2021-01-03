@@ -16,19 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "scanserver.h"
+#include "mainserver.h"
 
-#include <fstream>
 #include <sstream>
-#include <csignal>
-#include <cstring>
-#include <algorithm>
 #include <regex>
+#include <csignal>
+#include <ctime>
 
 #include "scanner.h"
 #include "scanjob.h"
 #include "mainpage.h"
-#include "scannerpage.h"
 #include "optionsfile.h"
 #include "basic/hostname.h"
 #include "zeroconf/hotplugnotifier.h"
@@ -37,8 +34,8 @@ namespace {
 
     struct Notifier : HotplugNotifier
     {
-        ScanServer& server;
-        explicit Notifier(ScanServer& s) : server(s) {}
+        MainServer& server;
+        explicit Notifier(MainServer& s) : server(s) {}
         void onHotplugEvent(Event ev) override
         {
             switch(ev) {
@@ -55,9 +52,9 @@ namespace {
 } // namespace
 
 
-ScanServer::ScanServer(int argc, char** argv)
+MainServer::MainServer(int argc, char** argv)
     : mAnnounce(true), mLocalonly(true), mHotplug(true),
-      mRandomUuids(false), mDoRun(true)
+      mRandomUuids(false), mDoRun(true), mStartupTimeSeconds(0)
 {
     std::string port, interface, accesslog, hotplug, announce,
         localonly, optionsfile, ignorelist, randomuuids, debug;
@@ -132,14 +129,18 @@ ScanServer::ScanServer(int argc, char** argv)
     }
 }
 
-ScanServer::~ScanServer()
+MainServer::~MainServer()
 {
 }
 
-bool ScanServer::run()
+bool MainServer::run()
 {
     if(!mDoRun)
         return false;
+    
+    struct timespec t = {0};
+    ::clock_gettime(CLOCK_MONOTONIC, &t);
+    float t0 = t.tv_sec + 1e-9 * t.tv_nsec;
 
     std::shared_ptr<Notifier> pNotifier;
     if(mHotplug)
@@ -150,7 +151,7 @@ bool ScanServer::run()
         OptionsFile optionsfile(mOptionsfile);
         std::clog << "enumerating " << (mLocalonly ? "local " : " ") << "devices..." << std::endl;
         auto scanners = sanecpp::enumerate_devices(mLocalonly);
-        uint16_t port = ScanServer::port();
+        uint16_t port = MainServer::port();
         for(const auto& s : scanners) {
             std::clog << "found: " << s.name << " (" << s.vendor << " " << s.model << ")" << std::endl;
             if(matchIgnorelist(s)) {
@@ -167,15 +168,15 @@ bool ScanServer::run()
                 auto options = optionsfile.scannerOptions(pScanner.get());
                 pScanner->setDeviceOptions(options);
 
-                //++port;
+                ++port;
                 std::ostringstream url;
                 url << "http://"
                     << hostnameFqdn()
                     << ":" << port
-                    << pScanner->uri();
+                    << "/";
                 pScanner->setAdminUrl(url.str());
                 if(!pScanner->iconFile().empty()) {
-                    url << "/ScannerIcon";
+                    url << "ScannerIcon";
                     pScanner->setIconUrl(url.str());
                 }
             }
@@ -185,13 +186,21 @@ bool ScanServer::run()
             {
                 pService = buildMdnsService(pScanner.get());
                 pService->setPort(port);
-                if(pService->announce())
+                if(pService->announce()) {
                     std::clog << "published as '" << pService->name() << "'" << std::endl;
+                    pScanner->setPublishedName(pService->name());
+                }
                 else
                     pService.reset();
             }
-            mScanners.push_back(std::make_pair(pScanner, pService));
+            
+            std::shared_ptr<ScannerServer> pServer = std::make_shared<ScannerServer>(pScanner, port);
+            mScanners.push_back(ScannerEntry({pScanner, pService, pServer}));
         }
+        ::clock_gettime(CLOCK_MONOTONIC, &t);
+        float t1 = t.tv_sec + 1e-9 * t.tv_nsec;
+        mStartupTimeSeconds = t1 - t0;
+
         ok = HttpServer::run();
         mScanners.clear();
         if(ok && terminationStatus() == SIGHUP) {
@@ -215,7 +224,7 @@ bool ScanServer::run()
     return ok;
 }
 
-bool ScanServer::matchIgnorelist(const sanecpp::device_info& info) const
+bool MainServer::matchIgnorelist(const sanecpp::device_info& info) const
 {
     std::ifstream file(mIgnorelist);
     std::string line;
@@ -232,11 +241,11 @@ bool ScanServer::matchIgnorelist(const sanecpp::device_info& info) const
     return false;
 }
 
-std::shared_ptr<MdnsPublisher::Service> ScanServer::buildMdnsService(const Scanner* pScanner)
+std::shared_ptr<MdnsPublisher::Service> MainServer::buildMdnsService(const Scanner* pScanner)
 {
     auto pService = std::make_shared<MdnsPublisher::Service>(&mPublisher);
     pService->setType("_uscan._tcp.");
-    pService->setName(pScanner->makeAndModel());
+    pService->setName(pScanner->publishedName());
     pService->setInterfaceIndex(interfaceIndex());
     pService->setTxt("txtvers", "1");
     pService->setTxt("vers", "2.0");
@@ -248,7 +257,7 @@ std::shared_ptr<MdnsPublisher::Service> ScanServer::buildMdnsService(const Scann
     pService->setTxt("ty", pScanner->makeAndModel());
     pService->setTxt("note", hostname());
     pService->setTxt("uuid", pScanner->uuid());
-    pService->setTxt("rs", pScanner->uri().substr(1));
+    pService->setTxt("rs", "eSCL");
     s.clear();
     for(const auto& cs : pScanner->txtColorSpaces())
         s += "," + cs;
@@ -271,7 +280,7 @@ std::shared_ptr<MdnsPublisher::Service> ScanServer::buildMdnsService(const Scann
     return pService;
 }
 
-void ScanServer::onRequest(const Request& request, Response& response)
+void MainServer::onRequest(const Request& request, Response& response)
 {
     if(request.uri() == "/") {
         response.setStatus(HttpServer::HTTP_OK);
@@ -283,7 +292,9 @@ void ScanServer::onRequest(const Request& request, Response& response)
     else if(request.uri() == "/reset") {
         response.setStatus(HttpServer::HTTP_OK);
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
-        response.setHeader(HttpServer::HTTP_HEADER_REFRESH, "2; url=/");
+        std::ostringstream oss;
+        oss << ::ceil(mStartupTimeSeconds) + 1 << "; url=/";
+        response.setHeader(HttpServer::HTTP_HEADER_REFRESH, oss.str());
         struct : WebPage
         {
           void onRender() override {
@@ -291,107 +302,9 @@ void ScanServer::onRequest(const Request& request, Response& response)
             out() << paragraph().addText("You will be redirected to the main page in a few seconds.") << std::endl;
           }
         } resetpage;
-        resetpage.setTitle("Resetting AirSane Server on " + hostname() + "...")
+        resetpage.setTitle("Resetting AirSane Server on " + hostname() + " ...")
                  .render(request, response);
         this->terminate(SIGHUP);
     }
-    for(auto& s : mScanners) {
-        if(request.uri().find(s.first->uri()) == 0) {
-            std::string res = request.uri().substr(s.first->uri().length());
-            handleScannerRequest(s, res, request, response);
-            return;
-        }
-        else if(request.uri().find("/" + s.first->uuid()) == 0) {
-            std::string res = request.uri().substr(s.first->uuid().length() + 1);
-            handleScannerRequest(s, res, request, response);
-            return;
-        }
-    }
     HttpServer::onRequest(request, response);
 }
-
-static bool clientIsAirscan(const HttpServer::Request& req)
-{
-    return req.header(HttpServer::HTTP_HEADER_USER_AGENT).find("AirScanScanner") != std::string::npos;
-}
-
-void ScanServer::handleScannerRequest(ScannerList::value_type s, const std::string& uriRemainder, const HttpServer::Request &request, HttpServer::Response &response)
-{
-    response.setStatus(HttpServer::HTTP_OK);
-    if(uriRemainder.empty() || uriRemainder == "/") {
-        response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
-        auto name = s.second ? s.second->name() : s.first->makeAndModel();
-        ScannerPage(*s.first).setTitle(name + " on " + hostname()).render(request, response);
-        return;
-    }
-    if(uriRemainder == "/ScannerCapabilities" && request.method() == HttpServer::HTTP_GET) {
-        response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/xml");
-        s.first->writeScannerCapabilitiesXml(response.send());
-        return;
-    }
-    if(uriRemainder == "/ScannerStatus" && request.method() == HttpServer::HTTP_GET) {
-        response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/xml");
-        s.first->writeScannerStatusXml(response.send());
-        return;
-    }
-    if(uriRemainder == "/ScannerIcon" && request.method() == HttpServer::HTTP_GET) {
-        std::ifstream file(s.first->iconFile());
-        if(file.is_open()) {
-            response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, HttpServer::MIME_TYPE_PNG);
-            response.send() << file.rdbuf() << std::flush;
-        }
-        else {
-            std::clog << "could not open " << s.first->iconFile()
-                      << " for reading" << std::endl;
-            response.setStatus(HttpServer::HTTP_NOT_FOUND);
-            response.send();
-        }
-        return;
-    }
-    const std::string ScanJobsDir = "/ScanJobs";
-    if(uriRemainder == ScanJobsDir && request.method() == HttpServer::HTTP_POST) {
-        bool autoselectFormat = clientIsAirscan(request);
-        std::shared_ptr<ScanJob> job = s.first->createJobFromScanSettingsXml(request.content(), autoselectFormat);
-        if(job) {
-            response.setStatus(HttpServer::HTTP_CREATED);
-            response.setHeader(HttpServer::HTTP_HEADER_LOCATION, job->uri());
-            response.send();
-            return;
-        }
-    }
-    if(uriRemainder.rfind(ScanJobsDir, 0) != 0)
-        return;
-    std::string res = uriRemainder.substr(ScanJobsDir.length());
-    if(res.empty() || res.front() != '/')
-        return;
-    res = res.substr(1);
-    size_t pos = res.find('/');
-    if(pos > res.length() && request.method() == HttpServer::HTTP_DELETE && s.first->cancelJob(res)) {
-        response.send();
-        return;
-    }
-    if(res.substr(pos) == "/NextDocument" && request.method() == HttpServer::HTTP_GET) {
-        auto job = s.first->getJob(res.substr(0, pos));
-        if(job) {
-            if(job->isFinished()) {
-                response.setStatus(HttpServer::HTTP_NOT_FOUND);
-                response.send();
-            } else {
-                if(job->beginTransfer()) {
-                    response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, job->documentFormat());
-                    response.setHeader(HttpServer::HTTP_HEADER_TRANSFER_ENCODING, "chunked");
-                    job->finishTransfer(response.send());
-                } else if(job->adfStatus() != SANE_STATUS_GOOD) {
-                    s.first->setTemporaryAdfStatus(job->adfStatus());
-                    response.setStatus(HttpServer::HTTP_CONFLICT);
-                    response.send();
-                } else {
-                    response.setStatus(HttpServer::HTTP_SERVICE_UNAVAILABLE);
-                    response.send();
-                }
-            }
-            return;
-        }
-    }
-}
-

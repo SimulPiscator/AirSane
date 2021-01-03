@@ -154,7 +154,7 @@ int ScanJob::imagesCompleted() const
 
 std::string ScanJob::uri() const
 {
-   return p->mpScanner ? p->mpScanner->uri() + "/ScanJobs/" + p->mUuid : "";
+   return "/eSCL/ScanJobs/" + p->mUuid;
 }
 
 const std::string& ScanJob::uuid() const

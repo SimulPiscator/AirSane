@@ -38,8 +38,8 @@ void MainPage::onRender()
     } else {
         list scannersList;
         for(const auto& s : mScanners) {
-            auto name = s.second ? s.second->name() : s.first->makeAndModel();
-            scannersList.addItem(anchor("/" + s.first->uuid()).addText(name));
+            auto name = s.pScanner->publishedName();
+            scannersList.addItem(anchor(s.pScanner->adminUrl()).addText(name));
             scannersList.addContent("\n");
         }
         out() << scannersList << std::endl;

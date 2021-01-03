@@ -41,10 +41,12 @@ public:
     std::string statusString() const;
 
     const std::string& uuid() const;
-    const std::string& uri() const;
     const std::string& makeAndModel() const;
     const std::string& saneName() const;
     const std::string& stableUniqueName() const;
+    
+    void setPublishedName(const std::string&);
+    const std::string& publishedName() const;
 
     void setAdminUrl(const std::string&);
     const std::string& adminUrl() const;

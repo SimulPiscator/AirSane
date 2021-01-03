@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pthread.h>
 
 #include "basic/fdbuf.h"
+#include "basic/hostname.h"
 #include "errorpage.h"
 
 const char* HttpServer::HTTP_GET = "GET";
@@ -389,9 +390,7 @@ std::string HttpServer::fileExtension(const std::string &mimeType)
 HttpServer::HttpServer()
     : p(new Private(this))
 {
-    std::getline(std::ifstream("/etc/hostname"), p->mHostname);
-    if(p->mHostname.empty())
-        p->mHostname = "unknown";
+    p->mHostname = ::hostname();
     setInterfaceIndex(anyInterface).setPort(8080);
 }
 

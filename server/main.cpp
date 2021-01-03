@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <thread>
 #include <csignal>
-#include "scanserver.h"
+#include "mainserver.h"
 
-static ScanServer* pServer;
+static MainServer* pServer;
 
 static void onSignal(int signal)
 {
@@ -34,7 +34,7 @@ static void onSignal(int signal)
 
 int main(int argc, char** argv)
 {
-    ScanServer server(argc, argv);
+    MainServer server(argc, argv);
     pServer = &server;
     bool ok = true;
     struct sigaction action = { 0 };

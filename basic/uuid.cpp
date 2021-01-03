@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "uuid.h"
 
+#include "hostname.h"
 #include <fstream>
 #include <iomanip>
 #include <functional>
@@ -29,7 +30,7 @@ namespace {
         std::string id;
         std::getline(std::ifstream("/etc/machine-id"), id);
         if(id.empty())
-            std::getline(std::ifstream("/etc/hostname"), id);
+            id = ::hostname();
         return id;
     }
     const std::string sMachineId = getMachineId();

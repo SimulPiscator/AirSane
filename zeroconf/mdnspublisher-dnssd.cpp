@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 #include <list>
+#include <ctime>
 
 #include <unistd.h>
 #include <netdb.h>
@@ -75,6 +76,8 @@ const char* dnssd_strerr(int code)
     return ::strerror(code);
 }
 
+static int sAddAnnounceDelaySeconds = 1;
+
 struct ServiceEntry
 {
     MdnsPublisher::Service* mpService;
@@ -107,7 +110,7 @@ struct ServiceEntry
         if (ifindex < 0)
             ifindex = 0;
         uint16_t port = mpService->port();
-        ::usleep(1000*1000); // without this, service registration may fail but not report an error (synchronization issue?)
+        ::usleep(1000 * 1000 * sAddAnnounceDelaySeconds); // without this, service registration may fail but not report an error (synchronization issue?)
         DNSServiceErrorType err = ::DNSServiceRegister(&mDNSServiceRef, 0, ifindex, mpService->name().c_str(), mpService->type().c_str(), nullptr, nullptr, htons(port), ::TXTRecordGetLength(&txtRecord), ::TXTRecordGetBytesPtr(&txtRecord), onRegisterService, mpService);
         if (err != kDNSServiceErr_NoError) {
             ok = false;

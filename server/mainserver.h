@@ -16,26 +16,30 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCANSERVER_H
-#define SCANSERVER_H
+#ifndef MAINSERVER_H
+#define MAINSERVER_H
 
 #include "scanner.h"
+#include "scannerserver.h"
 #include "web/httpserver.h"
 #include "zeroconf/mdnspublisher.h"
 #include <vector>
 #include <fstream>
 #include <memory>
+#include <tuple>
 
-typedef std::vector<std::pair<
-    std::shared_ptr<Scanner>,
-    std::shared_ptr<MdnsPublisher::Service>
->> ScannerList;
+struct ScannerEntry {
+    std::shared_ptr<Scanner> pScanner;
+    std::shared_ptr<MdnsPublisher::Service> pService;
+    std::shared_ptr<ScannerServer> pServer;
+};
+typedef std::vector<ScannerEntry> ScannerList;
 
-class ScanServer : public HttpServer
+class MainServer : public HttpServer
 {
 public:
-    ScanServer(int argc, char** argv);
-    ~ScanServer();
+    MainServer(int argc, char** argv);
+    ~MainServer();
     bool run();
 
 protected:
@@ -53,7 +57,8 @@ private:
     std::filebuf mLogfile;
     bool mAnnounce, mLocalonly, mHotplug, mRandomUuids;
     std::string mOptionsfile, mIgnorelist;
+    float mStartupTimeSeconds;
     bool mDoRun;
 };
 
-#endif // SCANSERVER_H
+#endif // MAINSERVER_H

@@ -168,8 +168,8 @@ struct Scanner::Private
 
     Scanner* p;
 
-    std::string mSaneName, mMakeAndModel, mStableUniqueName, mUuid;
-    std::string mUri, mAdminUrl, mIconUrl, mIconFile;
+    std::string mSaneName, mMakeAndModel, mStableUniqueName, mUuid, mPublishedName;
+    std::string mAdminUrl, mIconUrl, mIconFile;
 
     int mMinResDpi, mMaxResDpi, mResStepDpi;
     double mMaxWidthPx300dpi, mMaxHeightPx300dpi;
@@ -406,17 +406,13 @@ void Scanner::Private::generateStableUniqueName()
 const char* Scanner::Private::init(const sanecpp::device_info& info, bool randomUuid)
 {
     mMakeAndModel = info.vendor + " " + info.model;
+    mPublishedName = mMakeAndModel;
     mSaneName = info.name;
     generateStableUniqueName();
     if(randomUuid)
         mUuid = Uuid(::time(nullptr), ::rand()).toString();
     else
         mUuid = Uuid(mStableUniqueName).toString();
-
-    if(sInstances.size() == 1)
-        mUri = "/eSCL";
-    else
-        mUri = "/" + mUuid;
 
     auto device = sanecpp::open(info);
     if(!device)
@@ -591,11 +587,6 @@ const std::string &Scanner::uuid() const
     return p->mUuid;
 }
 
-const std::string &Scanner::uri() const
-{
-    return p->mUri;
-}
-
 const std::string &Scanner::makeAndModel() const
 {
     return p->mMakeAndModel;
@@ -610,6 +601,19 @@ const std::string &Scanner::stableUniqueName() const
 {
     return p->mStableUniqueName;
 }
+
+
+const std::string &Scanner::publishedName() const
+{
+    return p->mPublishedName;
+}
+
+
+void Scanner::setPublishedName(const std::string &name)
+{
+    p->mPublishedName = name;
+}
+
 
 void Scanner::setAdminUrl(const std::string& url)
 {
@@ -817,3 +821,4 @@ void Scanner::writeScannerStatusXml(std::ostream &os) const
 
     os << "</scan:Jobs>\r\n</scan:ScannerStatus>\r\n" << std::flush;
 }
+

@@ -16,17 +16,26 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "web/webpage.h"
-#include "mainserver.h"
+#ifndef SCANNERSERVER_H
+#define SCANNERSERVER_H
 
-class MainPage : public WebPage
+#include <thread>
+#include <memory>
+#include "web/httpserver.h"
+#include "scanner.h"
+
+class ScannerServer: public HttpServer
 {
 public:
-    explicit MainPage(const ScannerList&);
-
+    ScannerServer(std::shared_ptr<Scanner>, uint16_t port);
+    ~ScannerServer();
+    
 protected:
-    void onRender() override;
-
+    void onRequest(const Request&, Response&) override;
+    
 private:
-    const ScannerList& mScanners;
+    std::shared_ptr<Scanner> mpScanner;
+    std::thread* mpThread;
 };
+
+#endif // SCANNERSERVER_H

@@ -50,10 +50,11 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
     server/main.cpp
     server/optionsfile.cpp
-    server/scanserver.cpp
+    server/mainserver.cpp
     server/mainpage.cpp
     server/scanner.cpp
     server/scanjob.cpp
+    server/scannerserver.cpp
     server/scannerpage.cpp
     sanecpp/sanecpp.cpp
     basic/uuid.cpp
