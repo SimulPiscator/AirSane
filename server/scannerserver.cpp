@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scanjob.h"
 
 #include <fstream>
+#include <csignal>
 
 ScannerServer::ScannerServer(std::shared_ptr<Scanner> pScanner, uint16_t port)
 : mpScanner(pScanner), mpThread(nullptr)
