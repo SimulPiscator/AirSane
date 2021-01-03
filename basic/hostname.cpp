@@ -18,6 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "hostname.h"
 
+#include <iostream>
+#include <cerrno>
+#include <cstring>
+
+#include <unistd.h>
+#include <netdb.h>
+
 std::string hostname()
 {
     std::string s = "<unknown>";
@@ -25,17 +32,35 @@ std::string hostname()
     if (::gethostname(buf, sizeof(buf) - 1) == 0) {
         s = buf;
     }
+    else {
+        std::cerr << "gethostname() error: "
+                  << ::strerror(errno)
+                  << std::endl;
+    }
     return s;
 }
 
-std::string mHostNameFqdn()
+std::string hostnameFqdn()
 {
     std::string s = hostname();
     struct addrinfo* info = nullptr;
-    struct addrinfo hint = {0};
-    hint.ai_flags = AI_CANONNAME;
-    if (::getaddrinfo(s.c_str(), nullptr, &hint, &info) == 0) {
-        s = info->ai_canonname;
+    int err = ::getaddrinfo(s.c_str(), nullptr, nullptr, &info);
+    if (err) {
+        std::cerr << "getaddrinfo() error: "
+                  << ::gai_strerror(err)
+                  << std::endl;
+    }
+    else {
+        char node[NI_MAXHOST];
+        err = ::getnameinfo(info->ai_addr, info->ai_addrlen, node, sizeof(node), nullptr, 0, 0);
+        if (err) {
+            std::cerr << "getnameinfo() error: "
+                      << ::gai_strerror(err) 
+                      << std::endl;
+        }
+        else {
+            s = node;
+        }
         ::freeaddrinfo(info);
     }
     return s;

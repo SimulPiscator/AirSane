@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "mdnspublisher.h"
 
+#include <algorithm>
+
 MdnsPublisher::Service &MdnsPublisher::Service::setName(const std::string &s)
 {
     std::lock_guard<std::mutex> lock(mNameMutex);
