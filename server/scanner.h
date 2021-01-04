@@ -85,7 +85,7 @@ public:
     std::shared_ptr<sanecpp::session> open();
     bool isOpen() const;
 
-    void setDeviceOptions(const OptionsFile::Options&);
+    void setDeviceOptions(const OptionsFile&);
 
     void writeScannerCapabilitiesXml(std::ostream&) const;
     void writeScannerStatusXml(std::ostream&) const;

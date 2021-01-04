@@ -138,7 +138,7 @@ bool MainServer::run()
 {
     if(!mDoRun)
         return false;
-    
+
     struct timespec t = {0};
     ::clock_gettime(CLOCK_MONOTONIC, &t);
     float t0 = t.tv_sec + 1e-9 * t.tv_nsec;
@@ -166,8 +166,7 @@ bool MainServer::run()
                 std::clog << "stable unique name: " << pScanner->stableUniqueName() << std::endl;
                 std::clog << "uuid: " << pScanner->uuid() << std::endl;
 
-                auto options = optionsfile.scannerOptions(pScanner.get());
-                pScanner->setDeviceOptions(options);
+                pScanner->setDeviceOptions(optionsfile);
 
                 ++port;
                 std::ostringstream url;
@@ -194,7 +193,7 @@ bool MainServer::run()
                 else
                     pService.reset();
             }
-            
+
             std::shared_ptr<ScannerServer> pServer = std::make_shared<ScannerServer>(pScanner, port);
             mScanners.push_back(ScannerEntry({pScanner, pService, pServer}));
         }

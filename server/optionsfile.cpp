@@ -59,6 +59,14 @@ OptionsFile::~OptionsFile()
 {
 }
 
+std::string OptionsFile::path() const
+{
+    size_t pos = mFileName.rfind('/');
+    if (pos == std::string::npos)
+        return "";
+    return mFileName.substr(0, pos + 1);
+}
+
 OptionsFile::Options OptionsFile::scannerOptions(const Scanner* pScanner) const
 {
     auto options = mGlobalOptions;

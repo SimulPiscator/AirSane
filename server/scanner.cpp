@@ -720,12 +720,13 @@ std::string Scanner::colorScanModeName() const
     return p->mColorScanModeName;
 }
 
-void Scanner::setDeviceOptions(const OptionsFile::Options& options)
+void Scanner::setDeviceOptions(const OptionsFile& optionsfile)
 {
+    auto options = optionsfile.scannerOptions(this);
     p->mDeviceOptions.clear();
     for(const auto& option : options) {
         if(option.first == "icon")
-            p->mIconFile = option.second;
+            p->mIconFile = optionsfile.path() + option.second;
         else
             p->mDeviceOptions.push_back(option);
     }

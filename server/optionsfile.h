@@ -32,6 +32,7 @@ class OptionsFile
 public:
     explicit OptionsFile(const std::string& fileName);
     ~OptionsFile();
+    std::string path() const;
 
     typedef std::vector<std::pair<std::string, std::string>> Options;
     Options scannerOptions(const Scanner*) const;

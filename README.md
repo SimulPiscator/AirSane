@@ -23,7 +23,8 @@ implemented in Apple's AirScanScanner client
 [Disassembler](https://www.hopperapp.com/) able to reconstruct much of the original 
 Objective-C source code.
 
-Regarding the mdns announcement, and the basic working of the eSCL protocol, [David Poole's blog](http://testcluster.blogspot.com/2014/03) was very helpful.
+Regarding the mdns announcement, and the basic working of the eSCL protocol,
+[David Poole's blog](http://testcluster.blogspot.com/2014/03) was very helpful.
 
 ## Usage
 ### Web interface
@@ -41,10 +42,12 @@ have to use the scanner through 'Image Capture' once before it will be
 shown with this icon in 'Printers and Scanners'. This seems to be a bug in macOS.
 
 ### Mopria client on Android
-As of version 1.3.7, the Mopria Scan App will display all AirSane scanners and
+As of version 1.3.7, the Mopria Scan App will detect all AirSane scanners and
 display them with name and icon. After choosing scan options, you will be able
 to scan to your android device. Note that the Mopria Scan App will only detect
 scanners that have an icon defined in `/etc/airsane/options.conf` (see below).
+As of version 1.4.10, the app will detect scanners without icon but takes
+generally longer to display AirSane scanners -- please be patient.
 
 ## Installation
 ### Packages for Synology NAS
@@ -150,9 +153,10 @@ using weights as suited for sRGB data:
 This is useful for backends that do not allow true grayscale scanning or incorrectly return a single color component even if
 true gray is requested ([observed](https://gitlab.com/sane-project/backends/-/issues/308) with the SANE genesys backend).
 #### icon
-Full path to a png file that should be used as the scanner's icon. The image should have a size of 512x512, 256x256 or 
-128x128 pixels and an alpha channel for transparency. If pixel dimensions are not powers of two, the image will not be
-accepted by macOS.
+Name of a png file that should be used as the scanner's icon. Note this is a path relative to the options file, not an absolute
+path.
+The image should have a size of 512x512, 256x256 or 128x128 pixels and an alpha channel for transparency.
+If pixel dimensions are not powers of two, the image will not be accepted by macOS.
 
 ### Example
 ```
@@ -160,7 +164,7 @@ accepted by macOS.
 # Set SANE brightness to 10 for all scanners
 brightness 10
 # Set a default icon for all scanners
-icon /etc/airsane/Gnome-scanner.png
+icon Gnome-scanner.png
 
 # Compensate for OS-side gamma correction with gamma = 1.8 = 1/0.555555
 gray-gamma 0.555555
@@ -172,7 +176,7 @@ synthesize-gray yes
 
 # Set icon and calibration file option for a scanner "Canon LiDE 60"
 device Canon LiDE 60
-icon /etc/airsane/CanonLiDE60.png
+icon CanonLiDE60.png
 calibration-file /home/simul/some path with spaces/canon-lide-60.cal
 ```
 
