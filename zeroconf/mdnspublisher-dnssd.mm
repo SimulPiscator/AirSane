@@ -181,12 +181,12 @@ MdnsPublisher::~MdnsPublisher()
     delete p;
 }
 
-const std::string& hostname() const
+const std::string& MdnsPublisher::hostname() const
 {
     return p->mHostname;
 }
 
-const std::string& hostnameFqdn() const
+const std::string& MdnsPublisher::hostnameFqdn() const
 {
     return p->mHostnameFqdn;
 }
