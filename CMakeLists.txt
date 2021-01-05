@@ -29,7 +29,9 @@ if(APPLE)
     zeroconf/mdnspublisher-dnssd.mm
   )
   set(ZEROCONF_LIBS
+    "-lobjc"
     "-framework IOKit"
+    "-framework CFNetwork"
   )
 else()
   set(ZEROCONF_FILES
