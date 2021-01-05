@@ -32,6 +32,9 @@ public:
     MdnsPublisher();
     ~MdnsPublisher();
 
+    const std::string& hostname() const;
+    const std::string& hostnameFqdn() const;
+
     class Service;
     bool announce(Service*);
     bool unannounce(Service*);

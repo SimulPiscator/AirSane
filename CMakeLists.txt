@@ -25,19 +25,13 @@ include_directories(.)
 if(APPLE)
   include_directories(/usr/local/include /opt/local/include)
   link_directories(/usr/local/lib /opt/local/lib)
-  set(BASIC_FILES
-    basic/hostname-macos.mm
-  )
   set(ZEROCONF_FILES
-    zeroconf/mdnspublisher-dnssd.cpp
+    zeroconf/mdnspublisher-dnssd.mm
   )
   set(ZEROCONF_LIBS
     "-framework IOKit"
   )
 else()
-  set(BASIC_FILES
-    basic/hostname.cpp
-  )
   set(ZEROCONF_FILES
     zeroconf/mdnspublisher-avahi.cpp
   )
@@ -69,7 +63,6 @@ add_executable(${PROJECT_NAME}
     imageformats/pngencoder.cpp
     zeroconf/mdnspublisher.cpp
     zeroconf/hotplugnotifier.cpp
-    ${BASIC_FILES}
     ${ZEROCONF_FILES}
 )
 target_link_libraries(

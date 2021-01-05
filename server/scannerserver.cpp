@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fstream>
 #include <csignal>
 
-ScannerServer::ScannerServer(std::shared_ptr<Scanner> pScanner, uint16_t port)
-: mpScanner(pScanner), mpThread(nullptr)
+ScannerServer::ScannerServer(std::shared_ptr<Scanner> pScanner, const std::string& host, uint16_t port)
+: mpScanner(pScanner), mpThread(nullptr), mHost(host)
 {
     HttpServer::setPort(port);
     mpThread = new std::thread([this]{this->run();});
@@ -47,7 +47,7 @@ void ScannerServer::onRequest(const HttpServer::Request &request, HttpServer::Re
     if (request.uri().empty() || request.uri() == "/") {
         response.setStatus(HttpServer::HTTP_OK);
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
-        ScannerPage(*mpScanner.get()).setTitle(mpScanner->publishedName() + " on " + hostname()).render(request, response);
+        ScannerPage(*mpScanner.get()).setTitle(mpScanner->publishedName() + " on " + mHost).render(request, response);
         return;
     }
     if (request.uri() == "/ScannerIcon" && request.method() == HttpServer::HTTP_GET) {

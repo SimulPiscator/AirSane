@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <unistd.h>
 #include <netdb.h>
 #include <dns_sd.h>
+#include <Foundation/Foundation.h>
 
 namespace {
 
@@ -136,7 +137,7 @@ struct ServiceEntry
             mDNSServiceRef = nullptr;
         }
     }
-    
+
     static void onRegisterService(
         DNSServiceRef, DNSServiceFlags,
         DNSServiceErrorType errorCode, const char *name,
@@ -152,6 +153,7 @@ struct ServiceEntry
 
 struct MdnsPublisher::Private
 {
+    std::string mHostnameFqdn, mHostname;
     std::list<ServiceEntry> mServices;
 
     std::list<ServiceEntry>::iterator findService(const Service* pService)
@@ -168,11 +170,25 @@ struct MdnsPublisher::Private
 MdnsPublisher::MdnsPublisher()
     : p(new Private)
 {
+    NSString* name = [[NSHost currentHost] localizedName];
+    p->mHostnameFqdn = [name UTF8String];
+    size_t pos = p->mHostnameFqdn.find('.');
+    p->mHostname = p->mHostnameFqdn.substr(0, pos);
 }
 
 MdnsPublisher::~MdnsPublisher()
 {
     delete p;
+}
+
+const std::string& hostname() const
+{
+    return p->mHostname;
+}
+
+const std::string& hostnameFqdn() const
+{
+    return p->mHostnameFqdn;
 }
 
 bool MdnsPublisher::announce(MdnsPublisher::Service *pService)

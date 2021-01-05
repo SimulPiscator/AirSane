@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scanjob.h"
 #include "mainpage.h"
 #include "optionsfile.h"
-#include "basic/hostname.h"
 #include "zeroconf/hotplugnotifier.h"
 
 namespace {
@@ -171,7 +170,7 @@ bool MainServer::run()
                 ++port;
                 std::ostringstream url;
                 url << "http://"
-                    << hostnameFqdn()
+                    << mPublisher.hostnameFqdn()
                     << ":" << port
                     << "/";
                 pScanner->setAdminUrl(url.str());
@@ -194,7 +193,7 @@ bool MainServer::run()
                     pService.reset();
             }
 
-            std::shared_ptr<ScannerServer> pServer = std::make_shared<ScannerServer>(pScanner, port);
+            std::shared_ptr<ScannerServer> pServer = std::make_shared<ScannerServer>(pScanner, mPublisher.hostname(), port);
             mScanners.push_back(ScannerEntry({pScanner, pService, pServer}));
         }
         ::clock_gettime(CLOCK_MONOTONIC, &t);
@@ -259,7 +258,7 @@ std::shared_ptr<MdnsPublisher::Service> MainServer::buildMdnsService(const Scann
     if(!s.empty())
         pService->setTxt("pdl", s.substr(1));
     pService->setTxt("ty", pScanner->makeAndModel());
-    pService->setTxt("note", hostname());
+    pService->setTxt("note", mPublisher.hostname());
     pService->setTxt("uuid", pScanner->uuid());
     pService->setTxt("rs", "eSCL");
     s.clear();
@@ -290,7 +289,7 @@ void MainServer::onRequest(const Request& request, Response& response)
         response.setStatus(HttpServer::HTTP_OK);
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
         MainPage(mScanners)
-                .setTitle("AirSane Server on " + hostname())
+                .setTitle("AirSane Server on " + mPublisher.hostname())
                 .render(request, response);
     }
     else if(request.uri() == "/reset") {
@@ -306,7 +305,7 @@ void MainServer::onRequest(const Request& request, Response& response)
             out() << paragraph().addText("You will be redirected to the main page in a few seconds.") << std::endl;
           }
         } resetpage;
-        resetpage.setTitle("Resetting AirSane Server on " + hostname() + " ...")
+        resetpage.setTitle("Resetting AirSane Server on " + mPublisher.hostname() + " ...")
                  .render(request, response);
         this->terminate(SIGHUP);
     }
