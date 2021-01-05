@@ -164,6 +164,7 @@ struct MdnsPublisher::Private
     AvahiClient* mpClient;
     AvahiClientState mState;
 
+    std::string mHostnameFqdn, mHostname;
     std::list<ServiceEntry> mServices;
 
     Private() : mpThread(nullptr), mpClient(nullptr), mState(AVAHI_CLIENT_CONNECTING)
@@ -216,7 +217,17 @@ struct MdnsPublisher::Private
         mpClient = ::avahi_client_new(pPoll, AVAHI_CLIENT_NO_FAIL, &clientCallback, this, &err);
         if (!mpClient) {
             std::cerr << "Failed to create avahi client: " << ::avahi_strerror(err) << " (" << err << ")" << std::endl;
+            return;
         }
+        const char* name = ::avahi_client_get_host_name_fqdn(mpClient);
+        if (!name) {
+            int err = ::avahi_client_errno(mpClient);
+            std::cerr << "Failed to get host name: " << ::avahi_strerror(err) << " (" << err << ")" << std::endl;
+            return;
+        }
+        mHostnameFqdn = name;
+        size_t pos = mHostnameFqdn.find('.');
+        mHostname = mHostnameFqdn.substr(0, pos);
     }
 
     void destroyClient()
@@ -266,6 +277,16 @@ MdnsPublisher::MdnsPublisher()
 MdnsPublisher::~MdnsPublisher()
 {
     delete p;
+}
+
+const std::string& MdnsPublisher::hostname() const
+{
+    return p->mHostname;
+}
+
+const std::string& MdnsPublisher::hostnameFqdn() const
+{
+    return p->mHostnameFqdn;
 }
 
 bool MdnsPublisher::announce(MdnsPublisher::Service *pService)

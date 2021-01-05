@@ -36,7 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pthread.h>
 
 #include "basic/fdbuf.h"
-#include "basic/hostname.h"
 #include "errorpage.h"
 
 const char* HttpServer::HTTP_GET = "GET";
@@ -173,7 +172,7 @@ struct HttpServer::Private
     std::atomic<int> mTerminationStatus, mLastError;
 
     uint16_t mPort;
-    std::string mHostname, mInterfaceName;
+    std::string mInterfaceName;
     int mInterfaceIndex, mBacklog;
 
     std::atomic<bool> mRunning;
@@ -390,18 +389,12 @@ std::string HttpServer::fileExtension(const std::string &mimeType)
 HttpServer::HttpServer()
     : p(new Private(this))
 {
-    p->mHostname = ::hostname();
     setInterfaceIndex(anyInterface).setPort(8080);
 }
 
 HttpServer::~HttpServer()
 {
     delete p;
-}
-
-const std::string &HttpServer::hostname() const
-{
-    return p->mHostname;
 }
 
 HttpServer &HttpServer::setInterfaceName(const std::string &s)

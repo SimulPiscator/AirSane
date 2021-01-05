@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SCANNERSERVER_H
 #define SCANNERSERVER_H
 
+#include <string>
 #include <thread>
 #include <memory>
 #include "web/httpserver.h"
@@ -27,14 +28,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class ScannerServer: public HttpServer
 {
 public:
-    ScannerServer(std::shared_ptr<Scanner>, uint16_t port);
+    ScannerServer(std::shared_ptr<Scanner>, const std::string& host, uint16_t port);
     ~ScannerServer();
-    
+
 protected:
     void onRequest(const Request&, Response&) override;
-    
+
 private:
     std::shared_ptr<Scanner> mpScanner;
+    std::string mHost;
     std::thread* mpThread;
 };
 

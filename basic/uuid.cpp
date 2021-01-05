@@ -18,19 +18,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "uuid.h"
 
-#include "hostname.h"
 #include <fstream>
 #include <iomanip>
 #include <functional>
 #include <cstring>
+#include <unistd.h>
 
 namespace {
     std::string getMachineId()
     {
         std::string id;
         std::getline(std::ifstream("/etc/machine-id"), id);
-        if(id.empty())
-            id = ::hostname();
+        if (id.empty()) {
+            char buf[1024] = {0};
+            if (!::gethostname(buf, sizeof(buf) - 1))
+                id = buf;
+        }
         return id;
     }
     const std::string sMachineId = getMachineId();

@@ -55,7 +55,6 @@ public:
     HttpServer(const HttpServer&) = delete;
     HttpServer& operator=(const HttpServer&) = delete;
 
-    const std::string& hostname() const;
     HttpServer& setInterfaceName(const std::string&);
     const std::string& interfaceName() const;
     HttpServer& setInterfaceIndex(int);
