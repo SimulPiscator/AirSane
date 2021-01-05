@@ -81,6 +81,35 @@ target_link_libraries(
     ${ZEROCONF_LIBS}
     usb-1.0
 )
+
+if(APPLE)
+
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION /usr/local/sbin
+)
+install(FILES launchd/com.simulpiscator.airsaned.plist
+    DESTINATION /Library/LaunchDaemons
+)
+
+install(CODE "
+    if(NOT EXISTS /usr/local/etc/airsane/ignore.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/ignore.conf DESTINATION /usr/local/etc/airsane)
+    endif()
+")
+install(CODE "
+    if(NOT EXISTS /usr/local/etc/airsane/options.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/options.conf DESTINATION /usr/local/etc/airsane)
+    endif()
+")
+install(CODE "
+    if(NOT EXISTS /usr/local/etc/airsane/Gnome-scanner.png)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/Gnome-scanner.png DESTINATION /usr/local/etc/airsane)
+    endif()
+")
+
+
+else()
+
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
 )
@@ -107,3 +136,5 @@ install(CODE "
         file(INSTALL ${CMAKE_SOURCE_DIR}/etc/Gnome-scanner.png DESTINATION /etc/airsane)
     endif()
 ")
+
+endif()
