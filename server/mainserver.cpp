@@ -30,6 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "optionsfile.h"
 #include "zeroconf/hotplugnotifier.h"
 
+extern const char* GIT_COMMIT_HASH;
+extern const char* GIT_BRANCH;
+extern const char* GIT_REVISION_NUMBER;
+extern const char* BUILD_TIME_STAMP;
+
 namespace {
 
     struct Notifier : HotplugNotifier
@@ -126,6 +131,11 @@ MainServer::MainServer(int argc, char** argv)
             std::cout.rdbuf(nullptr);
         else if(accesslog != "-")
             std::cout.rdbuf(mLogfile.open(accesslog, std::ios::app));
+
+        std::clog << "git commit: " << GIT_COMMIT_HASH
+                  << " (branch " << GIT_BRANCH
+                  << ", rev " << GIT_REVISION_NUMBER << ")\n"
+                  << "build date: " << BUILD_TIME_STAMP << std::endl;
     }
 }
 
