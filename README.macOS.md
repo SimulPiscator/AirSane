@@ -1,4 +1,4 @@
-#macOS build instructions
+# macOS build instructions
 Building AirSane on macOS is quite similar to building on Linux but
 requires MacPorts to provide the necessary dependencies.
 
