@@ -58,6 +58,11 @@ Pre-built packages for Synology are available here:
 Build files and instructions for OpenWRT have been published here:
 <https://github.com/tbaela/AirSane-openwrt>
 
+### Build on macOS
+AirSane may be run on a macOS installation in order to serve locally attached
+scanners to eSCL clients such as Apple Image Capture. For instructions, see 
+README-macOS.md.
+
 ### Build and install from source on Debian/Ubuntu/Raspbian
 #### Build
 ```

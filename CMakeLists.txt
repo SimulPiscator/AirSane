@@ -23,8 +23,8 @@ find_package(Threads REQUIRED)
 
 include_directories(.)
 if(APPLE)
-  include_directories(/usr/local/include /opt/local/include)
-  link_directories(/usr/local/lib /opt/local/lib)
+  include_directories(/opt/local/include)
+  link_directories(/opt/local/lib)
   set(ZEROCONF_FILES
     zeroconf/mdnspublisher-dnssd.mm
   )
@@ -82,7 +82,7 @@ if(APPLE)
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION /usr/local/sbin
 )
-install(FILES launchd/com.simulpiscator.airsaned.plist
+install(FILES launchd/org.simulpiscator.airsaned.plist
     DESTINATION /Library/LaunchDaemons
 )
 
