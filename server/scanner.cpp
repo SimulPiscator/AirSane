@@ -175,12 +175,13 @@ struct Scanner::Private
     double mMaxWidthPx300dpi, mMaxHeightPx300dpi;
     std::vector<double> mDiscreteResolutions;
     std::vector<std::string> mDocumentFormats, mTxtColorSpaces,
-        mColorModes, mSupportedIntents, mInputSources;
+        mColorModes, mInputSources;
 
     struct InputSource
     {
         Private* p;
         std::string mSourceName;
+        std::vector<std::string> mSupportedIntents;
         double mMinWidth, mMaxWidth, mMinHeight, mMaxHeight,
                mMaxPhysicalWidth, mMaxPhysicalHeight;
         int mMaxBits;
@@ -372,7 +373,7 @@ void Scanner::Private::InputSource::writeCapabilitiesXml(std::ostream& os) const
     os <<
     "</scan:SettingProfiles>\r\n"
     "<scan:SupportedIntents>\r\n";
-    for(const auto& s : p->mSupportedIntents)
+    for(const auto& s : mSupportedIntents)
       os << "<scan:SupportedIntent>" << s << "</scan:SupportedIntent>\r\n";
     os <<
     "</scan:SupportedIntents>\r\n";
@@ -435,12 +436,6 @@ const char* Scanner::Private::init(const sanecpp::device_info& info, bool random
         HttpServer::MIME_TYPE_PNG,
     });
 
-    mSupportedIntents = std::vector<std::string>({
-        "Preview",
-        "TextAndGraphic",
-        "Photo",
-    });
-
     auto modes = opt[SANE_NAME_SCAN_MODE].allowed_string_values();
     if(modes.empty()) {
         modes.push_back("Gray");
@@ -484,6 +479,11 @@ const char* Scanner::Private::init(const sanecpp::device_info& info, bool random
       mpPlaten = new Private::InputSource(this);
       err = mpPlaten->init(opt);
       if(!err) {
+        mpPlaten->mSupportedIntents = std::vector<std::string>({
+           "Preview",
+           "TextAndGraphic",
+           "Photo",
+        });
         maxBits = std::max(maxBits, mpPlaten->mMaxBits);
         mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpPlaten->mMaxWidth);
         mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpPlaten->mMaxHeight);
@@ -496,6 +496,10 @@ const char* Scanner::Private::init(const sanecpp::device_info& info, bool random
       mpAdf = new Private::InputSource(this);
       err = mpAdf->init(opt);
       if(!err) {
+        mpAdf->mSupportedIntents = std::vector<std::string>({
+           "TextAndGraphic",
+           "Photo",
+        });
         maxBits = std::max(maxBits, mpAdf->mMaxBits);
         mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpAdf->mMaxWidth);
         mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpAdf->mMaxHeight);
@@ -655,9 +659,14 @@ const std::vector<std::string> &Scanner::colorModes() const
     return p->mColorModes;
 }
 
-const std::vector<std::string> &Scanner::supportedIntents() const
+std::vector<std::string> Scanner::platenSupportedIntents() const
 {
-    return p->mSupportedIntents;
+    return p->mpPlaten ? p->mpPlaten->mSupportedIntents : std::vector<std::string>();;
+}
+
+std::vector<std::string> Scanner::adfSupportedIntents() const
+{
+    return p->mpAdf ? p->mpAdf->mSupportedIntents : std::vector<std::string>();;
 }
 
 const std::vector<std::string> &Scanner::inputSources() const

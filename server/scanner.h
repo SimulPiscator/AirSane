@@ -44,7 +44,7 @@ public:
     const std::string& makeAndModel() const;
     const std::string& saneName() const;
     const std::string& stableUniqueName() const;
-    
+
     void setPublishedName(const std::string&);
     const std::string& publishedName() const;
 
@@ -57,7 +57,8 @@ public:
     const std::vector<std::string>& documentFormats() const;
     const std::vector<std::string>& txtColorSpaces() const;
     const std::vector<std::string>& colorModes() const;
-    const std::vector<std::string>& supportedIntents() const;
+    std::vector<std::string> platenSupportedIntents() const;
+    std::vector<std::string> adfSupportedIntents() const;
     const std::vector<std::string>& inputSources() const;
 
     int minResDpi() const;
