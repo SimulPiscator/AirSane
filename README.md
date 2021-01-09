@@ -252,6 +252,6 @@ Most likely, the avahi-daemon package is not installed, or avahi-daemon is not r
 ```
   sudo install avahi-daemon
   sudo systemctl enable avahi-daemon
-  sudo systemclt start avahi-damon
+  sudo systemctl start avahi-damon
 
 ```
