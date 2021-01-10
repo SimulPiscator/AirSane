@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class ScannerServer: public HttpServer
 {
 public:
-    ScannerServer(std::shared_ptr<Scanner>, const std::string& host, uint16_t port);
+    ScannerServer(std::shared_ptr<Scanner>, const std::string& host, int interfaceIndex, uint16_t port);
     ~ScannerServer();
 
 protected:

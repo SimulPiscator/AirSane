@@ -12,7 +12,7 @@ There, execute the following commands:
 ```
 sudo port install sane-backends jpeg libpng
 sudo port install cmake
-git clone github.com/SimulPiscator/AirSane.git
+git clone https://github.com/SimulPiscator/AirSane.git
 mkdir AirSane-build && cd AirSane-build
 cmake  ../AirSane
 make

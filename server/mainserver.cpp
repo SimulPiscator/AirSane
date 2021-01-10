@@ -203,7 +203,7 @@ bool MainServer::run()
                     pService.reset();
             }
 
-            std::shared_ptr<ScannerServer> pServer = std::make_shared<ScannerServer>(pScanner, mPublisher.hostname(), port);
+            std::shared_ptr<ScannerServer> pServer = std::make_shared<ScannerServer>(pScanner, mPublisher.hostname(), interfaceIndex(), port);
             mScanners.push_back(ScannerEntry({pScanner, pService, pServer}));
         }
         ::clock_gettime(CLOCK_MONOTONIC, &t);
