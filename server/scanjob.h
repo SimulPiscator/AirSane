@@ -47,7 +47,6 @@ public:
 
     bool beginTransfer();
     ScanJob& finishTransfer(std::ostream&);
-    ScanJob& abortTransfer();
     ScanJob& cancel();
 
     typedef enum {

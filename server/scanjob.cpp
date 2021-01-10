@@ -80,8 +80,11 @@ struct ScanJob::Private
     const char* statusString() const;
     bool atomicTransition(State from, State to);
     void updateStatus(SANE_Status);
-    void start();
-    void abortTransfer();
+
+    void openSession();
+    void closeSession();
+
+    bool beginTransfer();
     void finishTransfer(std::ostream&);
 
     bool isPending() const;
@@ -244,8 +247,10 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
     std::string inputSource = settings.getString("InputSource");
     if(inputSource == "Platen")
         mScanSource = mpScanner->platenSourceName();
-    else if(inputSource == "Feeder")
+    else if(inputSource == "Feeder") {
         mScanSource = mpScanner->adfSourceName();
+        mImagesToTransfer = std::numeric_limits<int>::max();
+    }
 
     if(err) {
         mState = aborted;
@@ -254,6 +259,9 @@ void ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectForm
         mState = pending;
         mStateReason = PWG_JOB_QUEUED;
     }
+
+    if (mState == pending)
+        openSession();
 }
 
 void ScanJob::Private::applyDeviceOptions(const OptionsFile::Options& options)
@@ -383,14 +391,11 @@ void ScanJob::Private::updateStatus(SANE_Status status)
         mState = processing;
         mStateReason = PWG_JOB_SCANNING;
         break;
-    case SANE_STATUS_DEVICE_BUSY:
-        mState = pending;
-        mStateReason = PWG_NONE;
-        break;
     case SANE_STATUS_INVAL:
         mState = aborted;
         mStateReason = PWG_INVALID_SCAN_TICKET;
         break;
+    case SANE_STATUS_DEVICE_BUSY:
     case SANE_STATUS_IO_ERROR:
     case SANE_STATUS_NO_MEM:
         mState = aborted;
@@ -400,7 +405,6 @@ void ScanJob::Private::updateStatus(SANE_Status status)
         mState = aborted;
         mStateReason = PWG_DOCUMENT_PERMISSION_ERROR;
         break;
-    case SANE_STATUS_NO_DOCS:
     case SANE_STATUS_JAMMED:
     case SANE_STATUS_COVER_OPEN:
         mState = aborted;
@@ -420,10 +424,23 @@ void ScanJob::Private::updateStatus(SANE_Status status)
             mStateReason = PWG_NONE;
         }
         break;
+    case SANE_STATUS_NO_DOCS:
+        if (mImagesCompleted > 0) {
+            mState = completed;
+            mStateReason = PWG_JOB_COMPLETED_SUCCESSFULLY;
+        }
+        else {
+            mState = aborted;
+            mStateReason = PWG_RESOURCES_ARE_NOT_READY;
+        }
+        mAdfStatus = status;
+        break;
     default:
         mState = aborted;
         mStateReason = PWG_ERRORS_DETECTED;
     }
+    if (mState == aborted)
+        closeSession();
 }
 
 void ScanJob::writeJobInfoXml(std::ostream &os) const
@@ -444,19 +461,20 @@ void ScanJob::writeJobInfoXml(std::ostream &os) const
 
 bool ScanJob::beginTransfer()
 {
-    if(!p->atomicTransition(pending, processing))
-        return false;
-    p->start();
-    return isProcessing();
+    return p->beginTransfer();
 }
 
-ScanJob &ScanJob::abortTransfer()
+bool ScanJob::Private::beginTransfer()
 {
-    p->abortTransfer();
-    return *this;
+    SANE_Status status = mpSession->start().status();
+    updateStatus(status);
+    bool ok = isProcessing();
+    if (!ok)
+        closeSession();
+    return ok;
 }
 
-void ScanJob::Private::start()
+void ScanJob::Private::openSession()
 {
     assert(!mpSession);
     mpSession = mpScanner->open();
@@ -499,19 +517,14 @@ void ScanJob::Private::start()
       if(!ok)
           status = SANE_STATUS_INVAL;
     }
-    if(status == SANE_STATUS_GOOD)
-        status = mpSession->start().status();
     updateStatus(status);
 }
 
-void ScanJob::Private::abortTransfer()
+void ScanJob::Private::closeSession()
 {
     if(mpSession)
         mpSession->cancel();
-    if(atomicTransition(processing, pending)) {
-        mStateReason = PWG_NONE;
-        mpSession.reset();
-    }
+    mpSession.reset();
 }
 
 ScanJob &ScanJob::finishTransfer(std::ostream &os)
@@ -588,7 +601,7 @@ void ScanJob::Private::finishTransfer(std::ostream &os)
                 try {
                     pEncoder->writeLine(buffer.data());
                     if(!os.flush())
-                        abortTransfer();
+                        throw std::runtime_error("Could not send data");
                 } catch(const std::runtime_error& e) {
                     std::cerr << e.what() << ", aborting" << std::endl;
                     mState = aborted;
@@ -606,14 +619,15 @@ void ScanJob::Private::finishTransfer(std::ostream &os)
             }
         }
     }
-    mpSession.reset();
+    if (isAborted() || isFinished())
+        closeSession();
 }
 
 ScanJob& ScanJob::cancel()
 {
-    if(p->atomicTransition(processing, canceled)
-            || p->atomicTransition(pending, canceled))
-        p->mStateReason = PWG_JOB_CANCELED_BY_USER;
+    p->mState = canceled;
+    p->mStateReason = PWG_JOB_CANCELED_BY_USER;
+    p->closeSession();
     return *this;
 }
 
