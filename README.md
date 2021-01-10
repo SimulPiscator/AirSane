@@ -61,7 +61,7 @@ Build files and instructions for OpenWRT have been published here:
 ### Build on macOS
 AirSane may be run on a macOS installation in order to serve locally attached
 scanners to eSCL clients such as Apple Image Capture. For instructions, see 
-[the macOS README file](README-macOS.md).
+[the macOS README file](README.macOS.md).
 
 ### Build and install from source on Debian/Ubuntu/Raspbian
 #### Build
@@ -252,6 +252,6 @@ Most likely, the avahi-daemon package is not installed, or avahi-daemon is not r
 ```
   sudo install avahi-daemon
   sudo systemctl enable avahi-daemon
-  sudo systemclt start avahi-damon
+  sudo systemctl start avahi-damon
 
 ```
