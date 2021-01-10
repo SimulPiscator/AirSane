@@ -428,7 +428,7 @@ HttpServer &HttpServer::setInterfaceIndex(int i)
     else {
         unsigned int idx = i;
         char buf[IF_NAMESIZE] = { 0 };
-        if(!::if_indextoname(idx, buf)) {
+        if(::if_indextoname(idx, buf)) {
             p->mInterfaceName = buf;
             p->mInterfaceIndex = i;
         }

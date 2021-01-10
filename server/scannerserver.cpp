@@ -23,9 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fstream>
 #include <csignal>
 
-ScannerServer::ScannerServer(std::shared_ptr<Scanner> pScanner, const std::string& host, uint16_t port)
+ScannerServer::ScannerServer(std::shared_ptr<Scanner> pScanner, const std::string& host, int idx, uint16_t port)
 : mpScanner(pScanner), mpThread(nullptr), mHost(host)
 {
+    HttpServer::setInterfaceIndex(idx);
     HttpServer::setPort(port);
     mpThread = new std::thread([this]{this->run();});
 }
