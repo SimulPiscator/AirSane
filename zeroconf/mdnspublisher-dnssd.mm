@@ -170,8 +170,10 @@ struct MdnsPublisher::Private
 MdnsPublisher::MdnsPublisher()
     : p(new Private)
 {
-    NSString* name = [[NSHost currentHost] localizedName];
-    p->mHostnameFqdn = [name UTF8String];
+    NSHost* host = [NSHost currentHost];
+    auto names = [host names];
+    if ([names count] > 0)
+        p->mHostnameFqdn = [names[0] UTF8String];
     size_t pos = p->mHostnameFqdn.find('.');
     p->mHostname = p->mHostnameFqdn.substr(0, pos);
 }
