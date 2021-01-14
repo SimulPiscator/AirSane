@@ -158,8 +158,11 @@ using weights as suited for sRGB data:
 This is useful for backends that do not allow true grayscale scanning or incorrectly return a single color component even if
 true gray is requested ([observed](https://gitlab.com/sane-project/backends/-/issues/308) with the SANE genesys backend).
 #### icon
-Name of a png file that should be used as the scanner's icon. Note this is a path relative to the options file, not an absolute
-path.
+Name of a png file that should be used as the scanner's icon.
+This may be an absolute path, or a relative path.
+If relative (e.g., just a file name without a path), it is relative to the 
+location of the options file.
+
 The image should have a size of 512x512, 256x256 or 128x128 pixels and an alpha channel for transparency.
 If pixel dimensions are not powers of two, the image will not be accepted by macOS.
 

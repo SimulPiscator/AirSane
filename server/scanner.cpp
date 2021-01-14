@@ -815,10 +815,13 @@ Scanner::setDeviceOptions(const OptionsFile& optionsfile)
   auto options = optionsfile.scannerOptions(this);
   p->mDeviceOptions.clear();
   for (const auto& option : options) {
-    if (option.first == "icon")
-      p->mIconFile = optionsfile.path() + option.second;
-    else
+    if (option.first == "icon") {
+      p->mIconFile = option.second;
+      if (p->mIconFile.find('/') != 0)
+        p->mIconFile = optionsfile.path() + p->mIconFile;
+    } else {
       p->mDeviceOptions.push_back(option);
+    }
   }
 }
 
