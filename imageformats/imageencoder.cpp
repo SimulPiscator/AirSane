@@ -20,129 +20,153 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdexcept>
 
 ImageEncoder::ImageEncoder()
-    : mWidth(0), mHeight(0), mComponents(0), mBitDepth(0),
-    mDpi(0), mBytesPerLine(0), mCurrentLine(0),
-    mColorspace(Unknown), mpDestination(nullptr)
+  : mWidth(0)
+  , mHeight(0)
+  , mComponents(0)
+  , mBitDepth(0)
+  , mDpi(0)
+  , mBytesPerLine(0)
+  , mCurrentLine(0)
+  , mColorspace(Unknown)
+  , mpDestination(nullptr)
 {}
 
-ImageEncoder &ImageEncoder::setWidth(int w)
+ImageEncoder&
+ImageEncoder::setWidth(int w)
 {
-    mWidth = w;
-    onParamChange();
-    return *this;
+  mWidth = w;
+  onParamChange();
+  return *this;
 }
 
-int ImageEncoder::width() const
+int
+ImageEncoder::width() const
 {
-    return mWidth;
+  return mWidth;
 }
 
-ImageEncoder &ImageEncoder::setHeight(int h)
+ImageEncoder&
+ImageEncoder::setHeight(int h)
 {
-    mHeight = h;
-    onParamChange();
-    return *this;
+  mHeight = h;
+  onParamChange();
+  return *this;
 }
 
-int ImageEncoder::height() const
+int
+ImageEncoder::height() const
 {
-    return mHeight;
+  return mHeight;
 }
 
-ImageEncoder &ImageEncoder::setBitDepth(int b)
+ImageEncoder&
+ImageEncoder::setBitDepth(int b)
 {
-    mBitDepth = b;
-    onParamChange();
-    return *this;
+  mBitDepth = b;
+  onParamChange();
+  return *this;
 }
 
-int ImageEncoder::bitDepth() const
+int
+ImageEncoder::bitDepth() const
 {
-    return mBitDepth;
+  return mBitDepth;
 }
 
-ImageEncoder &ImageEncoder::setResolutionDpi(int dpi)
+ImageEncoder&
+ImageEncoder::setResolutionDpi(int dpi)
 {
-    mDpi = dpi;
-    onParamChange();
-    return *this;
+  mDpi = dpi;
+  onParamChange();
+  return *this;
 }
 
-int ImageEncoder::resolutionDpi() const
+int
+ImageEncoder::resolutionDpi() const
 {
-    return mDpi;
+  return mDpi;
 }
 
-ImageEncoder &ImageEncoder::setColorspace(ImageEncoder::Colorspace cs)
+ImageEncoder&
+ImageEncoder::setColorspace(ImageEncoder::Colorspace cs)
 {
-    mColorspace = cs;
-    onParamChange();
-    return *this;
+  mColorspace = cs;
+  onParamChange();
+  return *this;
 }
 
-ImageEncoder::Colorspace ImageEncoder::colorspace() const
+ImageEncoder::Colorspace
+ImageEncoder::colorspace() const
 {
-    return mColorspace;
+  return mColorspace;
 }
 
-int ImageEncoder::components() const
+int
+ImageEncoder::components() const
 {
-    return mComponents;
+  return mComponents;
 }
 
-ImageEncoder &ImageEncoder::setDestination(std::ostream *p)
+ImageEncoder&
+ImageEncoder::setDestination(std::ostream* p)
 {
-    mpDestination = p;
-    onParamChange();
-    return *this;
+  mpDestination = p;
+  onParamChange();
+  return *this;
 }
 
-std::ostream *ImageEncoder::destination() const
+std::ostream*
+ImageEncoder::destination() const
 {
-    return mpDestination;
+  return mpDestination;
 }
 
-ImageEncoder &ImageEncoder::writeLine(const void * p)
+ImageEncoder&
+ImageEncoder::writeLine(const void* p)
 {
-    if(mCurrentLine == 0 && mpDestination)
-        onImageBegin();
-    if(mpDestination)
-        onWriteLine(p);
-    if(++mCurrentLine == mHeight)
-        mCurrentLine = 0;
-    if(mCurrentLine == 0 && mpDestination)
-        onImageEnd();
-    return *this;
+  if (mCurrentLine == 0 && mpDestination)
+    onImageBegin();
+  if (mpDestination)
+    onWriteLine(p);
+  if (++mCurrentLine == mHeight)
+    mCurrentLine = 0;
+  if (mCurrentLine == 0 && mpDestination)
+    onImageEnd();
+  return *this;
 }
 
-int ImageEncoder::bytesPerLine()
+int
+ImageEncoder::bytesPerLine()
 {
-    return mBytesPerLine;
+  return mBytesPerLine;
 }
 
-int ImageEncoder::linesLeftInCurrentImage() const
+int
+ImageEncoder::linesLeftInCurrentImage() const
 {
-    return mHeight - mCurrentLine;
+  return mHeight - mCurrentLine;
 }
 
-int ImageEncoder::encodedSize() const
+int
+ImageEncoder::encodedSize() const
 {
-    return onEncodedSize();
+  return onEncodedSize();
 }
 
-void ImageEncoder::onParamChange()
+void
+ImageEncoder::onParamChange()
 {
-    if(mCurrentLine != 0)
-        throw std::runtime_error("cannot change settings inside an image");
-    switch(mColorspace) {
+  if (mCurrentLine != 0)
+    throw std::runtime_error("cannot change settings inside an image");
+  switch (mColorspace) {
     case Grayscale:
-        mComponents = 1;
-        break;
+      mComponents = 1;
+      break;
     case RGB:
-        mComponents = 3;
-        break;
+      mComponents = 3;
+      break;
     default:
-        mComponents = 1;
-    }
-    mBytesPerLine = (mComponents * mWidth * mBitDepth) / 8;
+      mComponents = 1;
+  }
+  mBytesPerLine = (mComponents * mWidth * mBitDepth) / 8;
 }

@@ -23,42 +23,46 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scannerserver.h"
 #include "web/httpserver.h"
 #include "zeroconf/mdnspublisher.h"
-#include <vector>
 #include <fstream>
 #include <memory>
 #include <tuple>
+#include <vector>
 
-struct ScannerEntry {
-    std::shared_ptr<Scanner> pScanner;
-    std::shared_ptr<MdnsPublisher::Service> pService;
-    std::shared_ptr<ScannerServer> pServer;
+struct ScannerEntry
+{
+  std::shared_ptr<Scanner> pScanner;
+  std::shared_ptr<MdnsPublisher::Service> pService;
+  std::shared_ptr<ScannerServer> pServer;
 };
 typedef std::vector<ScannerEntry> ScannerList;
 
 class MainServer : public HttpServer
 {
 public:
-    MainServer(int argc, char** argv);
-    ~MainServer();
-    bool run();
+  MainServer(int argc, char** argv);
+  ~MainServer();
+  bool run();
 
 protected:
-    void onRequest(const Request&, Response&) override;
+  void onRequest(const Request&, Response&) override;
 
 private:
-    bool matchIgnorelist(const sanecpp::device_info&) const;
-    std::shared_ptr<MdnsPublisher::Service> buildMdnsService(const Scanner*);
-    // must pass ScannerList element by value to achieve protection during
-    // request
-    void handleScannerRequest(ScannerList::value_type, const std::string& uriRemainder, const HttpServer::Request&, HttpServer::Response&);
+  bool matchIgnorelist(const sanecpp::device_info&) const;
+  std::shared_ptr<MdnsPublisher::Service> buildMdnsService(const Scanner*);
+  // must pass ScannerList element by value to achieve protection during
+  // request
+  void handleScannerRequest(ScannerList::value_type,
+                            const std::string& uriRemainder,
+                            const HttpServer::Request&,
+                            HttpServer::Response&);
 
-    MdnsPublisher mPublisher;
-    ScannerList mScanners;
-    std::filebuf mLogfile;
-    bool mAnnounce, mLocalonly, mHotplug, mRandomUuids;
-    std::string mOptionsfile, mIgnorelist;
-    float mStartupTimeSeconds;
-    bool mDoRun;
+  MdnsPublisher mPublisher;
+  ScannerList mScanners;
+  std::filebuf mLogfile;
+  bool mAnnounce, mLocalonly, mHotplug, mRandomUuids;
+  std::string mOptionsfile, mIgnorelist;
+  float mStartupTimeSeconds;
+  bool mDoRun;
 };
 
 #endif // MAINSERVER_H

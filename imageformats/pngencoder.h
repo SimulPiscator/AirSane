@@ -24,18 +24,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class PngEncoder : public ImageEncoder
 {
 public:
-    PngEncoder();
-    ~PngEncoder();
+  PngEncoder();
+  ~PngEncoder();
 
 protected:
-    void onImageBegin() override;
-    void onImageEnd() override;
-    void onWriteLine(const void*) override;
+  void onImageBegin() override;
+  void onImageEnd() override;
+  void onWriteLine(const void*) override;
 
 private:
-    struct Private;
-    Private* p;
-
+  struct Private;
+  Private* p;
 };
 
 #endif // PNGENCODER_H

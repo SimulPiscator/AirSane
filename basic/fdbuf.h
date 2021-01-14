@@ -24,19 +24,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class fdbuf : public std::streambuf
 {
 public:
-    explicit fdbuf(int fd, int putback = 1);
-    ~fdbuf();
-    int_type overflow(int_type c) override;
-    int_type sync() override;
-    int_type underflow() override;
-    std::streampos seekoff(off_type, std::ios_base::seekdir, std::ios_base::openmode) override;
+  explicit fdbuf(int fd, int putback = 1);
+  ~fdbuf();
+  int_type overflow(int_type c) override;
+  int_type sync() override;
+  int_type underflow() override;
+  std::streampos seekoff(off_type,
+                         std::ios_base::seekdir,
+                         std::ios_base::openmode) override;
 
 private:
-    static const size_t bufsize = 4096;
-    int mFd;
-    int mPutback;
-    std::streamsize mTotalWritten;
-    char mOutbuf[bufsize], mInbuf[bufsize];
+  static const size_t bufsize = 4096;
+  int mFd;
+  int mPutback;
+  std::streamsize mTotalWritten;
+  char mOutbuf[bufsize], mInbuf[bufsize];
 };
 
 #endif // FDBUF_H

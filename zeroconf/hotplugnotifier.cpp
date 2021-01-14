@@ -18,87 +18,88 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "hotplugnotifier.h"
 
-#include <thread>
 #include <atomic>
 #include <csignal>
-#include <pthread.h>
 #include <libusb-1.0/libusb.h>
+#include <pthread.h>
+#include <thread>
 
 struct HotplugNotifier::Private
 {
-    libusb_context* mpContext;
-    std::thread mThread;
-    ::libusb_hotplug_callback_handle mCbHandle;
-    std::atomic<bool> mTerminate;
+  libusb_context* mpContext;
+  std::thread mThread;
+  ::libusb_hotplug_callback_handle mCbHandle;
+  std::atomic<bool> mTerminate;
 
-    Private(HotplugNotifier* pNotifier)
-        : mpContext(nullptr), mCbHandle(0), mTerminate(false)
-    {
-        ::libusb_init(&mpContext);
-        int events = LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED
-                   | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT;
-        ::libusb_hotplug_register_callback(
-            mpContext,
-            libusb_hotplug_event(events),
-            LIBUSB_HOTPLUG_NO_FLAGS,
-            LIBUSB_HOTPLUG_MATCH_ANY,
-            LIBUSB_HOTPLUG_MATCH_ANY,
-            LIBUSB_HOTPLUG_MATCH_ANY,
-            &Private::hotplugCallback,
-            pNotifier,
-            &mCbHandle
-        );
-        mThread = std::thread([this](){hotplugThread();});
+  Private(HotplugNotifier* pNotifier)
+    : mpContext(nullptr)
+    , mCbHandle(0)
+    , mTerminate(false)
+  {
+    ::libusb_init(&mpContext);
+    int events =
+      LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT;
+    ::libusb_hotplug_register_callback(mpContext,
+                                       libusb_hotplug_event(events),
+                                       LIBUSB_HOTPLUG_NO_FLAGS,
+                                       LIBUSB_HOTPLUG_MATCH_ANY,
+                                       LIBUSB_HOTPLUG_MATCH_ANY,
+                                       LIBUSB_HOTPLUG_MATCH_ANY,
+                                       &Private::hotplugCallback,
+                                       pNotifier,
+                                       &mCbHandle);
+    mThread = std::thread([this]() { hotplugThread(); });
+  }
+
+  ~Private()
+  {
+    mTerminate = true;
+    if (mCbHandle)
+      ::libusb_hotplug_deregister_callback(mpContext, mCbHandle);
+    mThread.join();
+    ::libusb_exit(mpContext);
+  }
+
+  void hotplugThread()
+  {
+    int err = 0;
+    while (err == 0) {
+      if (mTerminate)
+        return;
+      err = ::libusb_handle_events(mpContext);
+      switch (err) {
+        case LIBUSB_ERROR_INTERRUPTED:
+        case LIBUSB_ERROR_TIMEOUT:
+          err = 0;
+          break;
+      }
     }
+  }
 
-    ~Private()
-    {
-        mTerminate = true;
-        if(mCbHandle)
-            ::libusb_hotplug_deregister_callback(mpContext, mCbHandle);
-        mThread.join();
-        ::libusb_exit(mpContext);
+  static int hotplugCallback(libusb_context*,
+                             libusb_device*,
+                             libusb_hotplug_event libusbevent,
+                             void* p)
+  {
+    Event event = other;
+    switch (libusbevent) {
+      case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED:
+        event = deviceArrived;
+        break;
+      case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT:
+        event = deviceLeft;
+        break;
     }
-
-    void hotplugThread()
-    {
-        int err = 0;
-        while(err == 0) {
-            if(mTerminate)
-                return;
-            err = ::libusb_handle_events(mpContext);
-            switch(err) {
-            case LIBUSB_ERROR_INTERRUPTED:
-            case LIBUSB_ERROR_TIMEOUT:
-                err = 0;
-                break;
-            }
-        }
-    }
-
-    static int hotplugCallback(libusb_context*, libusb_device*, libusb_hotplug_event libusbevent, void* p)
-    {
-        Event event = other;
-        switch(libusbevent) {
-        case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED:
-            event = deviceArrived;
-            break;
-        case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT:
-            event = deviceLeft;
-            break;
-        }
-        static_cast<HotplugNotifier*>(p)->onHotplugEvent(event);
-        return 0;
-    }
-
+    static_cast<HotplugNotifier*>(p)->onHotplugEvent(event);
+    return 0;
+  }
 };
 
 HotplugNotifier::HotplugNotifier()
-    : p(new Private(this))
-{
-}
+  : p(new Private(this))
+{}
 
 HotplugNotifier::~HotplugNotifier()
 {
-    delete p;
+  delete p;
 }

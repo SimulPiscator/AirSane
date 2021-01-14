@@ -24,13 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class ErrorPage : public WebPage
 {
 public:
-    explicit ErrorPage(int errorCode);
+  explicit ErrorPage(int errorCode);
 
 protected:
-    void onRender() override;
+  void onRender() override;
 
 private:
-    int mErrorCode;
+  int mErrorCode;
 };
 
 #endif // ERRORPAGE_H

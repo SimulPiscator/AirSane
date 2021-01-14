@@ -26,13 +26,15 @@ class Scanner;
 class ScannerPage : public WebPage
 {
 public:
-    explicit ScannerPage(Scanner& s) : mScanner(s) {}
+  explicit ScannerPage(Scanner& s)
+    : mScanner(s)
+  {}
 
 protected:
-    void onRender() override;
+  void onRender() override;
 
 private:
-    Scanner& mScanner;
+  Scanner& mScanner;
 };
 
 #endif // SCANNERPAGE_H

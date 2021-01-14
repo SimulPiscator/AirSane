@@ -19,32 +19,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DICTIONARY_H
 #define DICTIONARY_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
 class Dictionary
 {
 public:
-    typedef std::vector<std::pair<std::string, std::string>> Storage;
+  typedef std::vector<std::pair<std::string, std::string>> Storage;
 
-    bool hasKey(const std::string& key) const;
-    void eraseKey(const std::string& key);
+  bool hasKey(const std::string& key) const;
+  void eraseKey(const std::string& key);
 
-    const std::string& applyDefaultValue(const std::string& key, const std::string& value);
-    const std::string& applyDefaultValue(const std::string& key, double value);
+  const std::string& applyDefaultValue(const std::string& key,
+                                       const std::string& value);
+  const std::string& applyDefaultValue(const std::string& key, double value);
 
-    double getNumber(const std::string& key) const;
-    const std::string& getString(const std::string& key) const;
+  double getNumber(const std::string& key) const;
+  const std::string& getString(const std::string& key) const;
 
-    const std::string& operator[](const std::string& key) const { return getString(key); }
-    std::string& operator[](const std::string& key);
+  const std::string& operator[](const std::string& key) const
+  {
+    return getString(key);
+  }
+  std::string& operator[](const std::string& key);
 
-    Storage::const_iterator begin() const { return mData.begin(); }
-    Storage::const_iterator end() const { return mData.end(); }
-    bool empty() const { return mData.empty(); }
+  Storage::const_iterator begin() const { return mData.begin(); }
+  Storage::const_iterator end() const { return mData.end(); }
+  bool empty() const { return mData.empty(); }
 
 private:
-    Storage mData;
+  Storage mData;
 };
 
 #endif // DICTIONARY_H

@@ -26,21 +26,21 @@ class Scanner;
 
 class OptionsFile
 {
-    OptionsFile(const OptionsFile&) = delete;
-    OptionsFile& operator=(const OptionsFile&) = delete;
+  OptionsFile(const OptionsFile&) = delete;
+  OptionsFile& operator=(const OptionsFile&) = delete;
 
 public:
-    explicit OptionsFile(const std::string& fileName);
-    ~OptionsFile();
-    std::string path() const;
+  explicit OptionsFile(const std::string& fileName);
+  ~OptionsFile();
+  std::string path() const;
 
-    typedef std::vector<std::pair<std::string, std::string>> Options;
-    Options scannerOptions(const Scanner*) const;
+  typedef std::vector<std::pair<std::string, std::string>> Options;
+  Options scannerOptions(const Scanner*) const;
 
 private:
-    std::string mFileName;
-    Options mGlobalOptions;
-    std::vector<std::pair<std::string, Options>> mDeviceOptions;
+  std::string mFileName;
+  Options mGlobalOptions;
+  std::vector<std::pair<std::string, Options>> mDeviceOptions;
 };
 
 #endif // OPTIONS_FILE_H

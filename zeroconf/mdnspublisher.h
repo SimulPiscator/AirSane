@@ -19,64 +19,80 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MDNSPUBLISHER_H
 #define MDNSPUBLISHER_H
 
+#include <mutex>
 #include <string>
 #include <vector>
-#include <mutex>
 
 class MdnsPublisher
 {
-    MdnsPublisher(const MdnsPublisher&) = delete;
-    MdnsPublisher& operator=(const MdnsPublisher&) = delete;
+  MdnsPublisher(const MdnsPublisher&) = delete;
+  MdnsPublisher& operator=(const MdnsPublisher&) = delete;
 
 public:
-    MdnsPublisher();
-    ~MdnsPublisher();
+  MdnsPublisher();
+  ~MdnsPublisher();
 
-    const std::string& hostname() const;
-    const std::string& hostnameFqdn() const;
+  const std::string& hostname() const;
+  const std::string& hostnameFqdn() const;
 
-    class Service;
-    bool announce(Service*);
-    bool unannounce(Service*);
+  class Service;
+  bool announce(Service*);
+  bool unannounce(Service*);
 
 public:
-    class Service
+  class Service
+  {
+  public:
+    explicit Service(MdnsPublisher* p)
+      : mpPublisher(p)
+      , mPort(0)
+      , mIfIndex(-1)
+    {}
+    ~Service() { unannounce(); }
+
+    typedef std::vector<std::pair<std::string, std::string>> TxtRecord;
+
+    Service& setType(const std::string& s)
     {
-    public:
-        explicit Service(MdnsPublisher* p) : mpPublisher(p), mPort(0), mIfIndex(-1) {}
-        ~Service() { unannounce(); }
+      mType = s;
+      return *this;
+    }
+    const std::string& type() const { return mType; }
+    Service& setName(const std::string&);
+    std::string name() const;
 
-        typedef std::vector<std::pair<std::string, std::string>> TxtRecord;
+    Service& setInterfaceIndex(int i)
+    {
+      mIfIndex = i;
+      return *this;
+    }
+    int interfaceIndex() const { return mIfIndex; }
+    Service& setPort(uint16_t p)
+    {
+      mPort = p;
+      return *this;
+    }
+    uint16_t port() const { return mPort; }
 
-        Service& setType(const std::string& s) { mType = s; return *this; }
-        const std::string& type() const { return mType; }
-        Service& setName(const std::string&);
-        std::string name() const;
+    Service& setTxt(const std::string&, const std::string&);
+    const std::string& txt(const std::string&) const;
+    const TxtRecord& txtRecord() const { return mTxtRecord; }
 
-        Service& setInterfaceIndex(int i) { mIfIndex = i; return *this; }
-        int interfaceIndex() const { return mIfIndex; }
-        Service& setPort(uint16_t p) { mPort = p; return *this; }
-        uint16_t port() const { return mPort; }
+    bool announce() { return mpPublisher->announce(this); }
+    bool unannounce() { return mpPublisher->unannounce(this); }
 
-        Service& setTxt(const std::string&, const std::string&);
-        const std::string& txt(const std::string&) const;
-        const TxtRecord& txtRecord() const { return mTxtRecord; }
-
-        bool announce() { return mpPublisher->announce(this); }
-        bool unannounce() { return mpPublisher->unannounce(this); }
-
-    private:
-        MdnsPublisher* mpPublisher;
-        std::string mType, mName;
-        int mIfIndex;
-        uint16_t mPort;
-        TxtRecord mTxtRecord;
-        mutable std::mutex mNameMutex;
-    };
+  private:
+    MdnsPublisher* mpPublisher;
+    std::string mType, mName;
+    int mIfIndex;
+    uint16_t mPort;
+    TxtRecord mTxtRecord;
+    mutable std::mutex mNameMutex;
+  };
 
 private:
-    struct Private;
-    Private* p;
+  struct Private;
+  Private* p;
 };
 
 #endif // MDNSPUBLISHER_H

@@ -24,22 +24,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class JpegEncoder : public ImageEncoder
 {
 public:
-    JpegEncoder();
-    ~JpegEncoder();
+  JpegEncoder();
+  ~JpegEncoder();
 
-    JpegEncoder& setGamma(double);
-    double gamma() const;
-    JpegEncoder& setQualityPercent(int);
-    int qualityPercent() const;
+  JpegEncoder& setGamma(double);
+  double gamma() const;
+  JpegEncoder& setQualityPercent(int);
+  int qualityPercent() const;
 
 protected:
-    void onImageBegin() override;
-    void onImageEnd() override;
-    void onWriteLine(const void*) override;
+  void onImageBegin() override;
+  void onImageEnd() override;
+  void onWriteLine(const void*) override;
 
 private:
-    struct Private;
-    Private* p;
+  struct Private;
+  Private* p;
 };
 
 #endif // JPEGENCODER_H

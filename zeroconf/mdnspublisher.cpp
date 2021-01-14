@@ -20,29 +20,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm>
 
-MdnsPublisher::Service &MdnsPublisher::Service::setName(const std::string &s)
+MdnsPublisher::Service&
+MdnsPublisher::Service::setName(const std::string& s)
 {
-    std::lock_guard<std::mutex> lock(mNameMutex);
-    mName = s;
-    return *this;
+  std::lock_guard<std::mutex> lock(mNameMutex);
+  mName = s;
+  return *this;
 }
 
-std::string MdnsPublisher::Service::name() const
+std::string
+MdnsPublisher::Service::name() const
 {
-    std::lock_guard<std::mutex> lock(mNameMutex);
-    return mName;
+  std::lock_guard<std::mutex> lock(mNameMutex);
+  return mName;
 }
 
-MdnsPublisher::Service &MdnsPublisher::Service::setTxt(const std::string &key, const std::string &value)
+MdnsPublisher::Service&
+MdnsPublisher::Service::setTxt(const std::string& key, const std::string& value)
 {
-    if(!key.empty()) {
-        auto i = std::find_if(mTxtRecord.begin(), mTxtRecord.end(),
-                              [key](const TxtRecord::value_type& v)
-                              {return v.first == key;});
-        if(i == mTxtRecord.end())
-            mTxtRecord.push_back(std::make_pair(key, value));
-        else
-            i->second = value;
-    }
-    return *this;
+  if (!key.empty()) {
+    auto i = std::find_if(
+      mTxtRecord.begin(),
+      mTxtRecord.end(),
+      [key](const TxtRecord::value_type& v) { return v.first == key; });
+    if (i == mTxtRecord.end())
+      mTxtRecord.push_back(std::make_pair(key, value));
+    else
+      i->second = value;
+  }
+  return *this;
 }

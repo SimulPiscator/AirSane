@@ -23,54 +23,58 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class ImageEncoder
 {
-    ImageEncoder(const ImageEncoder&) = delete;
-    ImageEncoder& operator=(const ImageEncoder&) = delete;
+  ImageEncoder(const ImageEncoder&) = delete;
+  ImageEncoder& operator=(const ImageEncoder&) = delete;
 
 public:
-    ImageEncoder();
-    virtual ~ImageEncoder() {}
+  ImageEncoder();
+  virtual ~ImageEncoder() {}
 
-    ImageEncoder& setWidth(int w);
-    int width() const;
+  ImageEncoder& setWidth(int w);
+  int width() const;
 
-    ImageEncoder& setHeight(int h);
-    int height() const;
+  ImageEncoder& setHeight(int h);
+  int height() const;
 
-    ImageEncoder& setBitDepth(int b);
-    int bitDepth() const;
+  ImageEncoder& setBitDepth(int b);
+  int bitDepth() const;
 
-    ImageEncoder& setResolutionDpi(int dpi);
-    int resolutionDpi() const;
+  ImageEncoder& setResolutionDpi(int dpi);
+  int resolutionDpi() const;
 
-    enum Colorspace { Unknown, Grayscale, RGB };
-    ImageEncoder& setColorspace(Colorspace cs);
-    Colorspace colorspace() const;
+  enum Colorspace
+  {
+    Unknown,
+    Grayscale,
+    RGB
+  };
+  ImageEncoder& setColorspace(Colorspace cs);
+  Colorspace colorspace() const;
 
-    int components() const;
+  int components() const;
 
-    ImageEncoder& setDestination(std::ostream* p);
-    std::ostream* destination() const;
+  ImageEncoder& setDestination(std::ostream* p);
+  std::ostream* destination() const;
 
-    ImageEncoder& writeLine(const void*);
-    int bytesPerLine();
-    int linesLeftInCurrentImage() const;
+  ImageEncoder& writeLine(const void*);
+  int bytesPerLine();
+  int linesLeftInCurrentImage() const;
 
-    int encodedSize() const;
+  int encodedSize() const;
 
 protected:
-    virtual int onEncodedSize() const { return -1; }
-    virtual void onImageBegin() = 0;
-    virtual void onImageEnd() = 0;
-    virtual void onWriteLine(const void*) = 0;
+  virtual int onEncodedSize() const { return -1; }
+  virtual void onImageBegin() = 0;
+  virtual void onImageEnd() = 0;
+  virtual void onWriteLine(const void*) = 0;
 
-    void onParamChange();
+  void onParamChange();
 
 private:
-    int mWidth, mHeight, mComponents, mBitDepth, mDpi;
-    int mBytesPerLine, mCurrentLine;
-    Colorspace mColorspace;
-    std::ostream* mpDestination;
+  int mWidth, mHeight, mComponents, mBitDepth, mDpi;
+  int mBytesPerLine, mCurrentLine;
+  Colorspace mColorspace;
+  std::ostream* mpDestination;
 };
-
 
 #endif // IMAGEENCODER_H

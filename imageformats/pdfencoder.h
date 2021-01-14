@@ -26,20 +26,20 @@ class Dictionary;
 class PdfEncoder : public ImageEncoder
 {
 public:
-    PdfEncoder();
-    ~PdfEncoder();
+  PdfEncoder();
+  ~PdfEncoder();
 
-    Dictionary& documentInfo();
-    const Dictionary& documentInfo() const;
+  Dictionary& documentInfo();
+  const Dictionary& documentInfo() const;
 
 protected:
-    void onImageBegin() override;
-    void onImageEnd() override;
-    void onWriteLine(const void*) override;
+  void onImageBegin() override;
+  void onImageEnd() override;
+  void onWriteLine(const void*) override;
 
 private:
-    struct Private;
-    Private* p;
+  struct Private;
+  Private* p;
 };
 
 #endif // PDFENCODER_H

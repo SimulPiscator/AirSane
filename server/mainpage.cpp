@@ -24,44 +24,41 @@ extern const char* GIT_REVISION_NUMBER;
 extern const char* BUILD_TIME_STAMP;
 
 MainPage::MainPage(const ScannerList& scanners)
-: mScanners(scanners)
-{
-}
+  : mScanners(scanners)
+{}
 
-void MainPage::onRender()
+void
+MainPage::onRender()
 {
-    out() << heading(1).addText(title()) << std::endl;
+  out() << heading(1).addText(title()) << std::endl;
 
-    out() << heading(2).addText("Scanners");
-    if(mScanners.empty()) {
-        out() << paragraph().addText("No scanners available");
-    } else {
-        list scannersList;
-        for(const auto& s : mScanners) {
-            auto name = s.pScanner->publishedName();
-            scannersList.addItem(anchor(s.pScanner->adminUrl()).addText(name));
-            scannersList.addContent("\n");
-        }
-        out() << scannersList << std::endl;
+  out() << heading(2).addText("Scanners");
+  if (mScanners.empty()) {
+    out() << paragraph().addText("No scanners available");
+  } else {
+    list scannersList;
+    for (const auto& s : mScanners) {
+      auto name = s.pScanner->publishedName();
+      scannersList.addItem(anchor(s.pScanner->adminUrl()).addText(name));
+      scannersList.addContent("\n");
     }
+    out() << scannersList << std::endl;
+  }
 
-    out() << heading(2).addText("Build");
-    list version;
-    version.addItem(paragraph().addText(
-      std::string("date: ") + BUILD_TIME_STAMP
-    ));
-    version.addContent("\n");
-    version.addItem(paragraph().addText(
-      std::string("commit: ") + GIT_COMMIT_HASH
-      + " (branch " + GIT_BRANCH
-      + ", revision " + GIT_REVISION_NUMBER + ")"
-    ));
-    version.addContent("\n");
-    out() << version << std::endl;
+  out() << heading(2).addText("Build");
+  list version;
+  version.addItem(
+    paragraph().addText(std::string("date: ") + BUILD_TIME_STAMP));
+  version.addContent("\n");
+  version.addItem(paragraph().addText(
+    std::string("commit: ") + GIT_COMMIT_HASH + " (branch " + GIT_BRANCH +
+    ", revision " + GIT_REVISION_NUMBER + ")"));
+  version.addContent("\n");
+  out() << version << std::endl;
 
-    out() << heading(2).addText("Server Maintenance");
-    list maintenance;
-    maintenance.addItem(anchor("/reset").addText("Reset"));
-    maintenance.addContent("\n");
-    out() << maintenance << std::endl;
+  out() << heading(2).addText("Server Maintenance");
+  list maintenance;
+  maintenance.addItem(anchor("/reset").addText("Reset"));
+  maintenance.addContent("\n");
+  out() << maintenance << std::endl;
 }

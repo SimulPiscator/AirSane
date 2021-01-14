@@ -16,36 +16,39 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <thread>
-#include <csignal>
 #include "mainserver.h"
+#include <csignal>
+#include <thread>
 
 static MainServer* pServer;
 
-static void onSignal(int signal)
+static void
+onSignal(int signal)
 {
-    if(pServer) switch(signal) {
-    case SIGHUP:
-    case SIGTERM:
+  if (pServer)
+    switch (signal) {
+      case SIGHUP:
+      case SIGTERM:
         pServer->terminate(signal);
         break;
     }
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
-    MainServer server(argc, argv);
-    pServer = &server;
-    bool ok = true;
-    struct sigaction action = { 0 };
-    sigemptyset(&action.sa_mask);
-    action.sa_handler = &onSignal;
-    ::sigaction(SIGTERM, &action, nullptr);
-    ::sigaction(SIGHUP, &action, nullptr);
-    action.sa_handler = SIG_IGN;
-    ::sigaction(SIGPIPE, &action, nullptr);
-    auto serverThread = std::thread([&ok](){ok = pServer->run();});
-    serverThread.join();
-    pServer = nullptr;
-    return ok ? 0 : -1;
+  MainServer server(argc, argv);
+  pServer = &server;
+  bool ok = true;
+  struct sigaction action = { 0 };
+  sigemptyset(&action.sa_mask);
+  action.sa_handler = &onSignal;
+  ::sigaction(SIGTERM, &action, nullptr);
+  ::sigaction(SIGHUP, &action, nullptr);
+  action.sa_handler = SIG_IGN;
+  ::sigaction(SIGPIPE, &action, nullptr);
+  auto serverThread = std::thread([&ok]() { ok = pServer->run(); });
+  serverThread.join();
+  pServer = nullptr;
+  return ok ? 0 : -1;
 }
