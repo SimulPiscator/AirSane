@@ -58,6 +58,12 @@ buildScanJobTicket(const Dictionary& dict)
 
 }
 
+ScannerPage::ScannerPage(Scanner& s)
+  : mScanner(s)
+{
+  setFavicon(HttpServer::MIME_TYPE_PNG, mScanner.iconUrl());
+}
+
 void
 ScannerPage::onRender()
 {
@@ -111,8 +117,16 @@ ScannerPage::onRender()
       imageuri = job->uri() + "/NextDocument";
   }
 
+  std::string icondef;
+  if (!mScanner.iconUrl().empty() ) {
+    icondef = "<img src='" + mScanner.iconUrl() + "'"
+            + " alt='Scanner Icon'"
+            + " style='width:1.2em;height:1.2em;vertical-align:bottom;padding-right:0.3em'"
+            + ">";
+  }
+
   if (!title().empty())
-    out() << heading(1).addText(title());
+    out() << heading(1).addContent(icondef).addText(title());
 
   const struct
   {

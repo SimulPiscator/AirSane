@@ -70,6 +70,22 @@ WebPage::WebPage()
 }
 
 WebPage&
+WebPage::setFavicon(const std::string& type, const std::string& url)
+{
+  mFaviconType = type;
+  mFaviconUrl = url;
+  return *this;
+}
+
+WebPage&
+WebPage::clearFavicon()
+{
+  mFaviconType.clear();
+  mFaviconUrl.clear();
+  return *this;
+}
+
+WebPage&
 WebPage::clearStyle()
 {
   mStyle.clear();
@@ -105,8 +121,12 @@ WebPage::render(const HttpServer::Request& request,
                        "</title>\n"
                        "<style>" +
                        mStyle +
-                       "</style>\n"
-                       "</head>\n"
+                       "</style>\n";
+
+    if (!mFaviconType.empty() && !mFaviconUrl.empty())
+      html +=          "<link rel='icon' type='" + mFaviconType + "' href='" + mFaviconUrl + "'>\n";
+
+    html +=            "</head>\n"
                        "<body>\n";
     html += oss.str();
     html += "</body>\n</html>\n";

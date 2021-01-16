@@ -41,6 +41,9 @@ public:
   }
   const std::string& title() const { return mTitle; }
 
+  WebPage& setFavicon(const std::string& type, const std::string& url);
+  WebPage& clearFavicon();
+
   WebPage& addStyle(const std::string&);
   const std::string& style() const { return mStyle; }
   WebPage& clearStyle();
@@ -170,7 +173,7 @@ protected:
   HttpServer::Response& response() const { return *mpResponse; }
 
 private:
-  std::string mTitle, mStyle;
+  std::string mTitle, mStyle, mFaviconType, mFaviconUrl;
   std::ostream* mpOut;
   const HttpServer::Request* mpRequest;
   HttpServer::Response* mpResponse;

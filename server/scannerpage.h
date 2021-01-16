@@ -26,9 +26,7 @@ class Scanner;
 class ScannerPage : public WebPage
 {
 public:
-  explicit ScannerPage(Scanner& s)
-    : mScanner(s)
-  {}
+  explicit ScannerPage(Scanner&);
 
 protected:
   void onRender() override;

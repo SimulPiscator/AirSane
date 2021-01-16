@@ -39,7 +39,15 @@ MainPage::onRender()
     list scannersList;
     for (const auto& s : mScanners) {
       auto name = s.pScanner->publishedName();
-      scannersList.addItem(anchor(s.pScanner->adminUrl()).addText(name));
+
+      std::string icondef;
+      if (!s.pScanner->iconUrl().empty() ) {
+        icondef = "<img src='" + s.pScanner->iconUrl() + "'"
+                + " alt='Scanner Icon'"
+                + " style='width:1.2em;height:1.2em;vertical-align:bottom;padding-right:0.6em'"
+                + ">";
+      }
+      scannersList.addItem(anchor(s.pScanner->adminUrl()).addContent(icondef).addText(name));
       scannersList.addContent("\n");
     }
     out() << scannersList << std::endl;
