@@ -4,10 +4,11 @@
 
 A SANE WebScan frontend that supports Apple's AirScan protocol.
 Scanners are detected automatically, and published through mDNS.
-Though images may be acquired and transferred
-in JPEG, PNG, and PDF/raster format through a simple web interface,
+Acquired images may be transferred 
+in JPEG, PNG, and [PDF/raster](https://www.pdfraster.org/) format.
+
 AirSane's intended purpose is to be used with AirScan/eSCL clients such as
-Apple's Image Capture.
+Apple's Image Capture, but a simple web interface is provided as well.
 
 Images are encoded on-the-fly during acquisition, keeping memory/storage
 demands low. Thus, AirSane will run fine on a Raspberry Pi or similar device.
@@ -34,20 +35,19 @@ link from the main page.
 ### macOS
 When opening 'Image Capture', 'Preview', or other applications using the
 ImageKit framework, scanners exported by AirSane should be immediately available.
-In 'Printers and Scanners', exported scanners will be listed with a type of 
-'Bonjour Scanner'.
 
-If you defined a custom icon for your scanner (see below), note that you will
+In the 'Printers and Scanners' control panel, exported scanners will be listed with 
+a type of 'Bonjour Scanner'.
+
+If you define a custom icon for your scanner (see below), note that you will
 have to use the scanner through 'Image Capture' once before it will be
-shown with this icon in 'Printers and Scanners'. This seems to be a bug in macOS.
+shown with this icon in 'Printers and Scanners'. This seems to be a bug in macOS
+at least up to Catalina.
 
 ### Mopria client on Android
-As of version 1.3.7, the Mopria Scan App will detect all AirSane scanners and
+As of version 1.4.10, the Mopria Scan App will detect all AirSane scanners and
 display them with name and icon. After choosing scan options, you will be able
-to scan to your android device. Note that the Mopria Scan App will only detect
-scanners that have an icon defined in `/etc/airsane/options.conf` (see below).
-As of version 1.4.10, the app will detect scanners without icon but takes
-generally longer to display AirSane scanners -- please be patient.
+to scan to your android device.
 
 ## Installation
 ### Packages for Synology NAS
@@ -118,7 +118,10 @@ by editing '/etc/default/airsane'. For options, and their meanings, run
 ```
 airsaned --help
 ```
-By default, the server listens on all local addresses, and port 8090.
+By default, the server listens on all local addresses, and on a range of ports beginning 8090.
+From there, each exported scanner has its own port (this is necessary to match the mdns-sd
+specification which allows only a single service to be announced per address/port combination).
+
 To verify http access, open `http://localhost:8090/` in a web browser.
 From there, follow a link to a scanner page, and click the 'update preview'
 button for a preview scan.
@@ -206,6 +209,15 @@ details in brighter areas.
 Using the gamma options of AirSane, you will be able to neutralize the gamma value of 1.8 in the macOS scanner profile.
 Apply the inverse of 1.8 as a `gray-gamma` and `color-gamma` value in your AirSane configuration file, as shown in the example 
 above. By multiplying with another factor between 0.45 and 2.2, you can correct for the gamma value returned from the SANE backend.
+
+## Ignore List
+
+If a file exists at the location for the ignore list (by default, `/etc/airsane/ignorelist.conf`), AirSane will read that file line
+by line, treat each line as a regular expression to be matched against a device's SANE name, and will ignore any device that
+matches.
+
+The original purpose of the ignore list is to avoid loops with backends that auto-detect eSCL devices, but it may be used to suppress
+any device from AirSane's list of published devices.
 
 ## Troubleshoot
 
