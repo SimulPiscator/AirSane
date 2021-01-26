@@ -274,12 +274,20 @@ Scanner::Private::writeScannerCapabilitiesXml(std::ostream& os) const
   if (mpAdf && !mDuplex) {
     os << "<scan:Adf>\r\n<scan:AdfSimplexInputCaps>\r\n";
     mpAdf->writeCapabilitiesXml(os);
-    os << "</scan:AdfSimplexInputCaps>\r\n</scan:Adf>\r\n";
+    os << "</scan:AdfSimplexInputCaps>\r\n"
+       << "<scan:AdfOptions>\r\n"
+       << "<scan:AdfOption>DetectPaperLoaded</scan:AdfOption>\r\n"
+       << "</scan:AdfOptions>\r\n"
+       << "</scan:Adf>\r\n";
   }
   if (mpAdf && mDuplex) {
     os << "<scan:Adf>\r\n<scan:AdfDuplexInputCaps>\r\n";
     mpAdf->writeCapabilitiesXml(os);
-    os << "</scan:AdfDuplexInputCaps>\r\n</scan:Adf>\r\n";
+    os << "</scan:AdfDuplexInputCaps>\r\n"
+       << "<scan:AdfOptions>\r\n"
+       << "<scan:AdfOption>DetectPaperLoaded</scan:AdfOption>\r\n"
+       << "</scan:AdfOptions>\r\n"
+       << "</scan:Adf>\r\n";
   }
   os << "</scan:ScannerCapabilities>\r\n";
 }
