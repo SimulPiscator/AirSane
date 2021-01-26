@@ -859,8 +859,7 @@ Scanner::createJobFromScanSettingsXml(const std::string& xml,
                                       bool autoselectFormat)
 {
   auto job = p->createJob();
-  job->initWithScanSettingsXml(xml, autoselectFormat);
-  job->applyDeviceOptions(p->mDeviceOptions);
+  job->initWithScanSettingsXml(xml, autoselectFormat, p->mDeviceOptions);
   return job;
 }
 

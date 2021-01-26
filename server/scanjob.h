@@ -36,8 +36,8 @@ public:
   ~ScanJob();
 
   ScanJob& initWithScanSettingsXml(const std::string&,
-                                   bool autoselectFormat = false);
-  ScanJob& applyDeviceOptions(const OptionsFile::Options&);
+                                   bool autoselectFormat,
+                                   const OptionsFile::Options&);
 
   int ageSeconds() const;
   int imagesToTransfer() const;

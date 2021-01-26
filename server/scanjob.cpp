@@ -74,7 +74,7 @@ struct ScanSettingsXml
 
 struct ScanJob::Private
 {
-  void init(const ScanSettingsXml&, bool autoselectFormat);
+  void init(const ScanSettingsXml&, bool autoselectFormat, const OptionsFile::Options&);
   void applyDeviceOptions(const OptionsFile::Options&);
   void initGammaTable(const std::string& gamma);
   void applyGamma(std::vector<char>&);
@@ -131,16 +131,9 @@ ScanJob::~ScanJob()
 }
 
 ScanJob&
-ScanJob::initWithScanSettingsXml(const std::string& xml, bool autoselect)
+ScanJob::initWithScanSettingsXml(const std::string& xml, bool autoselect, const OptionsFile::Options& deviceOptions)
 {
-  p->init(ScanSettingsXml(xml), autoselect);
-  return *this;
-}
-
-ScanJob&
-ScanJob::applyDeviceOptions(const OptionsFile::Options& options)
-{
-  p->applyDeviceOptions(options);
+  p->init(ScanSettingsXml(xml), autoselect, deviceOptions);
   return *this;
 }
 
@@ -187,7 +180,7 @@ ScanJob::adfStatus() const
 }
 
 void
-ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat)
+ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, const OptionsFile::Options& options)
 {
   const char* err = nullptr;
 
@@ -261,6 +254,8 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat)
     mScanSource = mpScanner->adfSourceName();
     mImagesToTransfer = std::numeric_limits<int>::max();
   }
+
+  applyDeviceOptions(options);
 
   if (err) {
     mState = aborted;
@@ -596,6 +591,7 @@ ScanJob::Private::finishTransfer(std::ostream& os)
   }
   if (isProcessing()) {
     pEncoder->setResolutionDpi(mRes_dpi);
+std::clog << "mColorScan: " << (mColorScan?"true":"false") << std::endl;
     if (mColorScan)
       pEncoder->setColorspace(ImageEncoder::RGB);
     else
