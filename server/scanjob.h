@@ -39,6 +39,9 @@ public:
                                    bool autoselectFormat,
                                    const OptionsFile::Options&);
 
+  enum { single, adfSingle, adfBatch };
+  int kind() const;
+
   int ageSeconds() const;
   int imagesToTransfer() const;
   int imagesCompleted() const;

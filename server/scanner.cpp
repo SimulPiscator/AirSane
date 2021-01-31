@@ -527,7 +527,7 @@ Scanner::Private::init(const sanecpp::device_info& info, bool randomUuid)
     flatbedName = "-";
 
   if (!flatbedName.empty()) {
-    mInputSources.push_back("Flatbed");
+    mInputSources.push_back("Platen");
     if (flatbedName != "-")
       opt[SANE_NAME_SCAN_SOURCE].set_string_value(flatbedName);
     mpPlaten = new Private::InputSource(this);

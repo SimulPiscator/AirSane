@@ -49,6 +49,7 @@ buildScanJobTicket(const Dictionary& dict)
   d.eraseKey("PaperSize");
   d["XOffset"] = "0";
   d["YOffset"] = "0";
+  d["BatchIfPossible"] = "1";
   std::string ticket = "<x:ContentRegionUnits>escl:ThreeHundredthsOfInches</"
                        "x:ContentRegionUnits>\n";
   for (auto& s : d) // just enough xml syntax for ScanJob to recognize
@@ -108,9 +109,9 @@ ScannerPage::onRender()
         job->finishTransfer(response().send());
         return;
       } else {
-        job->cancel();
         statusinfo =
           "Error: " + job->statusString() + ": " + job->statusReason();
+        response().setHeader(HttpServer::HTTP_HEADER_REFRESH, "5; url=/");
       }
     }
     if (job && preview)

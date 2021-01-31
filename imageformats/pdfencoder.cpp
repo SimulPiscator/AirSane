@@ -206,41 +206,19 @@ PdfEncoder::onImageBegin()
   *destination() << std::dec <<
     R"(%PDF-1.4
 %âãÏÓ
-)" << p->defobj(1)
-                 << R"(
-<<
-/Type/Pages
-/Count 1
-/Kids [ 4 0 R ]
->>
-endobj
 )" << p->defobj(2)
                  << R"(
 <<
-/Type/Catalog
-/Pages 1 0 R
->>
-endobj
-)" << p->defobj(3)
-                 << R"(
-<<
-)" << p->mInfoString
-                 << R"(
->>
-endobj
-)" << p->defobj(4)
-                 << R"(
-<<
 /Type/Page
-/Contents 6 0 R
+/Contents 4 0 R
 /MediaBox [ 0 0 )"
                  << pdfunits_per_px * width() << " "
                  << pdfunits_per_px * height() << R"( ]
 /Parent 1 0 R
-/Resources << /XObject << /strip0 5 0 R >> >>
+/Resources << /XObject << /strip0 3 0 R >> >>
 >>
 endobj
-)" << p->defobj(5)
+)" << p->defobj(3)
                  << R"(
 <<
 /Type /XObject
@@ -277,7 +255,7 @@ PdfEncoder::onImageEnd()
     R"(
 endstream
 endobj
-)" << p->defobj(6)
+)" << p->defobj(4)
      << R"(
 <<
 /Length )"
@@ -288,7 +266,31 @@ endobj
      << pagedef << "endstream\n"
      << R"(
 endobj
+)" << p->defobj(1)
+                 << R"(
+<<
+/Type/Pages
+/Count 1
+/Kids [ 2 0 R ]
+>>
+endobj
+)" << p->defobj(5)
+                 << R"(
+<<
+/Type/Catalog
+/Pages 1 0 R
+>>
+endobj
+)" << p->defobj(6)
+                 << R"(
+<<
+)" << p->mInfoString
+                 << R"(
+>>
+endobj
 )";
+
+
   p->mStartxref = os.tellp() - p->mBegin;
   os << "xref\n"
      << "0 " << p->mObjects.size() + 1 << "\n"
@@ -300,8 +302,8 @@ endobj
 <<
 /Size )"
      << p->mObjects.size() + 1 << R"(
-/Root 2 0 R
-/Info 3 0 R
+/Root 5 0 R
+/Info 6 0 R
 /ID
 [
 <)" << fileid

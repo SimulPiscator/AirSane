@@ -75,6 +75,7 @@ struct ScanSettingsXml
 struct ScanJob::Private
 {
   void init(const ScanSettingsXml&, bool autoselectFormat, const OptionsFile::Options&);
+  const char* kindString() const;
   void applyDeviceOptions(const OptionsFile::Options&);
   void initGammaTable(const std::string& gamma);
   void applyGamma(std::vector<char>&);
@@ -107,7 +108,7 @@ struct ScanJob::Private
   bool mColorScan, mSynthesizedGray;
   double mLeft_px, mTop_px, mWidth_px, mHeight_px;
 
-  int mImagesToTransfer, mImagesCompleted;
+  int mKind, mImagesToTransfer, mImagesCompleted;
   std::shared_ptr<sanecpp::session> mpSession;
 
   OptionsFile::Options mDeviceOptions;
@@ -248,12 +249,24 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
   mImagesCompleted = 0;
 
   std::string inputSource = settings.getString("InputSource");
-  if (inputSource == "Platen")
+  if (inputSource == "Platen") {
     mScanSource = mpScanner->platenSourceName();
+    mImagesToTransfer = 1;
+    mKind = single;
+  }
   else if (inputSource == "Feeder") {
     mScanSource = mpScanner->adfSourceName();
     mImagesToTransfer = std::numeric_limits<int>::max();
+    if (settings.getNumber("BatchIfPossible") && mDocumentFormat == HttpServer::MIME_TYPE_PDF)
+      mKind = adfBatch;
+    else
+      mKind = adfSingle;
   }
+  else {
+    err = PWG_INVALID_SCAN_TICKET;
+    std::cerr << "unknown input source: " << inputSource << std::endl;
+  }
+  std::clog << "job kind: " << kindString() << std::endl;
 
   applyDeviceOptions(options);
 
@@ -264,9 +277,20 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
     mState = pending;
     mStateReason = PWG_JOB_QUEUED;
   }
+}
 
-  if (mState == pending)
-    openSession();
+const char*
+ScanJob::Private::kindString() const
+{
+  switch (mKind) {
+    case single:
+      return "single";
+    case adfBatch:
+      return "ADF batch";
+    case adfSingle:
+      return "ADF single";
+  }
+  return "unknown";
 }
 
 void
@@ -429,7 +453,7 @@ ScanJob::Private::updateStatus(SANE_Status status)
       mStateReason = PWG_JOB_CANCELED_BY_USER;
       break;
     case SANE_STATUS_EOF:
-      if (mImagesCompleted == mImagesToTransfer) {
+      if (mImagesCompleted > 0 && mKind == single) {
         mState = completed;
         mStateReason = PWG_JOB_COMPLETED_SUCCESSFULLY;
       } else {
@@ -438,7 +462,7 @@ ScanJob::Private::updateStatus(SANE_Status status)
       }
       break;
     case SANE_STATUS_NO_DOCS:
-      if (mImagesCompleted > 0) {
+      if (mImagesCompleted > 0 && (mKind == adfSingle || mKind == adfBatch)) {
         mState = completed;
         mStateReason = PWG_JOB_COMPLETED_SUCCESSFULLY;
       } else {
@@ -494,8 +518,9 @@ ScanJob::beginTransfer()
 bool
 ScanJob::Private::beginTransfer()
 {
-  SANE_Status status = mpSession->start().status();
-  updateStatus(status);
+  if(!atomicTransition(pending, processing))
+    return false;
+  openSession();
   bool ok = isProcessing();
   if (!ok)
     closeSession();
@@ -505,9 +530,10 @@ ScanJob::Private::beginTransfer()
 void
 ScanJob::Private::openSession()
 {
+  SANE_Status status = SANE_STATUS_GOOD;
   assert(!mpSession);
   mpSession = mpScanner->open();
-  SANE_Status status = mpSession->status();
+  status = mpSession->status();
   if (status == SANE_STATUS_GOOD) {
 
     auto& opt = mpSession->options();
@@ -545,7 +571,10 @@ ScanJob::Private::openSession()
     if (!ok)
       status = SANE_STATUS_INVAL;
   }
-  updateStatus(status);
+  if (status == SANE_STATUS_GOOD) {
+    status = mpSession->start().status();
+    updateStatus(status);
+  }
 }
 
 void
@@ -591,7 +620,6 @@ ScanJob::Private::finishTransfer(std::ostream& os)
   }
   if (isProcessing()) {
     pEncoder->setResolutionDpi(mRes_dpi);
-std::clog << "mColorScan: " << (mColorScan?"true":"false") << std::endl;
     if (mColorScan)
       pEncoder->setColorspace(ImageEncoder::RGB);
     else
@@ -618,7 +646,7 @@ std::clog << "mColorScan: " << (mColorScan?"true":"false") << std::endl;
       mStateReason = PWG_ERRORS_DETECTED;
     }
   }
-  if (isProcessing()) {
+  while (isProcessing()) {
     std::vector<char> buffer(mpSession->parameters()->bytes_per_line);
     SANE_Status status = SANE_STATUS_GOOD;
     while (status == SANE_STATUS_GOOD && os && isProcessing()) {
@@ -640,6 +668,7 @@ std::clog << "mColorScan: " << (mColorScan?"true":"false") << std::endl;
     }
     if (isProcessing()) {
       ++mImagesCompleted;
+      std::clog << "images completed: " << mImagesCompleted << std::endl;
       updateStatus(status);
       if (pEncoder->linesLeftInCurrentImage() != pEncoder->height()) {
         std::cerr << "incomplete or excess scan data" << std::endl;
@@ -648,8 +677,7 @@ std::clog << "mColorScan: " << (mColorScan?"true":"false") << std::endl;
       }
     }
   }
-  if (isAborted() || isFinished())
-    closeSession();
+  closeSession();
 }
 
 ScanJob&
