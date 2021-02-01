@@ -453,12 +453,23 @@ ScanJob::Private::updateStatus(SANE_Status status)
       mStateReason = PWG_JOB_CANCELED_BY_USER;
       break;
     case SANE_STATUS_EOF:
-      if (mImagesCompleted > 0 && mKind == single) {
-        mState = completed;
-        mStateReason = PWG_JOB_COMPLETED_SUCCESSFULLY;
-      } else {
-        mState = pending;
-        mStateReason = PWG_NONE;
+      switch(mKind) {
+      case single:
+          if (mImagesCompleted > 0) {
+              mState = completed;
+              mStateReason = PWG_JOB_COMPLETED_SUCCESSFULLY;
+          } else {
+            mState = pending;
+            mStateReason = PWG_NONE;
+          }
+          break;
+      case adfSingle:
+          mState = pending;
+          mStateReason = PWG_NONE;
+          break;
+      case adfBatch:
+          updateStatus(mpSession->start().status());
+          break;
       }
       break;
     case SANE_STATUS_NO_DOCS:
@@ -604,8 +615,10 @@ ScanJob::Private::finishTransfer(std::ostream& os)
       pEncoder.reset(jpegEncoder);
     } else if (mDocumentFormat == HttpServer::MIME_TYPE_PDF) {
       auto pdfEncoder = new PdfEncoder;
+#if 0 // "Title" does not conform to pdf/raster
       pdfEncoder->documentInfo()["Title"] =
         mUuid + "/" + sanecpp::dtostr_c(mImagesCompleted);
+#endif
       pdfEncoder->documentInfo()["Creator"] =
         mpScanner->makeAndModel() + " (SANE)";
       pdfEncoder->documentInfo()["Producer"] = "AirSane Server";
@@ -677,6 +690,7 @@ ScanJob::Private::finishTransfer(std::ostream& os)
       }
     }
   }
+  pEncoder->endDocument();
   closeSession();
 }
 

@@ -27,6 +27,7 @@ ImageEncoder::ImageEncoder()
   , mDpi(0)
   , mBytesPerLine(0)
   , mCurrentLine(0)
+  , mCurrentImage(0)
   , mColorspace(Unknown)
   , mpDestination(nullptr)
 {}
@@ -124,21 +125,39 @@ ImageEncoder::destination() const
 ImageEncoder&
 ImageEncoder::writeLine(const void* p)
 {
+  if (mCurrentLine == 0 && mCurrentImage == 0)
+      onDocumentBegin();
   if (mCurrentLine == 0 && mpDestination)
     onImageBegin();
   if (mpDestination)
     onWriteLine(p);
-  if (++mCurrentLine == mHeight)
+  if (++mCurrentLine == mHeight) {
     mCurrentLine = 0;
+    ++mCurrentImage;
+  }
   if (mCurrentLine == 0 && mpDestination)
     onImageEnd();
   return *this;
+}
+
+ImageEncoder&
+ImageEncoder::endDocument()
+{
+    if (mpDestination)
+        onDocumentEnd();
+    return *this;
 }
 
 int
 ImageEncoder::bytesPerLine()
 {
   return mBytesPerLine;
+}
+
+int
+ImageEncoder::currentImage() const
+{
+  return mCurrentImage;
 }
 
 int

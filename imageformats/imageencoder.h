@@ -57,13 +57,17 @@ public:
   std::ostream* destination() const;
 
   ImageEncoder& writeLine(const void*);
+  ImageEncoder& endDocument();
   int bytesPerLine();
   int linesLeftInCurrentImage() const;
+  int currentImage() const;
 
   int encodedSize() const;
 
 protected:
   virtual int onEncodedSize() const { return -1; }
+  virtual void onDocumentBegin() {}
+  virtual void onDocumentEnd() {}
   virtual void onImageBegin() = 0;
   virtual void onImageEnd() = 0;
   virtual void onWriteLine(const void*) = 0;
@@ -72,7 +76,7 @@ protected:
 
 private:
   int mWidth, mHeight, mComponents, mBitDepth, mDpi;
-  int mBytesPerLine, mCurrentLine;
+  int mBytesPerLine, mCurrentLine, mCurrentImage;
   Colorspace mColorspace;
   std::ostream* mpDestination;
 };

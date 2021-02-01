@@ -33,6 +33,8 @@ public:
   const Dictionary& documentInfo() const;
 
 protected:
+  void onDocumentBegin() override;
+  void onDocumentEnd() override;
   void onImageBegin() override;
   void onImageEnd() override;
   void onWriteLine(const void*) override;

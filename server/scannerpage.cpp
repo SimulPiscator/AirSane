@@ -157,6 +157,12 @@ ScannerPage::onRender()
   out() << "<form id='scanform' method='POST'>\n"
         << "<div id='maindiv'>\n"
         << "<div id='settings'>\n";
+
+  std::string note;
+  for (const auto& s : mScanner.inputSources())
+      if (s == "Feeder")
+          note = "Choose \"Feeder\" input source and <br>PDF format to scan multiple pages.";
+
   const struct
   {
     const char *name, *label;
@@ -176,6 +182,7 @@ ScannerPage::onRender()
                .setLabel(s.label)
                .setValue(d[s.name])
           << "</nobr>" << br();
+  out() << "<div id='note'>" << note << "</div>\n";
   out() << "<div id='status'>" << statusinfo << "</div>\n";
   out() << "</div>\n"
         << "<div id='downloadbtn'>\n"
@@ -213,6 +220,7 @@ ScannerPage::onRender()
         #settings { float:left; min-width:45%; padding:0.2em }
         #downloadbtn { position:absolute; bottom:8px; margin-left:8px }
         #previewbtn  { position:absolute; bottom:8px; margin-left:8px }
+        #note { padding-top:2em; font-size:small }
         #status { padding-top:2em; color:red }
         #previewpane { overflow:hidden }
         #previewimg { background-color:lightgray; line-height:2.5em; text-align:left }

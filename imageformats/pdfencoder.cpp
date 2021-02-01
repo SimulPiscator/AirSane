@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <locale>
 #include <stdexcept>
 #include <vector>
+#include <algorithm>
 
 #include "basic/dictionary.h"
 #include "basic/uuid.h"
@@ -123,12 +124,15 @@ struct PdfEncoder::Private
   {
     int id;
     std::streamoff offset;
+    static bool less(const objdef& obj1, const objdef& obj2)
+    { return obj1.id < obj2.id; }
   };
   std::vector<objdef> mObjects;
   std::streampos mBegin;
   std::streamoff mStartxref;
   Dictionary mInfoDict;
   std::string mInfoString;
+  int mObj;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
   std::vector<uint16_t> mLineBuffer;
@@ -171,7 +175,7 @@ PdfEncoder::documentInfo() const
 }
 
 void
-PdfEncoder::onImageBegin()
+PdfEncoder::onDocumentBegin()
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
   p->mLineBuffer.clear();
@@ -188,6 +192,15 @@ PdfEncoder::onImageBegin()
   p->mObjects.clear();
   if (resolutionDpi() == 0)
     throw std::runtime_error("no resolution specified");
+  p->mBegin = destination()->tellp();
+  destination()->imbue(std::locale("C"));
+  *destination() << std::dec << "%PDF-1.4\n%âãÏÓ\n";
+  p->mObj = 1;
+}
+
+void
+PdfEncoder::onImageBegin()
+{
   const double pdfunits_per_px = 72.0 / resolutionDpi();
   const char* csname = "unknown";
   switch (components()) {
@@ -201,39 +214,21 @@ PdfEncoder::onImageBegin()
       csname = "DeviceCMYK";
       break;
   };
-  p->mBegin = destination()->tellp();
-  destination()->imbue(std::locale("C"));
-  *destination() << std::dec <<
-    R"(%PDF-1.4
-%âãÏÓ
-)" << p->defobj(2)
-                 << R"(
-<<
-/Type/Page
-/Contents 4 0 R
-/MediaBox [ 0 0 )"
-                 << pdfunits_per_px * width() << " "
-                 << pdfunits_per_px * height() << R"( ]
-/Parent 1 0 R
-/Resources << /XObject << /strip0 3 0 R >> >>
->>
-endobj
-)" << p->defobj(3)
-                 << R"(
-<<
-/Type /XObject
-/Subtype /Image
-)"
-                 << "/Width " << width() << " /Height " << height() << R"(
-/ColorSpace /)" << csname
-                 << R"(
-/BitsPerComponent )"
-                 << bitDepth() << R"(
-/Length )" << height() * bytesPerLine()
-                 << R"(
->>
-stream
-)";
+  *destination() << p->defobj(++p->mObj) // mObj == 2
+  << "<<\n/Type/Page\n/Contents " << p->mObj + 2 << " 0 R\n"
+  << "/MediaBox [ 0 0 "
+  << pdfunits_per_px * width() << " "
+  << pdfunits_per_px * height() << " ]\n"
+  << "/Parent 1 0 R\n"
+  << "/Resources << /XObject << /strip0 " << p->mObj + 1 << " 0 R >> >>\n"
+  << ">>\nendobj\n"
+  << p->defobj(++p->mObj) << "\n" // mObj == 3
+  << "<<\n/Type /XObject\n/Subtype /Image\n"
+  << "/Width " << width() << "\n/Height " << height()
+  << "\n/ColorSpace /" << csname
+  << "\n/BitsPerComponent " << bitDepth()
+  << "\n/Length " << height() * bytesPerLine()
+  << "\n>>\nstream\n";
 }
 
 void
@@ -245,77 +240,54 @@ PdfEncoder::onImageEnd()
       << " 0 0 cm\n"
       << "/strip0 Do\n";
   std::string pagedef = oss.str();
+  *destination()
+  << "\nendstream\nendobj\n" << p->defobj(++p->mObj) // mObj == 4
+  << "\n<<\n/Length " << pagedef.length() << "\n>>\n"
+  << "stream\n"
+  << pagedef << "endstream\n"
+  << "\nendobj\n";
+}
+
+void
+PdfEncoder::onDocumentEnd()
+{
   std::string fileid = Uuid(p->mInfoString, ::time(nullptr)).toString();
   for (size_t pos = fileid.find('-'); pos < fileid.length();
        pos = fileid.find('-'))
     fileid = fileid.substr(0, pos) + fileid.substr(pos + 1);
 
   std::ostream& os = *destination();
-  os <<
-    R"(
-endstream
-endobj
-)" << p->defobj(4)
-     << R"(
-<<
-/Length )"
-     << pagedef.length() << R"(
->>
-)"
-     << "stream\n"
-     << pagedef << "endstream\n"
-     << R"(
-endobj
-)" << p->defobj(1)
-                 << R"(
-<<
-/Type/Pages
-/Count 1
-/Kids [ 2 0 R ]
->>
-endobj
-)" << p->defobj(5)
-                 << R"(
-<<
-/Type/Catalog
-/Pages 1 0 R
->>
-endobj
-)" << p->defobj(6)
-                 << R"(
-<<
-)" << p->mInfoString
-                 << R"(
->>
-endobj
-)";
+  os << p->defobj(1) << "\n<<\n"
+     << "/Type/Pages\n"
+     << "/Count " << currentImage() << "\n"
+     << "/Kids [\n";
+  for (int i = 2; i < p->mObj; i += 3)
+    os << i << " 0 R\n";
+  os << "\n]\n>>\nendobj\n";
 
+  os << p->defobj(++p->mObj) // mObj == 5
+     << "<<\n/Type/Catalog\n/Pages 1 0 R\n>>\n"
+     << "endobj\n";
+  os << p->defobj(++p->mObj) // mObj == 6
+     << "<<\n" << p->mInfoString << ">>\nendobj\n";
 
   p->mStartxref = os.tellp() - p->mBegin;
   os << "xref\n"
      << "0 " << p->mObjects.size() + 1 << "\n"
      << "0000000000 65535 f \n";
+  std::sort(p->mObjects.begin(), p->mObjects.end(), Private::objdef::less);
   for (const auto& obj : p->mObjects)
     os << std::setfill('0') << std::setw(10) << obj.offset << " 00000 n \n";
-  os <<
-    R"(trailer
-<<
-/Size )"
-     << p->mObjects.size() + 1 << R"(
-/Root 5 0 R
-/Info 6 0 R
-/ID
-[
-<)" << fileid
-     << ">\n<" << fileid << R"(>
-]
->>
-%PDF-raster-1.0
-startxref
-)" << p->mStartxref
-     << R"(
-%%EOF
-)";
+  os << "trailer\n<<\n"
+     << "/Size " << p->mObjects.size() + 1 << "\n"
+     << "/Root " << p->mObj - 1 << " 0 R\n"
+     << "/Info " << p->mObj << " 0 R\n"
+     << "/ID [\n<" << fileid << ">\n<" << fileid << ">\n]\n"
+     << ">>\n";
+
+  os << "%PDF-raster-1.0\n"
+     << "startxref\n" << p->mStartxref << "\n"
+     << "%%EOF\n";
 }
 
 void
@@ -344,7 +316,6 @@ PdfEncoder::Private::insert_objdef::insert_objdef(Private* p, int id)
 void
 PdfEncoder::Private::insert_objdef::insert(std::ostream& os) const
 {
-  assert(id == p->mObjects.size() + 1);
   objdef obj = { id, os.tellp() - p->mBegin };
   os << id << " 0 obj";
   p->mObjects.push_back(obj);

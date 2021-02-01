@@ -169,6 +169,8 @@ JpegEncoder::onImageBegin()
 {
   if (bitDepth() != BITS_IN_JSAMPLE)
     throw std::runtime_error("JpegEncoder: bit depth unsupported");
+  if (currentImage() > 0)
+    throw std::runtime_error("JpegEncoder: cannot encode more than one image per file");
   p->mCompressStruct.image_width = width();
   p->mCompressStruct.image_height = height();
   p->mCompressStruct.input_components = components();
