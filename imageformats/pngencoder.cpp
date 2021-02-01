@@ -75,6 +75,8 @@ PngEncoder::onImageBegin()
 {
   if (currentImage() > 0)
     throw std::runtime_error("PngEncoder: cannot encode more than one image per file");
+  if (orientationDegrees() != 0)
+    throw std::runtime_error("PngEncoder: cannot rotate image");
 #if BYTE_ORDER == LITTLE_ENDIAN
   if (bitDepth() == 16)
     p->mLineBuffer.resize(width() * components());

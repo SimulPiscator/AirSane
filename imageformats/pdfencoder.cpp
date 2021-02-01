@@ -216,6 +216,7 @@ PdfEncoder::onImageBegin()
   };
   *destination() << p->defobj(++p->mObj) // mObj == 2
   << "<<\n/Type/Page\n/Contents " << p->mObj + 2 << " 0 R\n"
+  << "/Rotate " << orientationDegrees() << "\n"
   << "/MediaBox [ 0 0 "
   << pdfunits_per_px * width() << " "
   << pdfunits_per_px * height() << " ]\n"

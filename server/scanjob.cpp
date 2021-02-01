@@ -105,7 +105,7 @@ struct ScanJob::Private
 
   std::string mScanSource, mIntent, mDocumentFormat, mColorMode;
   int mBitDepth, mRes_dpi;
-  bool mColorScan, mSynthesizedGray;
+  bool mColorScan, mSynthesizedGray, mRotateEvenPages;
   double mLeft_px, mTop_px, mWidth_px, mHeight_px;
 
   int mKind, mImagesToTransfer, mImagesCompleted;
@@ -241,7 +241,7 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
 
   mDocumentFormat = settings.getString("DocumentFormat");
   std::clog << "document format requested: " << mDocumentFormat << "\n";
-  if (autoselectFormat && mDocumentFormat == HttpServer::MIME_TYPE_JPEG)
+  if (autoselectFormat)
     mDocumentFormat = HttpServer::MIME_TYPE_PNG;
   std::clog << "document format used: " << mDocumentFormat << "\n";
 
@@ -257,7 +257,8 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
   else if (inputSource == "Feeder") {
     mScanSource = mpScanner->adfSourceName();
     mImagesToTransfer = std::numeric_limits<int>::max();
-    if (settings.getNumber("BatchIfPossible") && mDocumentFormat == HttpServer::MIME_TYPE_PDF)
+    double batchIfPossible = settings.getNumber("BatchIfPossible");
+    if (batchIfPossible == 1.0 && mDocumentFormat == HttpServer::MIME_TYPE_PDF)
       mKind = adfBatch;
     else
       mKind = adfSingle;
@@ -299,6 +300,7 @@ ScanJob::Private::applyDeviceOptions(const OptionsFile::Options& options)
   mDeviceOptions.clear();
   mGammaTable.clear();
   mSynthesizedGray = false;
+  mRotateEvenPages = false;
   for (const auto& option : options) {
     if (option.first == "gray-gamma") {
       if (!mColorScan) {
@@ -322,6 +324,16 @@ ScanJob::Private::applyDeviceOptions(const OptionsFile::Options& options)
           mColorMode = mpScanner->grayScanModeName();
         }
       }
+#if 0
+    } else if (option.first == "rotate-even") {
+        if (option.second == "yes") {
+            std::clog << "rotating even-numbered pages by 180 degrees" << std::endl;
+            mRotateEvenPages = true;
+        } else {
+            std::clog << "not rotating pages" << std::endl;
+            mRotateEvenPages = false;
+        }
+#endif
     } else {
       mDeviceOptions.push_back(option);
     }
@@ -681,6 +693,8 @@ ScanJob::Private::finishTransfer(std::ostream& os)
     }
     if (isProcessing()) {
       ++mImagesCompleted;
+      if (mRotateEvenPages)
+        pEncoder->setOrientationDegrees(mImagesCompleted % 2 ? 0 : 180);
       std::clog << "images completed: " << mImagesCompleted << std::endl;
       updateStatus(status);
       if (pEncoder->linesLeftInCurrentImage() != pEncoder->height()) {

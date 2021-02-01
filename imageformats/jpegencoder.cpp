@@ -171,6 +171,8 @@ JpegEncoder::onImageBegin()
     throw std::runtime_error("JpegEncoder: bit depth unsupported");
   if (currentImage() > 0)
     throw std::runtime_error("JpegEncoder: cannot encode more than one image per file");
+  if (orientationDegrees() != 0)
+    throw std::runtime_error("JpegEncoder: cannot rotate image");
   p->mCompressStruct.image_width = width();
   p->mCompressStruct.image_height = height();
   p->mCompressStruct.input_components = components();

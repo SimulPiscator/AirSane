@@ -42,6 +42,9 @@ public:
   ImageEncoder& setResolutionDpi(int dpi);
   int resolutionDpi() const;
 
+  ImageEncoder& setOrientationDegrees(int);
+  int orientationDegrees() const;
+
   enum Colorspace
   {
     Unknown,
@@ -75,7 +78,7 @@ protected:
   void onParamChange();
 
 private:
-  int mWidth, mHeight, mComponents, mBitDepth, mDpi;
+  int mWidth, mHeight, mComponents, mBitDepth, mDpi, mOrientationDegrees;
   int mBytesPerLine, mCurrentLine, mCurrentImage;
   Colorspace mColorspace;
   std::ostream* mpDestination;

@@ -161,7 +161,7 @@ ScannerPage::onRender()
   std::string note;
   for (const auto& s : mScanner.inputSources())
       if (s == "Feeder")
-          note = "Choose \"Feeder\" input source and <br>PDF format to scan multiple pages.";
+          note = "Choose \"Feeder\" input source and \"PDF\"<br>document type to scan multiple pages.";
 
   const struct
   {
@@ -220,7 +220,7 @@ ScannerPage::onRender()
         #settings { float:left; min-width:45%; padding:0.2em }
         #downloadbtn { position:absolute; bottom:8px; margin-left:8px }
         #previewbtn  { position:absolute; bottom:8px; margin-left:8px }
-        #note { padding-top:2em; font-size:small }
+        #note { padding:2em; font-size:small }
         #status { padding-top:2em; color:red }
         #previewpane { overflow:hidden }
         #previewimg { background-color:lightgray; line-height:2.5em; text-align:left }

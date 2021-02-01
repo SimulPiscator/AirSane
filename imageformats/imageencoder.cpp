@@ -25,6 +25,7 @@ ImageEncoder::ImageEncoder()
   , mComponents(0)
   , mBitDepth(0)
   , mDpi(0)
+  , mOrientationDegrees(0)
   , mBytesPerLine(0)
   , mCurrentLine(0)
   , mCurrentImage(0)
@@ -86,6 +87,19 @@ int
 ImageEncoder::resolutionDpi() const
 {
   return mDpi;
+}
+
+ImageEncoder&
+ImageEncoder::setOrientationDegrees(int d)
+{
+  mOrientationDegrees = d;
+  return *this;
+}
+
+int
+ImageEncoder::orientationDegrees() const
+{
+  return mOrientationDegrees;
 }
 
 ImageEncoder&
