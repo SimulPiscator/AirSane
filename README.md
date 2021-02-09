@@ -20,9 +20,7 @@ You may be interested in [phpSANE](https://sourceforge.net/projects/phpsane) ins
 
 AirSane has been developed by reverse-engineering the communication protocol
 implemented in Apple's AirScanScanner client
-(macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`), using a 
-[Disassembler](https://www.hopperapp.com/) able to reconstruct much of the original 
-Objective-C source code.
+(macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`).
 
 Regarding the mdns announcement, and the basic working of the eSCL protocol,
 [David Poole's blog](http://testcluster.blogspot.com/2014/03) was very helpful.
