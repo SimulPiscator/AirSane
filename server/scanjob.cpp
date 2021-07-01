@@ -22,10 +22,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "imageformats/pngencoder.h"
 #include "scanner.h"
 #include "web/httpserver.h"
+
 #include <atomic>
 #include <cassert>
 #include <cmath>
 #include <regex>
+#include <stdexcept>
+#include <limits>
+
 #include <sane/saneopts.h>
 
 // pwg JobStateReasonsWKV
