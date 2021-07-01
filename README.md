@@ -225,13 +225,6 @@ Installing libpng16-dev should fix the issue:
 ```
    sudo apt install libpng16-dev
 ```
-* Compiling fails because of **`#include <libpng/png.h>`** not being found. 
-On some distributions (e.g., Arch Linux), `libpng` may come in multiple flavors, with each having its
-own `/usr/include` subdirectory. 
-Creating a symlink will then fix the build:
-```
-  sudo ln -s /usr/include/libpng16/ /usr/include/libpng/
-```
 * If you are able to open the server's web page locally, but **not from a remote
 machine,** you may have to allow access to port 8090 in your iptables
 configuration.
