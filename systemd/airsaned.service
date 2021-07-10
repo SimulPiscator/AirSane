@@ -1,6 +1,6 @@
 [Unit]
 Description=AirSane Imaging Service
-After=network-online.target
+After=avahi-daemon.service
 
 [Service]
 EnvironmentFile=-/etc/default/airsane
