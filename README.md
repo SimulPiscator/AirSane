@@ -25,6 +25,9 @@ implemented in Apple's AirScanScanner client
 Regarding the mdns announcement, and the basic working of the eSCL protocol,
 [David Poole's blog](http://testcluster.blogspot.com/2014/03) was very helpful.
 
+In the meantime, the eSCL protocol has been officially published
+[here](https://mopria.org/mopria-escl-specification).
+
 ## Usage
 ### Web interface
 Open `http://machine-name:8090/` in a web browser, and follow a scanner 
