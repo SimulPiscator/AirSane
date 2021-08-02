@@ -119,7 +119,7 @@ by editing '/etc/default/airsane'. For options, and their meanings, run
 ```
 airsaned --help
 ```
-By default, the server listens on all local addresses, and on a range of ports beginning 8090.
+By default, the server listens on all local addresses, and on a range of ports beginning at 8090.
 From there, each exported scanner has its own port (this is necessary to match the mdns-sd
 specification which allows only a single service to be announced per address/port combination).
 
