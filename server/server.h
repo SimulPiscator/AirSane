@@ -16,11 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MAINSERVER_H
-#define MAINSERVER_H
+#ifndef SERVER_H
+#define SERVER_H
 
 #include "scanner.h"
-#include "scannerserver.h"
 #include "web/httpserver.h"
 #include "zeroconf/mdnspublisher.h"
 #include <fstream>
@@ -32,21 +31,22 @@ struct ScannerEntry
 {
   std::shared_ptr<Scanner> pScanner;
   std::shared_ptr<MdnsPublisher::Service> pService;
-  std::shared_ptr<ScannerServer> pServer;
 };
 typedef std::vector<ScannerEntry> ScannerList;
 
-class MainServer : public HttpServer
+class Server : public HttpServer
 {
 public:
-  MainServer(int argc, char** argv);
-  ~MainServer();
+  Server(int argc, char** argv);
+  ~Server();
   bool run();
 
 protected:
   void onRequest(const Request&, Response&) override;
 
 private:
+  void chooseUniquePublishedName(Scanner*) const;
+  bool publishedNameExists(const std::string&) const;
   bool matchIgnorelist(const sanecpp::device_info&) const;
   std::shared_ptr<MdnsPublisher::Service> buildMdnsService(const Scanner*);
   // must pass ScannerList element by value to achieve protection during
@@ -65,4 +65,4 @@ private:
   bool mDoRun;
 };
 
-#endif // MAINSERVER_H
+#endif // SERVER_H

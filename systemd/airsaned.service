@@ -4,7 +4,7 @@ After=avahi-daemon.service
 
 [Service]
 EnvironmentFile=-/etc/default/airsane
-ExecStart=/usr/local/bin/airsaned --interface=${INTERFACE} --base-port=${BASE_PORT} --access-log=${ACCESS_LOG} --hotplug=${HOTPLUG} --mdns-announce=${MDNS_ANNOUNCE} --local-scanners-only=${LOCAL_SCANNERS_ONLY} --options-file=${OPTIONS_FILE} --ignore-list=${IGNORE_LIST}
+ExecStart=/usr/local/bin/airsaned --interface=${INTERFACE} --listen-port=${LISTEN_PORT} --access-log=${ACCESS_LOG} --hotplug=${HOTPLUG} --mdns-announce=${MDNS_ANNOUNCE} --local-scanners-only=${LOCAL_SCANNERS_ONLY} --options-file=${OPTIONS_FILE} --ignore-list=${IGNORE_LIST}
 ExecReload=/bin/kill -HUP $MAINPID
 User=saned
 Group=saned

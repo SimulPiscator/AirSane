@@ -163,7 +163,7 @@ ScanJob::imagesCompleted() const
 std::string
 ScanJob::uri() const
 {
-  return "/eSCL/ScanJobs/" + p->mUuid;
+  return p->mpScanner->uri() + "/ScanJobs/" + p->mUuid;
 }
 
 const std::string&

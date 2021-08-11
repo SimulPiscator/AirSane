@@ -48,6 +48,8 @@ public:
   void setPublishedName(const std::string&);
   const std::string& publishedName() const;
 
+  void setUri(const std::string&);
+  const std::string& uri() const;
   void setAdminUrl(const std::string&);
   const std::string& adminUrl() const;
   void setIconUrl(const std::string&);

@@ -178,7 +178,7 @@ struct Scanner::Private
   Scanner* p;
 
   std::string mSaneName, mMakeAndModel, mStableUniqueName, mUuid,
-    mPublishedName;
+    mPublishedName, mUri;
   std::string mAdminUrl, mIconUrl, mIconFile;
 
   int mMinResDpi, mMaxResDpi, mResStepDpi;
@@ -680,6 +680,18 @@ void
 Scanner::setPublishedName(const std::string& name)
 {
   p->mPublishedName = name;
+}
+
+void
+Scanner::setUri(const std::string& uri)
+{
+  p->mUri = uri;
+}
+
+const std::string&
+Scanner::uri() const
+{
+  return p->mUri;
 }
 
 void

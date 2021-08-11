@@ -8,7 +8,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/usr/local/sbin/airsaned</string>
-        <string>--base-port=8090</string>
+        <string>--listen-port=8090</string>
         <string>--options-file=/usr/local/etc/airsane/options.conf</string>
         <string>--ignore-list=/usr/local/etc/airsane/ignore.conf</string>
     </array>

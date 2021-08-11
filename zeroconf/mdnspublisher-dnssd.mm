@@ -38,39 +38,39 @@ static struct
   _(kDNSServiceErr_NoError)    //                    = 0,
   _(kDNSServiceErr_Unknown)    //                    = -65537,    // 0xFFFE FFFF
                                //                    (first error code)
-  _(kDNSServiceErr_NoSuchName) //                = -65538,
+  _(kDNSServiceErr_NoSuchName) //                    = -65538,
   _(kDNSServiceErr_NoMemory)   //                    = -65539,
   _(kDNSServiceErr_BadParam)   //                    = -65540,
   _(kDNSServiceErr_BadReference)   //                = -65541,
-  _(kDNSServiceErr_BadState)       //                    = -65542,
-  _(kDNSServiceErr_BadFlags)       //                    = -65543,
+  _(kDNSServiceErr_BadState)       //                = -65542,
+  _(kDNSServiceErr_BadFlags)       //                = -65543,
   _(kDNSServiceErr_Unsupported)    //                = -65544,
-  _(kDNSServiceErr_NotInitialized) //            = -65545,
-  //    _(kDNSServiceErr_NoCache)//                    = -65546,
-  _(kDNSServiceErr_AlreadyRegistered) //        = -65547,
-  _(kDNSServiceErr_NameConflict)      //                = -65548,
-  _(kDNSServiceErr_Invalid)           //                    = -65549,
-  _(kDNSServiceErr_Incompatible)      //                = -65551,
-  _(kDNSServiceErr_BadInterfaceIndex) //        = -65552,
-  _(kDNSServiceErr_Refused)           //                    = -65553,
-  _(kDNSServiceErr_NoSuchRecord)      //                = -65554,
-  _(kDNSServiceErr_NoAuth)            //                    = -65555,
-  _(kDNSServiceErr_NoSuchKey)         //                = -65556,
-//    _(kDNSServiceErr_NoValue)//                    = -65557,
-//    _(kDNSServiceErr_BufferTooSmall)//            = -65558,
+  _(kDNSServiceErr_NotInitialized) //                = -65545,
+//  _(kDNSServiceErr_NoCache)         //             = -65546,
+  _(kDNSServiceErr_AlreadyRegistered) //             = -65547,
+  _(kDNSServiceErr_NameConflict)      //             = -65548,
+  _(kDNSServiceErr_Invalid)           //             = -65549,
+  _(kDNSServiceErr_Incompatible)      //             = -65551,
+  _(kDNSServiceErr_BadInterfaceIndex) //             = -65552,
+  _(kDNSServiceErr_Refused)           //             = -65553,
+  _(kDNSServiceErr_NoSuchRecord)      //             = -65554,
+  _(kDNSServiceErr_NoAuth)            //             = -65555,
+  _(kDNSServiceErr_NoSuchKey)         //             = -65556,
+//  _(kDNSServiceErr_NoValue)         //             = -65557,
+//  _(kDNSServiceErr_BufferTooSmall)  //             = -65558,
 
 // TCP Connection Status
 
-//    _(kDNSServiceErr_ConnectionPending)//        = -65570,
-//    _(kDNSServiceErr_ConnectionFailed)//            = -65571,
-//    _(kDNSServiceErr_ConnectionEstablished)//     = -65572,
+//  _(kDNSServiceErr_ConnectionPending)     //       = -65570,
+//  _(kDNSServiceErr_ConnectionFailed)      //       = -65571,
+//  _(kDNSServiceErr_ConnectionEstablished) //       = -65572,
 
 // Non-error values
 
-//    _(kDNSServiceErr_GrowCache)//                = -65790,
-//    _(kDNSServiceErr_ConfigChanged)//            = -65791,
-//    _(kDNSServiceErr_MemFree)//                    = -65792    // 0xFFFE FF00
-//    (last error code)
+//  _(kDNSServiceErr_GrowCache)             //       = -65790,
+//  _(kDNSServiceErr_ConfigChanged)         //       = -65791,
+//  _(kDNSServiceErr_MemFree)               //       = -65792    // 0xFFFE FF00
+//  (last error code)
 #undef _
   { 0, nullptr }
 };
@@ -119,10 +119,6 @@ struct ServiceEntry
     if (ifindex < 0)
       ifindex = 0;
     uint16_t port = mpService->port();
-    ::usleep(1000 * 1000 *
-             sAddAnnounceDelaySeconds); // without this, service registration
-                                        // may fail but not report an error
-                                        // (synchronization issue?)
     DNSServiceErrorType err =
       ::DNSServiceRegister(&mDNSServiceRef,
                            0,

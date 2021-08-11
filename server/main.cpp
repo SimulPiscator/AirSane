@@ -16,11 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "mainserver.h"
+#include "server.h"
 #include <csignal>
 #include <thread>
 
-static MainServer* pServer;
+static Server* pServer;
 
 static void
 onSignal(int signal)
@@ -37,7 +37,7 @@ onSignal(int signal)
 int
 main(int argc, char** argv)
 {
-  MainServer server(argc, argv);
+  Server server(argc, argv);
   pServer = &server;
   bool ok = true;
   struct sigaction action = { 0 };
