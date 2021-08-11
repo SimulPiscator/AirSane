@@ -75,8 +75,8 @@ Server::Server(int argc, char** argv)
   , mDoRun(true)
   , mStartupTimeSeconds(0)
 {
-  std::string port, interface, accesslog, hotplug, announce, localonly,
-    optionsfile, ignorelist, randomuuids, debug;
+  std::string port, interface, accesslog, hotplug, announce, webinterface,
+    localonly, optionsfile, ignorelist, randomuuids, debug;
   struct
   {
     const std::string name, def, info;
@@ -87,6 +87,7 @@ Server::Server(int argc, char** argv)
     { "access-log", "", "HTTP access log, - for stdout", accesslog },
     { "hotplug", "true", "repeat scanner search on hotplug event", hotplug },
     { "mdns-announce", "true", "announce scanners via mDNS", announce },
+    { "web-interface", "true", "enable web interface", webinterface },
     { "local-scanners-only",
       "true",
       "ignore SANE network scanners",
@@ -136,6 +137,7 @@ Server::Server(int argc, char** argv)
 
   mHotplug = (hotplug == "true");
   mAnnounce = (announce == "true");
+  mWebinterface = (webinterface == "true");
   mLocalonly = (localonly == "true");
   mOptionsfile = optionsfile;
   mIgnorelist = ignorelist;
@@ -214,7 +216,8 @@ Server::run()
         std::ostringstream url;
         url << "http://" << mPublisher.hostnameFqdn() << ":" << port()
             << pScanner->uri();
-        pScanner->setAdminUrl(url.str());
+        if (mWebinterface)
+          pScanner->setAdminUrl(url.str());
         if (!pScanner->iconFile().empty()) {
           url << "/ScannerIcon";
           pScanner->setIconUrl(url.str());
@@ -344,32 +347,34 @@ Server::buildMdnsService(const Scanner* pScanner)
 void
 Server::onRequest(const Request& request, Response& response)
 {
-  if (request.uri() == "/") {
-    response.setStatus(HttpServer::HTTP_OK);
-    response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
-    MainPage(mScanners)
-      .setTitle("AirSane Server on " + mPublisher.hostname())
-      .render(request, response);
-  } else if (request.uri() == "/reset") {
-    response.setStatus(HttpServer::HTTP_OK);
-    response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
-    std::ostringstream oss;
-    oss << ::ceil(mStartupTimeSeconds) + 1 << "; url=/";
-    response.setHeader(HttpServer::HTTP_HEADER_REFRESH, oss.str());
-    struct : WebPage
-    {
-      void onRender() override
-      {
-        out() << heading(1).addText(title()) << std::endl;
-        out() << paragraph().addText(
-                   "You will be redirected to the main page in a few seconds.")
-              << std::endl;
+  if (mWebinterface) {
+      if (request.uri() == "/") {
+        response.setStatus(HttpServer::HTTP_OK);
+        response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
+        MainPage(mScanners)
+          .setTitle("AirSane Server on " + mPublisher.hostname())
+          .render(request, response);
+      } else if (request.uri() == "/reset") {
+        response.setStatus(HttpServer::HTTP_OK);
+        response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
+        std::ostringstream oss;
+        oss << ::ceil(mStartupTimeSeconds) + 1 << "; url=/";
+        response.setHeader(HttpServer::HTTP_HEADER_REFRESH, oss.str());
+        struct : WebPage
+        {
+          void onRender() override
+          {
+            out() << heading(1).addText(title()) << std::endl;
+            out() << paragraph().addText(
+                       "You will be redirected to the main page in a few seconds.")
+                  << std::endl;
+          }
+        } resetpage;
+        resetpage
+          .setTitle("Resetting AirSane Server on " + mPublisher.hostname() + " ...")
+          .render(request, response);
+        this->terminate(SIGHUP);
       }
-    } resetpage;
-    resetpage
-      .setTitle("Resetting AirSane Server on " + mPublisher.hostname() + " ...")
-      .render(request, response);
-    this->terminate(SIGHUP);
   }
   for (auto entry : mScanners) {// copy of entry is intended to protect scanner object
     if (request.uri().find(entry.pScanner->uri()) == 0) {
@@ -384,7 +389,7 @@ Server::onRequest(const Request& request, Response& response)
 void
 Server::handleScannerRequest(ScannerList::value_type entry, const std::string& partialUri, const HttpServer::Request& request, HttpServer::Response& response)
 {
-  if (partialUri.empty() || partialUri == "/") {
+  if ((partialUri.empty() || partialUri == "/") && mWebinterface) {
     response.setStatus(HttpServer::HTTP_OK);
     response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
     ScannerPage(*entry.pScanner.get())
