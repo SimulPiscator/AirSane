@@ -72,13 +72,14 @@ Server::Server(int argc, char** argv)
   , mLocalonly(true)
   , mWebinterface(true)
   , mResetoption(false)
+  , mDiscloseversion(true)
   , mHotplug(true)
   , mRandomUuids(false)
   , mDoRun(true)
   , mStartupTimeSeconds(0)
 {
   std::string port, interface, accesslog, hotplug, announce, webinterface,
-    resetoption, localonly, optionsfile, ignorelist, randomuuids, debug;
+    resetoption, discloseversion, localonly, optionsfile, ignorelist, randomuuids, debug;
   struct
   {
     const std::string name, def, info;
@@ -91,6 +92,7 @@ Server::Server(int argc, char** argv)
     { "mdns-announce", "true", "announce scanners via mDNS", announce },
     { "web-interface", "true", "enable web interface", webinterface },
     { "reset-option", "false", "allow server reset from web interface", resetoption },
+    { "disclose-version", "true", "disclose version information in web interface", discloseversion },
     { "local-scanners-only",
       "true",
       "ignore SANE network scanners",
@@ -141,6 +143,8 @@ Server::Server(int argc, char** argv)
   mHotplug = (hotplug == "true");
   mAnnounce = (announce == "true");
   mWebinterface = (webinterface == "true");
+  mResetoption = (resetoption == "true");
+  mDiscloseversion = (discloseversion == "true");
   mLocalonly = (localonly == "true");
   mOptionsfile = optionsfile;
   mIgnorelist = ignorelist;
@@ -354,7 +358,7 @@ Server::onRequest(const Request& request, Response& response)
       if (request.uri() == "/") {
         response.setStatus(HttpServer::HTTP_OK);
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
-        MainPage(mScanners, mResetoption)
+        MainPage(mScanners, mResetoption, mDiscloseversion)
           .setTitle("AirSane Server on " + mPublisher.hostname())
           .render(request, response);
       } else if (request.uri() == "/reset" && mResetoption) {

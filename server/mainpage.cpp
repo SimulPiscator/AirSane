@@ -23,8 +23,10 @@ extern const char* GIT_BRANCH;
 extern const char* GIT_REVISION_NUMBER;
 extern const char* BUILD_TIME_STAMP;
 
-MainPage::MainPage(const ScannerList& scanners, bool resetoption)
-  : mScanners(scanners), mResetoption(resetoption)
+MainPage::MainPage(const ScannerList& scanners, bool resetoption, bool discloseversion)
+  : mScanners(scanners)
+  , mResetoption(resetoption)
+  , mDiscloseversion(discloseversion)
 {}
 
 void
@@ -53,16 +55,18 @@ MainPage::onRender()
     out() << scannersList << std::endl;
   }
 
-  out() << heading(2).addText("Build");
-  list version;
-  version.addItem(
-    paragraph().addText(std::string("date: ") + BUILD_TIME_STAMP));
-  version.addContent("\n");
-  version.addItem(paragraph().addText(
-    std::string("commit: ") + GIT_COMMIT_HASH + " (branch " + GIT_BRANCH +
-    ", revision " + GIT_REVISION_NUMBER + ")"));
-  version.addContent("\n");
-  out() << version << std::endl;
+  if (mDiscloseversion) {
+    out() << heading(2).addText("Build");
+    list version;
+    version.addItem(
+      paragraph().addText(std::string("date: ") + BUILD_TIME_STAMP));
+    version.addContent("\n");
+    version.addItem(paragraph().addText(
+      std::string("commit: ") + GIT_COMMIT_HASH + " (branch " + GIT_BRANCH +
+      ", revision " + GIT_REVISION_NUMBER + ")"));
+    version.addContent("\n");
+    out() << version << std::endl;
+  }
 
   if (mResetoption) {
     out() << heading(2).addText("Server Maintenance");

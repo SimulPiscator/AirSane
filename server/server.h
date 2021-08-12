@@ -59,7 +59,7 @@ private:
   MdnsPublisher mPublisher;
   ScannerList mScanners;
   std::filebuf mLogfile;
-  bool mAnnounce, mWebinterface, mResetoption,
+  bool mAnnounce, mWebinterface, mResetoption, mDiscloseversion,
     mLocalonly, mHotplug, mRandomUuids;
   std::string mOptionsfile, mIgnorelist;
   float mStartupTimeSeconds;
