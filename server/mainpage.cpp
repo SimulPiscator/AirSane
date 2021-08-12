@@ -23,8 +23,8 @@ extern const char* GIT_BRANCH;
 extern const char* GIT_REVISION_NUMBER;
 extern const char* BUILD_TIME_STAMP;
 
-MainPage::MainPage(const ScannerList& scanners)
-  : mScanners(scanners)
+MainPage::MainPage(const ScannerList& scanners, bool resetoption)
+  : mScanners(scanners), mResetoption(resetoption)
 {}
 
 void
@@ -64,9 +64,11 @@ MainPage::onRender()
   version.addContent("\n");
   out() << version << std::endl;
 
-  out() << heading(2).addText("Server Maintenance");
-  list maintenance;
-  maintenance.addItem(anchor("/reset").addText("Reset"));
-  maintenance.addContent("\n");
-  out() << maintenance << std::endl;
+  if (mResetoption) {
+    out() << heading(2).addText("Server Maintenance");
+    list maintenance;
+    maintenance.addItem(anchor("/reset").addText("Reset"));
+    maintenance.addContent("\n");
+    out() << maintenance << std::endl;
+  }
 }

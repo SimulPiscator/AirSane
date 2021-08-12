@@ -70,13 +70,15 @@ clientIsAirscan(const HttpServer::Request& req)
 Server::Server(int argc, char** argv)
   : mAnnounce(true)
   , mLocalonly(true)
+  , mWebinterface(true)
+  , mResetoption(false)
   , mHotplug(true)
   , mRandomUuids(false)
   , mDoRun(true)
   , mStartupTimeSeconds(0)
 {
   std::string port, interface, accesslog, hotplug, announce, webinterface,
-    localonly, optionsfile, ignorelist, randomuuids, debug;
+    resetoption, localonly, optionsfile, ignorelist, randomuuids, debug;
   struct
   {
     const std::string name, def, info;
@@ -88,6 +90,7 @@ Server::Server(int argc, char** argv)
     { "hotplug", "true", "repeat scanner search on hotplug event", hotplug },
     { "mdns-announce", "true", "announce scanners via mDNS", announce },
     { "web-interface", "true", "enable web interface", webinterface },
+    { "reset-option", "false", "allow server reset from web interface", resetoption },
     { "local-scanners-only",
       "true",
       "ignore SANE network scanners",
@@ -351,10 +354,10 @@ Server::onRequest(const Request& request, Response& response)
       if (request.uri() == "/") {
         response.setStatus(HttpServer::HTTP_OK);
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
-        MainPage(mScanners)
+        MainPage(mScanners, mResetoption)
           .setTitle("AirSane Server on " + mPublisher.hostname())
           .render(request, response);
-      } else if (request.uri() == "/reset") {
+      } else if (request.uri() == "/reset" && mResetoption) {
         response.setStatus(HttpServer::HTTP_OK);
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
         std::ostringstream oss;

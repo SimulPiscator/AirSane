@@ -22,11 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class MainPage : public WebPage
 {
 public:
-  explicit MainPage(const ScannerList&);
+  explicit MainPage(const ScannerList&, bool resetoption);
 
 protected:
   void onRender() override;
 
 private:
   const ScannerList& mScanners;
+  bool mResetoption;
 };
