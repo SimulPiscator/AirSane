@@ -74,7 +74,6 @@ Server::Server(int argc, char** argv)
   , mResetoption(false)
   , mDiscloseversion(true)
   , mHotplug(true)
-  , mRandomUuids(false)
   , mDoRun(true)
   , mStartupTimeSeconds(0)
 {
@@ -105,10 +104,6 @@ Server::Server(int argc, char** argv)
       "/etc/airsane/ignore.conf",
       "location of device ignore list",
       ignorelist },
-    { "random-uuids",
-      "false",
-      "generate random UUIDs on startup",
-      randomuuids },
     { "debug", "false", "log debug information to stderr", debug },
   };
   for (auto& opt : options)
@@ -148,7 +143,6 @@ Server::Server(int argc, char** argv)
   mLocalonly = (localonly == "true");
   mOptionsfile = optionsfile;
   mIgnorelist = ignorelist;
-  mRandomUuids = (randomuuids == "true");
 
   uint16_t port_ = 0;
   if (!(std::istringstream(port) >> port_)) {
@@ -208,7 +202,7 @@ Server::run()
         std::clog << "ignoring " << s.name << std::endl;
         continue;
       }
-      auto pScanner = std::make_shared<Scanner>(s, mRandomUuids);
+      auto pScanner = std::make_shared<Scanner>(s);
       if (pScanner->error())
         std::clog << "error: " << pScanner->error() << std::endl;
       else {

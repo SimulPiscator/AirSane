@@ -217,7 +217,7 @@ struct Scanner::Private
 
   Private(Scanner*);
   ~Private();
-  const char* init(const sanecpp::device_info&, bool);
+  const char* init(const sanecpp::device_info&);
   void generateStableUniqueName();
   void writeScannerCapabilitiesXml(std::ostream&) const;
   void writeSettingProfile(int bits, std::ostream&) const;
@@ -433,8 +433,7 @@ Scanner::Private::InputSource::writeCapabilitiesXml(std::ostream& os) const
 void
 Scanner::Private::generateStableUniqueName()
 {
-  // We construct a name that is stable with regard to USB renumbering,
-  // and addition or removal of other scanners.
+  // We construct a name that is stable with regard to USB renumbering.
   std::string s;
   size_t pos = mSaneName.find(':');
   if (pos == std::string::npos)
@@ -457,16 +456,13 @@ Scanner::Private::generateStableUniqueName()
 }
 
 const char*
-Scanner::Private::init(const sanecpp::device_info& info, bool randomUuid)
+Scanner::Private::init(const sanecpp::device_info& info)
 {
   mMakeAndModel = info.vendor + " " + info.model;
   mPublishedName = mMakeAndModel;
   mSaneName = info.name;
   generateStableUniqueName();
-  if (randomUuid)
-    mUuid = Uuid(::time(nullptr), ::rand()).toString();
-  else
-    mUuid = Uuid(mStableUniqueName).toString();
+  mUuid = Uuid(mStableUniqueName).toString();
 
   auto device = sanecpp::open(info);
   if (!device)
@@ -617,10 +613,10 @@ Scanner::Private::InputSource::init(const sanecpp::option_set& opt)
   return nullptr;
 }
 
-Scanner::Scanner(const sanecpp::device_info& info, bool randomUuid)
+Scanner::Scanner(const sanecpp::device_info& info)
   : p(new Private(this))
 {
-  p->mError = p->init(info, randomUuid);
+  p->mError = p->init(info);
 }
 
 Scanner::~Scanner()
