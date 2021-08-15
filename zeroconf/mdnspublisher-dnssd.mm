@@ -83,8 +83,6 @@ dnssd_strerr(int code)
   return ::strerror(code);
 }
 
-static int sAddAnnounceDelaySeconds = 1;
-
 struct ServiceEntry
 {
   MdnsPublisher::Service* mpService;
