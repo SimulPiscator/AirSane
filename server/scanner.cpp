@@ -260,7 +260,8 @@ Scanner::Private::writeScannerCapabilitiesXml(std::ostream& os) const
         "<pwg:MakeAndModel>"
      << xmlEscape(mMakeAndModel)
      << "</pwg:MakeAndModel>\r\n"
-        "<scan:UUID>"
+     << "<pwg:SerialNumber>1.0</pwg:SerialNumber>\r\n"
+     << "<scan:UUID>"
      << mUuid << "</scan:UUID>\r\n";
   if (!mAdminUrl.empty())
     os << "<scan:AdminURI>" << mAdminUrl << "</scan:AdminURI>\r\n";
