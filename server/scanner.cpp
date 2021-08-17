@@ -176,9 +176,9 @@ struct Scanner::Private
   static std::set<Scanner::Private*> sInstances;
 
   Scanner* p;
-
-  std::string mSaneName, mMakeAndModel, mStableUniqueName, mUuid,
-    mPublishedName, mUri;
+  
+  sanecpp::device_info mDeviceInfo;
+  std::string mMakeAndModel, mStableUniqueName, mUuid, mPublishedName, mUri;
   std::string mAdminUrl, mIconUrl, mIconFile;
 
   int mMinResDpi, mMaxResDpi, mResStepDpi;
@@ -203,7 +203,7 @@ struct Scanner::Private
   bool mDuplex;
 
   std::string mGrayScanModeName, mColorScanModeName;
-
+  mutable int mCurrentProfile;
   OptionsFile::Options mDeviceOptions;
 
   std::map<std::string, std::shared_ptr<ScanJob>> mJobs;
@@ -217,11 +217,11 @@ struct Scanner::Private
 
   Private(Scanner*);
   ~Private();
-  const char* init(const sanecpp::device_info&);
+  void init(const sanecpp::device_info&);
+  const char* init2(const OptionsFile&);
   void generateStableUniqueName();
   void writeScannerCapabilitiesXml(std::ostream&) const;
   void writeSettingProfile(int bits, std::ostream&) const;
-  mutable int mCurrentProfile;
   std::shared_ptr<ScanJob> createJob();
   bool isOpen() const;
   const char* statusString() const;
@@ -436,11 +436,11 @@ Scanner::Private::generateStableUniqueName()
 {
   // We construct a name that is stable with regard to USB renumbering.
   std::string s;
-  size_t pos = mSaneName.find(':');
+  size_t pos = mDeviceInfo.name.find(':');
   if (pos == std::string::npos)
-    s = mSaneName + ':';
+    s = mDeviceInfo.name + ':';
   else
-    s = mSaneName.substr(0, pos + 1);
+    s = mDeviceInfo.name.substr(0, pos + 1);
   s += mMakeAndModel + ':';
   int i = 0;
   std::ostringstream oss;
@@ -456,20 +456,37 @@ Scanner::Private::generateStableUniqueName()
   mStableUniqueName = oss.str();
 }
 
-const char*
+void
 Scanner::Private::init(const sanecpp::device_info& info)
 {
+  mDeviceInfo = info;
   mMakeAndModel = info.vendor + " " + info.model;
   mPublishedName = mMakeAndModel;
-  mSaneName = info.name;
   generateStableUniqueName();
   mUuid = Uuid(mStableUniqueName).toString();
+}
 
-  auto device = sanecpp::open(info);
+const char*
+Scanner::Private::init2(const OptionsFile& optionsfile)
+{
+  auto device = sanecpp::open(mDeviceInfo);
   if (!device)
     return "failed to open device";
 
   sanecpp::option_set opt(device);
+  // Apply device options first so any changes to dependent parameters
+  // are detected during initialization.
+  mDeviceOptions = optionsfile.scannerOptions(p);
+  for (const auto &option : mDeviceOptions.sane_options) {
+    if (opt[option.first].is_null()) {
+      std::clog << "SANE option specified in options file: " << option.first << ", does not exist" << std::endl;
+    }
+    else {
+      std::clog << "applying SANE option " << option.first << ":=" << option.second << std::endl;
+      opt[option.first] = option.second;
+    }
+  }
+
   const auto& resolution = opt[SANE_NAME_SCAN_RESOLUTION];
   if (resolution.is_null())
     return "missing SANE parameter: " SANE_NAME_SCAN_RESOLUTION;
@@ -617,7 +634,14 @@ Scanner::Private::InputSource::init(const sanecpp::option_set& opt)
 Scanner::Scanner(const sanecpp::device_info& info)
   : p(new Private(this))
 {
-  p->mError = p->init(info);
+  p->init(info);
+}
+
+bool
+Scanner::initWithOptions(const OptionsFile& optionsfile)
+{
+  p->mError = p->init2(optionsfile);
+  return p->mError == nullptr;
 }
 
 Scanner::~Scanner()
@@ -658,7 +682,7 @@ Scanner::makeAndModel() const
 const std::string&
 Scanner::saneName() const
 {
-  return p->mSaneName;
+  return p->mDeviceInfo.name;
 }
 
 const std::string&
@@ -826,26 +850,10 @@ Scanner::colorScanModeName() const
   return p->mColorScanModeName;
 }
 
-void
-Scanner::setDeviceOptions(const OptionsFile& optionsfile)
-{
-  auto options = optionsfile.scannerOptions(this);
-  p->mDeviceOptions.clear();
-  for (const auto& option : options) {
-    if (option.first == "icon") {
-      p->mIconFile = option.second;
-      if (p->mIconFile.find('/') != 0)
-        p->mIconFile = optionsfile.path() + p->mIconFile;
-    } else {
-      p->mDeviceOptions.push_back(option);
-    }
-  }
-}
-
 std::shared_ptr<sanecpp::session>
 Scanner::open()
 {
-  auto session = std::make_shared<sanecpp::session>(p->mSaneName);
+  auto session = std::make_shared<sanecpp::session>(p->mDeviceInfo.name);
   p->mpSession = session;
   return session;
 }

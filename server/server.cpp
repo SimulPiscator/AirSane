@@ -203,26 +203,20 @@ Server::run()
         continue;
       }
       auto pScanner = std::make_shared<Scanner>(s);
-      if (pScanner->error())
-        std::clog << "error: " << pScanner->error() << std::endl;
-      else {
-        std::clog << "stable unique name: " << pScanner->stableUniqueName()
-                  << std::endl;
-        std::clog << "uuid: " << pScanner->uuid() << std::endl;
+      std::clog << "stable unique name: " << pScanner->stableUniqueName()
+                << std::endl;
+      std::clog << "uuid: " << pScanner->uuid() << std::endl;
 
-        pScanner->setDeviceOptions(optionsfile);
-          
-        chooseUniquePublishedName(pScanner.get());
-        pScanner->setUri("/" + pScanner->uuid());
-        std::ostringstream url;
-        url << "http://" << mPublisher.hostnameFqdn() << ":" << port()
-            << pScanner->uri();
-        if (mWebinterface)
-          pScanner->setAdminUrl(url.str());
-        if (!pScanner->iconFile().empty()) {
-          url << "/ScannerIcon";
-          pScanner->setIconUrl(url.str());
-        }
+      chooseUniquePublishedName(pScanner.get());
+      pScanner->setUri("/" + pScanner->uuid());
+      std::ostringstream url;
+      url << "http://" << mPublisher.hostnameFqdn() << ":" << port()
+          << pScanner->uri();
+      if (mWebinterface)
+        pScanner->setAdminUrl(url.str());
+      if (!pScanner->iconFile().empty()) {
+        url << "/ScannerIcon";
+        pScanner->setIconUrl(url.str());
       }
     
       std::shared_ptr<MdnsPublisher::Service> pService;
@@ -236,7 +230,10 @@ Server::run()
         } else
           pService.reset();
       }
-      mScanners.push_back(ScannerEntry({ pScanner, pService }));
+      if (!pScanner->initWithOptions(optionsfile))
+        std::clog << "error: " << pScanner->error() << std::endl;
+      else
+        mScanners.push_back(ScannerEntry({ pScanner, pService }));
     }
     ::clock_gettime(CLOCK_MONOTONIC, &t);
     float t1 = t.tv_sec + 1e-9 * t.tv_nsec;

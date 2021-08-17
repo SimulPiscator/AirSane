@@ -33,7 +33,7 @@ OptionsFile::OptionsFile(const std::string& fileName)
     std::clog << "no device options at '" << fileName << "'" << std::endl;
 
   std::string line;
-  Options* pDeviceSection = nullptr;
+  RawOptions* pDeviceSection = nullptr;
   while (std::getline(file >> std::ws, line)) {
 
     if (line.empty() || line.front() == '#')
@@ -46,7 +46,7 @@ OptionsFile::OptionsFile(const std::string& fileName)
     while (!value.empty() && std::isspace(value.back()))
       value.resize(value.length() - 1);
     if (name == "device") {
-      mDeviceOptions.push_back(std::make_pair(value, Options()));
+      mDeviceOptions.push_back(std::make_pair(value, RawOptions()));
       pDeviceSection = &mDeviceOptions.back().second;
     } else if (pDeviceSection)
       pDeviceSection->push_back(std::make_pair(name, value));
@@ -69,7 +69,7 @@ OptionsFile::path() const
 OptionsFile::Options
 OptionsFile::scannerOptions(const Scanner* pScanner) const
 {
-  auto options = mGlobalOptions;
+  auto rawOptions = mGlobalOptions;
   for (const auto& section : mDeviceOptions) {
     std::regex r(section.first);
     bool match = false;
@@ -85,8 +85,24 @@ OptionsFile::scannerOptions(const Scanner* pScanner) const
       match = true;
     }
     if (match)
-      options.insert(
-        options.end(), section.second.begin(), section.second.end());
+      rawOptions.insert(
+        rawOptions.end(), section.second.begin(), section.second.end());
   }
-  return options;
+  OptionsFile::Options processedOptions;
+  for (const auto& option : rawOptions) {
+    if (option.first == "icon") {
+      processedOptions.icon = option.second;
+      if (processedOptions.icon.find('/') != 0)
+        processedOptions.icon = this->path() + processedOptions.icon;
+    }
+    else if (option.first == "gray-gamma")
+      processedOptions.gray_gamma = ::atof(option.second.c_str());
+    else if (option.first == "color-gamma")
+      processedOptions.color_gamma = ::atof(option.second.c_str());
+    else if (option.first == "synthesize-gray")
+      processedOptions.synthesize_gray = (option.second == "true");
+    else
+      processedOptions.sane_options.push_back(option);
+  }
+  return processedOptions;
 }

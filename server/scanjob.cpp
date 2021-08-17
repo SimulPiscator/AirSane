@@ -81,7 +81,7 @@ struct ScanJob::Private
   void init(const ScanSettingsXml&, bool autoselectFormat, const OptionsFile::Options&);
   const char* kindString() const;
   void applyDeviceOptions(const OptionsFile::Options&);
-  void initGammaTable(const std::string& gamma);
+  void initGammaTable(float gamma);
   void applyGamma(std::vector<char>&);
   void synthesizeGray(std::vector<char>&);
   const char* statusString() const;
@@ -109,7 +109,7 @@ struct ScanJob::Private
 
   std::string mScanSource, mIntent, mDocumentFormat, mColorMode;
   int mBitDepth, mRes_dpi;
-  bool mColorScan, mSynthesizedGray, mRotateEvenPages;
+  bool mColorScan;
   double mLeft_px, mTop_px, mWidth_px, mHeight_px;
 
   int mKind, mImagesToTransfer, mImagesCompleted;
@@ -301,54 +301,34 @@ ScanJob::Private::kindString() const
 void
 ScanJob::Private::applyDeviceOptions(const OptionsFile::Options& options)
 {
-  mDeviceOptions.clear();
+  mDeviceOptions = options;
   mGammaTable.clear();
-  mSynthesizedGray = false;
-  mRotateEvenPages = false;
-  for (const auto& option : options) {
-    if (option.first == "gray-gamma") {
-      if (!mColorScan) {
-        std::clog << "using grayscale gamma of " << option.second << std::endl;
-        initGammaTable(option.second);
-      }
-    } else if (option.first == "color-gamma") {
-      if (mColorScan) {
-        std::clog << "using color gamma of " << option.second << std::endl;
-        initGammaTable(option.second);
-      }
-    } else if (option.first == "synthesize-gray") {
-      if (!mColorScan) {
-        if (option.second == "yes") {
-          std::clog << "synthesizing grayscale from RGB" << std::endl;
-          mSynthesizedGray = true;
-          mColorMode = mpScanner->colorScanModeName();
-        } else {
-          std::clog << "requesting grayscale from backend" << std::endl;
-          mSynthesizedGray = false;
-          mColorMode = mpScanner->grayScanModeName();
-        }
-      }
-#if 0
-    } else if (option.first == "rotate-even") {
-        if (option.second == "yes") {
-            std::clog << "rotating even-numbered pages by 180 degrees" << std::endl;
-            mRotateEvenPages = true;
-        } else {
-            std::clog << "not rotating pages" << std::endl;
-            mRotateEvenPages = false;
-        }
-#endif
-    } else {
-      mDeviceOptions.push_back(option);
+  if (!mColorScan) {
+    std::clog << "using grayscale gamma of " << options.gray_gamma << std::endl;
+    initGammaTable(options.gray_gamma);
+  }
+  else {
+    std::clog << "using color gamma of " << options.color_gamma << std::endl;
+    initGammaTable(options.color_gamma);
+  }
+  if (!mColorScan) {
+    if (options.synthesize_gray) {
+      std::clog << "synthesizing grayscale from RGB" << std::endl;
+      mColorMode = mpScanner->colorScanModeName();
+    }
+    else {
+      std::clog << "requesting grayscale from backend" << std::endl;
+      mColorMode = mpScanner->grayScanModeName();
     }
   }
 }
 
 void
-ScanJob::Private::initGammaTable(const std::string& gamma)
+ScanJob::Private::initGammaTable(float gammaVal)
 {
-  float gammaVal = ::atof(gamma.c_str());
   mGammaTable.clear();
+  if (gammaVal == 1.0f)
+    return;
   int size = 1L << mBitDepth;
   float scale = 1.0f / (size - 1), invscale = size - 1;
   mGammaTable.resize(size);
@@ -564,6 +544,9 @@ ScanJob::Private::openSession()
   if (status == SANE_STATUS_GOOD) {
 
     auto& opt = mpSession->options();
+    
+    for (const auto& option : mDeviceOptions.sane_options)
+      opt[option.first] = option.second;
 
     if (mIntent == "Preview")
       opt[SANE_NAME_PREVIEW] = 1;
@@ -658,14 +641,14 @@ ScanJob::Private::finishTransfer(std::ostream& os)
     pEncoder->setHeight(p->lines);
     pEncoder->setBitDepth(p->depth);
     pEncoder->setDestination(&os);
-    if (mSynthesizedGray && pEncoder->bytesPerLine() != p->bytes_per_line / 3) {
+    if (mDeviceOptions.synthesize_gray && pEncoder->bytesPerLine() != p->bytes_per_line / 3) {
       std::cerr << __FILE__ << ", line " << __LINE__
                 << ": encoder bytesPerLine (" << pEncoder->bytesPerLine()
                 << ") differs from SANE bytes_per_line/3 ("
                 << p->bytes_per_line / 3 << ")" << std::endl;
       mState = aborted;
       mStateReason = PWG_ERRORS_DETECTED;
-    } else if (!mSynthesizedGray &&
+    } else if (!mDeviceOptions.synthesize_gray &&
                pEncoder->bytesPerLine() != p->bytes_per_line) {
       std::cerr << __FILE__ << ", line " << __LINE__
                 << ": encoder bytesPerLine (" << pEncoder->bytesPerLine()
@@ -682,7 +665,7 @@ ScanJob::Private::finishTransfer(std::ostream& os)
       status = mpSession->read(buffer).status();
       if (status == SANE_STATUS_GOOD) {
         applyGamma(buffer);
-        if (mSynthesizedGray)
+        if (mDeviceOptions.synthesize_gray)
           synthesizeGray(buffer);
         try {
           pEncoder->writeLine(buffer.data());
@@ -697,8 +680,6 @@ ScanJob::Private::finishTransfer(std::ostream& os)
     }
     if (isProcessing()) {
       ++mImagesCompleted;
-      if (mRotateEvenPages)
-        pEncoder->setOrientationDegrees(mImagesCompleted % 2 ? 0 : 180);
       std::clog << "images completed: " << mImagesCompleted << std::endl;
       updateStatus(status);
       if (pEncoder->linesLeftInCurrentImage() != pEncoder->height()) {

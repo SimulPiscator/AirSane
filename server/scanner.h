@@ -36,6 +36,8 @@ class Scanner
 public:
   explicit Scanner(const sanecpp::device_info&);
   ~Scanner();
+  bool initWithOptions(const OptionsFile&);
+
 
   const char* error() const;
   std::string statusString() const;
@@ -55,7 +57,7 @@ public:
   void setIconUrl(const std::string&);
   const std::string& iconUrl() const;
   const std::string& iconFile() const;
-
+  
   const std::vector<std::string>& documentFormats() const;
   const std::vector<std::string>& txtColorSpaces() const;
   const std::vector<std::string>& colorModes() const;
@@ -89,8 +91,6 @@ public:
 
   std::shared_ptr<sanecpp::session> open();
   bool isOpen() const;
-
-  void setDeviceOptions(const OptionsFile&);
 
   void writeScannerCapabilitiesXml(std::ostream&) const;
   void writeScannerStatusXml(std::ostream&) const;

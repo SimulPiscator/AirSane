@@ -33,14 +33,21 @@ public:
   explicit OptionsFile(const std::string& fileName);
   ~OptionsFile();
   std::string path() const;
-
-  typedef std::vector<std::pair<std::string, std::string>> Options;
+  
+  typedef std::vector<std::pair<std::string, std::string>> RawOptions;
+  struct Options
+  {
+    std::string icon;
+    double gray_gamma = 1.0, color_gamma = 1.0;
+    bool synthesize_gray = false;
+    RawOptions sane_options;
+  };
   Options scannerOptions(const Scanner*) const;
 
 private:
   std::string mFileName;
-  Options mGlobalOptions;
-  std::vector<std::pair<std::string, Options>> mDeviceOptions;
+  RawOptions mGlobalOptions;
+  std::vector<std::pair<std::string, RawOptions>> mDeviceOptions;
 };
 
 #endif // OPTIONS_FILE_H
