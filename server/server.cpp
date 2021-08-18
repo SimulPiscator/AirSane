@@ -77,8 +77,9 @@ Server::Server(int argc, char** argv)
   , mDoRun(true)
   , mStartupTimeSeconds(0)
 {
-  std::string port, interface, accesslog, hotplug, announce, webinterface,
-    resetoption, discloseversion, localonly, optionsfile, ignorelist, randomuuids, debug;
+  std::string port, interface, unixsocket, accesslog, hotplug, announce,
+     webinterface, resetoption, discloseversion, localonly, optionsfile,
+     ignorelist, randomuuids, debug;
   struct
   {
     const std::string name, def, info;
@@ -86,6 +87,7 @@ Server::Server(int argc, char** argv)
   } options[] = {
     { "listen-port", "8090", "listening port", port },
     { "interface", "", "listen on named interface only", interface },
+    { "unix-socket", "", "listen on named unix socket", unixsocket },
     { "access-log", "", "HTTP access log, - for stdout", accesslog },
     { "hotplug", "true", "repeat scanner search on hotplug event", hotplug },
     { "mdns-announce", "true", "announce scanners via mDNS", announce },
@@ -136,7 +138,7 @@ Server::Server(int argc, char** argv)
   sanecpp::log.rdbuf(std::clog.rdbuf());
 
   mHotplug = (hotplug == "true");
-  mAnnounce = (announce == "true");
+  mAnnounce = (announce == "true" && unixsocket.empty());
   mWebinterface = (webinterface == "true");
   mResetoption = (resetoption == "true");
   mDiscloseversion = (discloseversion == "true");
@@ -162,6 +164,7 @@ Server::Server(int argc, char** argv)
     if (!interface.empty())
       setInterfaceName(interface);
     setPort(port_);
+    setUnixSocket(unixsocket);
     if (accesslog.empty())
       std::cout.rdbuf(nullptr);
     else if (accesslog != "-")

@@ -65,6 +65,8 @@ public:
   int interfaceIndex() const;
   HttpServer& setPort(uint16_t port);
   uint16_t port() const;
+  HttpServer& setUnixSocket(const std::string&);
+  const std::string& unixSocket() const;
   HttpServer& setBacklog(int);
   int backlog() const;
 

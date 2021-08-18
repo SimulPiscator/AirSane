@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <atomic>
 #include <cstring>
+#include <cassert>
 #include <ctime>
-#include <fstream>
 #include <sstream>
 #include <thread>
 
@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pthread.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
 
 #include "basic/fdbuf.h"
@@ -112,11 +113,14 @@ typedef union
   sockaddr sa;
   sockaddr_in in;
   sockaddr_in6 in6;
+  sockaddr_un un;
 } Sockaddr;
+
 std::string
 ipString(Sockaddr address)
 {
   char buf[128] = "n/a";
+  assert(sizeof(buf) > sizeof(address.un.sun_path));
   switch (address.sa.sa_family) {
     case AF_INET:
       ::inet_ntop(AF_INET, &address.in.sin_addr, buf, sizeof(buf));
@@ -125,6 +129,9 @@ ipString(Sockaddr address)
       ::strcpy(buf, "[");
       ::inet_ntop(AF_INET6, &address.in6.sin6_addr, buf + 1, sizeof(buf) - 2);
       ::strcat(buf, "]");
+      break;
+    case AF_UNIX:
+      ::strcpy(buf, "unix");
       break;
   }
   return buf;
@@ -140,6 +147,22 @@ portNumber(Sockaddr address)
       return ntohs(address.in6.sin6_port);
   }
   return 0;
+}
+
+std::string
+describeAddress(const Sockaddr& address)
+{
+  std::ostringstream oss;
+  switch (address.sa.sa_family) {
+    case AF_INET:
+    case AF_INET6:
+      oss << ipString(address) << ":" << portNumber(address);
+      break;
+    case AF_UNIX:
+      oss << address.un.sun_path;
+      break;
+  }
+  return oss.str();
 }
 
 std::vector<Sockaddr>
@@ -179,7 +202,7 @@ struct HttpServer::Private
   std::atomic<int> mTerminationStatus, mLastError;
 
   uint16_t mPort;
-  std::string mInterfaceName;
+  std::string mInterfaceName, mUnixSocket;
   int mInterfaceIndex, mBacklog;
 
   std::atomic<bool> mRunning;
@@ -195,6 +218,33 @@ struct HttpServer::Private
     , mRunning(false)
     , mPipeWriteFd(-1)
   {}
+  
+  int determineAddresses(std::vector<Sockaddr>& addresses)
+  {
+    int err = 0;
+    if (!mUnixSocket.empty()) {
+      Sockaddr addr = { 0 };
+      addr.sa.sa_family = AF_UNIX;
+      if (mUnixSocket.length() >= sizeof(addr.un.sun_path))
+        err = ENAMETOOLONG;
+      else {
+        ::strcpy(addr.un.sun_path, mUnixSocket.c_str());
+        addresses.push_back(addr);
+      }
+    }
+    else {
+      const char* if_name = nullptr;
+      if (mInterfaceIndex == invalidInterface)
+        err = ENXIO;
+      else if (mInterfaceIndex != anyInterface)
+        if_name = mInterfaceName.c_str();
+      if (!err)
+        addresses = interfaceAddresses(if_name);
+    }
+    if (!err && addresses.empty())
+      err = EINVAL;
+    return err;
+  }
 
   int createListeningSocket(Sockaddr addr)
   {
@@ -208,13 +258,22 @@ struct HttpServer::Private
         addr.in6.sin6_port = htons(mPort);
         socklen = sizeof(sockaddr_in6);
         break;
+      case AF_UNIX:
+        socklen = sizeof(sockaddr_un);
+        break;
     }
     int sockfd = ::socket(addr.sa.sa_family, SOCK_STREAM, 0);
     if (sockfd < 0)
       return -1;
-    int reuseaddr = 1;
-    int err = ::setsockopt(
-      sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(reuseaddr));
+    int err = 0;
+    if (addr.sa.sa_family == AF_UNIX) {
+      ::unlink(addr.un.sun_path);
+    }
+    else {
+      int reuseaddr = 1;
+      err = ::setsockopt(
+        sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(reuseaddr));
+    }
     if (!err)
       err = ::bind(sockfd, &addr.sa, socklen);
     if (!err)
@@ -246,16 +305,7 @@ struct HttpServer::Private
     mTerminationStatus = 0;
 
     std::vector<Sockaddr> addresses;
-    int err = 0;
-    const char* if_name = nullptr;
-    if (mInterfaceIndex == invalidInterface)
-      err = ENXIO;
-    else if (mInterfaceIndex != anyInterface)
-      if_name = mInterfaceName.c_str();
-    if (!err)
-      addresses = interfaceAddresses(if_name);
-    if (addresses.empty())
-      err = EINVAL;
+    int err = determineAddresses(addresses);
     if (!err) {
       std::vector<struct pollfd> pfds(1);
       pfds[0].fd = pipeReadFd;
@@ -267,7 +317,7 @@ struct HttpServer::Private
         else {
           struct pollfd pfd = { sockfd, POLLIN, 0 };
           pfds.push_back(pfd);
-          std::clog << "listening on " << ipString(address) << ":" << mPort
+          std::clog << "listening on " << describeAddress(address)
                     << std::endl;
         }
       }
@@ -464,6 +514,19 @@ uint16_t
 HttpServer::port() const
 {
   return p->mPort;
+}
+
+HttpServer&
+HttpServer::setUnixSocket(const std::string &path)
+{
+  p->mUnixSocket = path;
+  return *this;
+}
+
+const std::string&
+HttpServer::unixSocket() const
+{
+  return p->mUnixSocket;
 }
 
 HttpServer&
