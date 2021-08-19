@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <atomic>
 #include <cstring>
-#include <cassert>
 #include <ctime>
 #include <sstream>
 #include <thread>
@@ -120,7 +119,6 @@ std::string
 ipString(Sockaddr address)
 {
   char buf[128] = "n/a";
-  assert(sizeof(buf) > sizeof(address.un.sun_path));
   switch (address.sa.sa_family) {
     case AF_INET:
       ::inet_ntop(AF_INET, &address.in.sin_addr, buf, sizeof(buf));
