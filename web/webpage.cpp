@@ -130,7 +130,6 @@ WebPage::render(const HttpServer::Request& request,
                        "<body>\n";
     html += oss.str();
     html += "</body>\n</html>\n";
-    response.setStatus(HttpServer::HTTP_OK);
     response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
     response.sendWithContent(html);
   }

@@ -387,6 +387,8 @@ struct HttpServer::Private
       if (!response.sent()) {
         response.setStatus(HTTP_NOT_FOUND);
         ErrorPage(HTTP_NOT_FOUND).render(request, response);
+        std::cerr << "Warning: Error 404 when requesting "
+                  << request.uri() << std::endl;
       }
     }
     os.flush();
@@ -566,8 +568,9 @@ HttpServer::lastError() const
 
 void
 HttpServer::onRequest(const HttpServer::Request&,
-                      HttpServer::Response& response)
-{}
+                      HttpServer::Response&)
+{
+}
 
 struct HttpServer::Response::Chunkstream : std::ostream
 {
