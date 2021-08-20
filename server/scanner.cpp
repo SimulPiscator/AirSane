@@ -393,6 +393,8 @@ Scanner::Private::temporaryAdfStatusString()
       return "ScannerAdfDoorOpen";
     case SANE_STATUS_NO_DOCS:
       return "ScannerAdfEmpty";
+    default:
+      break;
   }
   return "";
 }
