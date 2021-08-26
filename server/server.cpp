@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "optionsfile.h"
 #include "scanjob.h"
 #include "scanner.h"
+#include "basic/uuid.h"
 #include "zeroconf/hotplugnotifier.h"
 
 extern const char* GIT_COMMIT_HASH;
@@ -72,6 +73,7 @@ Server::Server(int argc, char** argv)
   , mLocalonly(true)
   , mWebinterface(true)
   , mResetoption(false)
+  , mRandompaths(false)
   , mDiscloseversion(true)
   , mHotplug(true)
   , mDoRun(true)
@@ -79,7 +81,7 @@ Server::Server(int argc, char** argv)
 {
   std::string port, interface, unixsocket, accesslog, hotplug, announce,
      webinterface, resetoption, discloseversion, localonly, optionsfile,
-     ignorelist, randomuuids, debug;
+     ignorelist, randompaths, debug;
   struct
   {
     const std::string name, def, info;
@@ -94,6 +96,7 @@ Server::Server(int argc, char** argv)
     { "web-interface", "true", "enable web interface", webinterface },
     { "reset-option", "false", "allow server reset from web interface", resetoption },
     { "disclose-version", "true", "disclose version information in web interface", discloseversion },
+    { "random-paths", "false", "prepend a random uuid to scanner paths", randompaths },
     { "local-scanners-only",
       "true",
       "ignore SANE network scanners",
@@ -141,6 +144,7 @@ Server::Server(int argc, char** argv)
   mAnnounce = (announce == "true" && unixsocket.empty());
   mWebinterface = (webinterface == "true");
   mResetoption = (resetoption == "true");
+  mRandompaths = (randompaths == "true");
   mDiscloseversion = (discloseversion == "true");
   mLocalonly = (localonly == "true");
   mOptionsfile = optionsfile;
@@ -197,6 +201,9 @@ Server::run()
     OptionsFile optionsfile(mOptionsfile);
     std::clog << "enumerating " << (mLocalonly ? "local " : " ") << "devices..."
               << std::endl;
+    std::string pathPrefix = "/";
+    if (mRandompaths)
+      pathPrefix += Uuid::Random().toString() + "/";
     auto scanners = sanecpp::enumerate_devices(mLocalonly);
     for (const auto& s : scanners) {
       std::clog << "found: " << s.name << " (" << s.vendor << " " << s.model
@@ -211,7 +218,7 @@ Server::run()
       std::clog << "uuid: " << pScanner->uuid() << std::endl;
 
       chooseUniquePublishedName(pScanner.get());
-      pScanner->setUri("/" + pScanner->uuid());
+      pScanner->setUri(pathPrefix + pScanner->uuid());
       std::ostringstream url;
       url << "http://" << mPublisher.hostnameFqdn() << ":" << port()
           << pScanner->uri();

@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstring>
 #include <fstream>
+#include <iostream>
 #include <functional>
 #include <iomanip>
 #include <unistd.h>
@@ -103,9 +104,29 @@ Uuid::initFromString(const std::string& inStringData)
   ::memset(mData, 0, sizeof(mData));
   for (size_t i = 0; i < s.length(); ++i)
     mData[i % sizeof(mData)] ^= s[i];
-  // Report the UUID as version 5 (which is closest to our case).
+  // Mark the UUID as version 5 (which is closest to our case).
   mData[6] &= 0x0f;
   mData[6] |= 0x50;
   mData[8] &= 0x3f;
   mData[8] |= 0x80;
 }
+
+Uuid Uuid::Random()
+{
+  Uuid uuid;
+  std::ifstream random("/dev/random");
+  if (!random.is_open())
+    random.open("/dev/urandom");
+  if (!random.is_open()) {
+    std::cerr << "could not open /dev/random or /dev/urandom for reading" << std::endl;
+    ::exit(-1);
+  }
+  random.read(uuid.mData, sizeof(uuid.mData));
+  // Mark the UUID as version 4, variant 1.
+  uuid.mData[6] &= 0x0f;
+  uuid.mData[6] |= 0x40;
+  uuid.mData[8] &= 0x3f;
+  uuid.mData[8] |= 0x80;
+  return uuid;
+}
+

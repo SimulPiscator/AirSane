@@ -7,6 +7,7 @@ WEB_INTERFACE=true
 RESET_OPTION=true
 DISCLOSE_VERSION=true
 LOCAL_SCANNERS_ONLY=true
+RANDOM_PATHS=false
 OPTIONS_FILE=/etc/airsane/options.conf
 IGNORE_LIST=/etc/airsane/ignore.conf
 

@@ -31,6 +31,7 @@ public:
   {
     initFromString(makeString(args...));
   }
+  static Uuid Random();
 
   std::ostream& print(std::ostream&) const;
   std::string toString() const;
