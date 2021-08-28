@@ -81,7 +81,7 @@ Server::Server(int argc, char** argv)
 {
   std::string port, interface, unixsocket, accesslog, hotplug, announce,
      webinterface, resetoption, discloseversion, localonly, optionsfile,
-     ignorelist, randompaths, debug;
+     ignorelist, randompaths, debug, announcesecure;
   struct
   {
     const std::string name, def, info;
@@ -93,6 +93,7 @@ Server::Server(int argc, char** argv)
     { "access-log", "", "HTTP access log, - for stdout", accesslog },
     { "hotplug", "true", "repeat scanner search on hotplug event", hotplug },
     { "mdns-announce", "true", "announce scanners via mDNS", announce },
+    { "announce-secure", "false", "announce secure connection", announcesecure },
     { "web-interface", "true", "enable web interface", webinterface },
     { "reset-option", "false", "allow server reset from web interface", resetoption },
     { "disclose-version", "true", "disclose version information in web interface", discloseversion },
@@ -141,7 +142,8 @@ Server::Server(int argc, char** argv)
   sanecpp::log.rdbuf(std::clog.rdbuf());
 
   mHotplug = (hotplug == "true");
-  mAnnounce = (announce == "true" && unixsocket.empty());
+  mAnnounce = (announce == "true");
+  mAnnouncesecure = (announcesecure == "true");
   mWebinterface = (webinterface == "true");
   mResetoption = (resetoption == "true");
   mRandompaths = (randompaths == "true");
@@ -220,7 +222,10 @@ Server::run()
       chooseUniquePublishedName(pScanner.get());
       pScanner->setUri(pathPrefix + pScanner->uuid());
       std::ostringstream url;
-      url << "http://" << mPublisher.hostnameFqdn() << ":" << port()
+      url << "http";
+      if (mAnnouncesecure)
+        url << "s";
+      url << "://" << mPublisher.hostnameFqdn() << ":" << port()
           << pScanner->uri();
       if (mWebinterface)
         pScanner->setAdminUrl(url.str());
@@ -316,7 +321,10 @@ std::shared_ptr<MdnsPublisher::Service>
 Server::buildMdnsService(const Scanner* pScanner)
 {
   auto pService = std::make_shared<MdnsPublisher::Service>(&mPublisher);
-  pService->setType("_uscan._tcp.");
+  std::string type = "_uscan._tcp";
+  if (mAnnouncesecure)
+    type = "_uscans._tcp";
+  pService->setType(type);
   pService->setName(pScanner->publishedName());
   pService->setInterfaceIndex(interfaceIndex());
   pService->setTxt("txtvers", "1");
