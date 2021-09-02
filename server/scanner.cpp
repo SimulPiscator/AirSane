@@ -179,7 +179,7 @@ struct Scanner::Private
   
   sanecpp::device_info mDeviceInfo;
   std::string mMakeAndModel, mStableUniqueName, mUuid, mPublishedName, mUri;
-  std::string mAdminUrl, mIconUrl, mIconFile;
+  std::string mAdminUrl, mIconUrl;
 
   int mMinResDpi, mMaxResDpi, mResStepDpi;
   double mMaxWidthPx300dpi, mMaxHeightPx300dpi;
@@ -732,7 +732,7 @@ Scanner::adminUrl() const
 const std::string&
 Scanner::iconFile() const
 {
-  return p->mIconFile;
+  return p->mDeviceOptions.icon;
 }
 
 void

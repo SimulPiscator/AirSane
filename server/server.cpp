@@ -220,35 +220,39 @@ Server::run()
       std::clog << "uuid: " << pScanner->uuid() << std::endl;
 
       chooseUniquePublishedName(pScanner.get());
-      pScanner->setUri(pathPrefix + pScanner->uuid());
-      std::ostringstream url;
-      url << "http";
-      if (mAnnouncesecure)
-        url << "s";
-      url << "://" << mPublisher.hostnameFqdn() << ":" << port()
-          << pScanner->uri();
-      if (mWebinterface)
-        pScanner->setAdminUrl(url.str());
-      if (!pScanner->iconFile().empty()) {
-        url << "/ScannerIcon";
-        pScanner->setIconUrl(url.str());
-      }
-    
-      std::shared_ptr<MdnsPublisher::Service> pService;
-      if (mAnnounce && !pScanner->error()) {
-        pService = buildMdnsService(pScanner.get());
-        pService->setPort(port());
-        if (pService->announce()) {
-          std::clog << "published as '" << pService->name() << "'" << std::endl;
-          // may have changed due to collision
-          pScanner->setPublishedName(pService->name());
-        } else
-          pService.reset();
-      }
-      if (!pScanner->initWithOptions(optionsfile))
+
+      if (!pScanner->initWithOptions(optionsfile)) {
         std::clog << "error: " << pScanner->error() << std::endl;
-      else
-        mScanners.push_back(ScannerEntry({ pScanner, pService }));
+      }
+      else {
+        pScanner->setUri(pathPrefix + pScanner->uuid());
+        std::ostringstream url;
+        url << "http";
+        if (mAnnouncesecure)
+          url << "s";
+        url << "://" << mPublisher.hostnameFqdn() << ":" << port()
+            << pScanner->uri();
+        if (mWebinterface)
+          pScanner->setAdminUrl(url.str());
+        if (!pScanner->iconFile().empty()) {
+          url << "/ScannerIcon";
+          pScanner->setIconUrl(url.str());
+        }
+        
+        std::shared_ptr<MdnsPublisher::Service> pService;
+        if (mAnnounce && !pScanner->error()) {
+          pService = buildMdnsService(pScanner.get());
+          pService->setPort(port());
+          if (pService->announce()) {
+            std::clog << "published as '" << pService->name() << "'" << std::endl;
+              // may have changed due to collision
+            pScanner->setPublishedName(pService->name());
+          } else
+            pService.reset();
+          }
+          if (pService && !pScanner->error())
+            mScanners.push_back(ScannerEntry({ pScanner, pService }));
+      }
     }
     ::clock_gettime(CLOCK_MONOTONIC, &t);
     float t1 = t.tv_sec + 1e-9 * t.tv_nsec;
