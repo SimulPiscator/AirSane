@@ -244,7 +244,7 @@ struct HttpServer::Private
     return err;
   }
 
-  int createListeningSocket(Sockaddr addr)
+  int createListeningSocket(Sockaddr& addr)
   {
     size_t socklen = 0;
     switch (addr.sa.sa_family) {
