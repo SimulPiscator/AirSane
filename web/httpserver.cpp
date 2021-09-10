@@ -388,7 +388,7 @@ struct HttpServer::Private
         response.setStatus(HTTP_NOT_FOUND);
         ErrorPage(HTTP_NOT_FOUND).render(request, response);
         std::cerr << "Warning: Error 404 when requesting "
-                  << request.uri() << std::endl;
+                  << "\"" << request.uri() << "\"" << std::endl;
       }
     }
     os.flush();
