@@ -13,7 +13,8 @@ Apple's Image Capture, but a simple web interface is provided as well.
 Images are encoded on-the-fly during acquisition, keeping memory/storage
 demands low. Thus, AirSane will run fine on a Raspberry Pi or similar device.
 
-Authentication and secure communication are not supported.
+Authentication and secure communication are supported in conjunction with a
+proxy server such as nginx (see <README.https.md>).
 
 If you are looking for a powerful SANE web frontend, AirSane may not be for you.
 You may be interested in [phpSANE](https://sourceforge.net/projects/phpsane) instead.
