@@ -26,7 +26,11 @@ The eSCL (AirScan) protocol supports all means of web authentication: Basic, dig
 For our secure nginx configuration, basic authentication will be fine, as no clear text will be transmitted during authentication over
 a https connection.
 ### Create a htpasswd file
-```sudo printf "USER:$(openssl passwd -crypt PASSWORD)\n" >> /etc/nginx/.htpasswd```
+```
+sudo su
+printf "USER:$(openssl passwd -crypt PASSWORD)\n" >> /etc/nginx/.htpasswd
+exit
+```
 ### In the nginx site configuration, enable the two lines defining user authentication
 ```sudo nano /etc/nginx/sites-available/airsaned-ssl```
 ### Restart nginx
