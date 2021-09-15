@@ -14,7 +14,7 @@ sudo chmod g+s /var/run/airsaned
 ```
 sudo cp https/systemd/airsaned.default /etc/default
 sudo cp https/nginx/airsaned-ssl /etc/nginx/sites-available
-sudo ln -s /etc/gninx/sites-available/airsaned-ssl /etc/nginx/sites-enabled
+sudo ln -s /etc/nginx/sites-available/airsaned-ssl /etc/nginx/sites-enabled
 ```
 ## Restart services
 ```
