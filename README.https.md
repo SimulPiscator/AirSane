@@ -12,7 +12,7 @@ sudo chmod g+s /var/run/airsaned
 ```
 ## Copy example configuration
 ```
-sudo cp https/systemd/airsaned.default /etc/default
+sudo cp https/systemd/airsaned.default /etc/default/airsane
 sudo cp https/nginx/airsaned-ssl /etc/nginx/sites-available
 sudo ln -s /etc/nginx/sites-available/airsaned-ssl /etc/nginx/sites-enabled
 ```
