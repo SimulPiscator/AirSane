@@ -1,0 +1,15 @@
+INTERFACE=*
+LISTEN_PORT=4443
+ACCESS_LOG=
+HOTPLUG=true
+MDNS_ANNOUNCE=true
+ANNOUNCE_SECURE=true
+UNIX_SOCKET=/var/run/airsaned/airsaned.sock
+WEB_INTERFACE=true
+RESET_OPTION=true
+DISCLOSE_VERSION=true
+LOCAL_SCANNERS_ONLY=true
+RANDOM_PATHS=false
+OPTIONS_FILE=/etc/airsane/options.conf
+IGNORE_LIST=/etc/airsane/ignore.conf
+
