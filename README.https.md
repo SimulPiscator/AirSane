@@ -7,7 +7,7 @@ To set up secure traffic, follow these steps:
 ## Create a location for a forwarded unix socket
 ```
 sudo mkdir /var/run/airsaned
-sudo chown root:www-data /var/run/airsaned
+sudo chown saned:www-data /var/run/airsaned
 sudo chmod g+s /var/run/airsaned
 ```
 ## Copy example configuration
