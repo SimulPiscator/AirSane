@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "basic/fdbuf.h"
@@ -274,6 +275,8 @@ struct HttpServer::Private
     }
     if (!err)
       err = ::bind(sockfd, &addr.sa, socklen);
+    if (!err && addr.sa.sa_family == AF_UNIX)
+      ::chmod(addr.un.sun_path, 0660);
     if (!err)
       err = ::listen(sockfd, mBacklog);
     if (err) {
