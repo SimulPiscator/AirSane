@@ -36,10 +36,10 @@ exit
 ### Restart nginx
 ```sudo service nginx restart```
 
-Both secure communication and user authentication have been tested and confirmed to work
-using macOS Image Capture, and Mopria Scan for Android as a client.
+Secure communication have been tested and confirmed to work
+using a Firefox web browser, macOS Image Capture, and Mopria Scan for Android as clients.
+Authentication only works using a web browser, or Mopria Scan for Android.
 When using a web browser to access the AirSane web interface, you will receive a warning
 about an invalid certificate unless you configure nginx to use a real certificate rather
 than the self-signed one coming with openssl.
-
   
