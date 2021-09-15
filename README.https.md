@@ -25,6 +25,9 @@ sudo service nginx restart
 The eSCL (AirScan) protocol supports all means of web authentication: Basic, digest, OAuth, ...
 For our secure nginx configuration, basic authentication will be fine, as no clear text will be transmitted during authentication over
 a https connection.
+
+Note that you will not be able to use authentication with the macOS AirScan client (Image Capture, Preview).
+
 ### Create a htpasswd file
 ```
 sudo su
