@@ -42,7 +42,10 @@ exit
 Secure communication have been tested and confirmed to work
 using a Firefox web browser, macOS Image Capture, and Mopria Scan for Android as clients.
 Authentication only works using a web browser, or Mopria Scan for Android.
+
 When using a web browser to access the AirSane web interface, you will receive a warning
 about an invalid certificate unless you configure nginx to use a real certificate rather
 than the self-signed one coming with openssl.
+If you have your own internet domain, you will be able to use a real certificate 
+for free from [the Let's Encrypt initiative](https://letsencrypt.org).
   
