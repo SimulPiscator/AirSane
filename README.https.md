@@ -1,6 +1,7 @@
 # Configuring AirSane for secure communication 
-By itself, AirSane does not support secure data transmission over https. 
-Still, secure connections are possible by using the nginx webserver as a proxy. Also, user authentication may be configured via nginx.
+By itself, AirSane does not support secure data transmission over HTTPS. 
+Still, secure connections are possible by using the nginx webserver as a proxy.
+Also, user authentication may be configured via nginx.
 To set up secure traffic, follow these steps:
 ## Install nginx
 ```sudo apt install nginx```
@@ -22,11 +23,13 @@ sudo service airsaned restart
 sudo service nginx restart
 ```
 ## Configure user authentication
-The eSCL (AirScan) protocol supports all means of web authentication: Basic, digest, OAuth, ...
-For our secure nginx configuration, basic authentication will be fine, as no clear text will be transmitted during authentication over
-a https connection.
+Officially, the eSCL protocol supports all means of web authentication.
+In our tests however, the macOS AirScan client supported neither basic nor digest authentication,
+and the Mopria Scan app for Android only worked with basic authentication.
 
-Note that you will not be able to use authentication with the macOS AirScan client (Image Capture, Preview).
+If you still want to use authentication for the web interface or the Mopria app, 
+basic authentication will be fine, as no clear text will be transmitted during authentication over
+a HTTPS connection.
 
 ### Create a htpasswd file
 ```
