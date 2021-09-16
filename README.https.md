@@ -48,4 +48,3 @@ about an invalid certificate unless you configure nginx to use a real certificat
 than the self-signed one coming with openssl.
 If you have your own internet domain, you will be able to use a real certificate 
 for free from [the Let's Encrypt initiative](https://letsencrypt.org).
-  
