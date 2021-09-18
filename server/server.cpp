@@ -341,7 +341,10 @@ Server::buildMdnsService(const Scanner* pScanner)
   pService->setTxt("ty", pScanner->makeAndModel());
   pService->setTxt("note", mPublisher.hostname());
   pService->setTxt("uuid", pScanner->uuid());
-  pService->setTxt("rs", pScanner->uri());
+  s = pScanner->uri();
+  if (!s.empty() && s.front() == '/')
+    s = s.substr(1);
+  pService->setTxt("rs", s);
   s.clear();
   for (const auto& cs : pScanner->txtColorSpaces())
     s += "," + cs;
