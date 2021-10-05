@@ -102,7 +102,7 @@ of them.
 To install AirSane:
 ```
 sudo apt-get install avahi-daemon
-sudo make install
+make && sudo make install
 sudo systemctl enable airsaned
 sudo systemctl start airsaned
 sudo systemctl status airsaned
