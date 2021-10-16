@@ -77,6 +77,8 @@ findFlatbedName(const std::vector<std::string>& names)
   if (i == names.end())
     i = std::find(names.begin(), names.end(), "FlatBed");
   if (i == names.end())
+    i = std::find(names.begin(), names.end(), "Auto");
+  if (i == names.end())
     return "";
   return *i;
 }
