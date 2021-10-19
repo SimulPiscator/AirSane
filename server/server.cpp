@@ -103,11 +103,19 @@ Server::Server(int argc, char** argv)
       "ignore SANE network scanners",
       localonly },
     { "options-file",
+#ifdef __FreeBSD__
+      "/usr/local/etc/airsane/options.conf",
+#else
       "/etc/airsane/options.conf",
+#endif
       "location of device options file",
       optionsfile },
     { "ignore-list",
+#ifdef __FreeBSD__
+      "/usr/local/etc/airsane/ignore.conf",
+#else
       "/etc/airsane/ignore.conf",
+#endif
       "location of device ignore list",
       ignorelist },
     { "debug", "false", "log debug information to stderr", debug },

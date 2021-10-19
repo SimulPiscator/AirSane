@@ -66,6 +66,17 @@ add_executable(${PROJECT_NAME}
     zeroconf/hotplugnotifier.cpp
     ${ZEROCONF_FILES}
 )
+if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
+target_link_libraries(
+    ${PROJECT_NAME}
+    Threads::Threads
+    sane
+    jpeg
+    png
+    ${ZEROCONF_LIBS}
+    usb
+)
+else()
 target_link_libraries(
     ${PROJECT_NAME}
     Threads::Threads
@@ -75,6 +86,7 @@ target_link_libraries(
     ${ZEROCONF_LIBS}
     usb-1.0
 )
+endif()
 
 if(APPLE)
 
@@ -101,6 +113,39 @@ install(CODE "
     endif()
 ")
 
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
+
+if ($ENV{PREFIX})
+    set(CMAKE_INSTALL_PREFIX $ENV{PREFIX})
+else()
+    # default is "/usr/local"
+endif()
+
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION sbin
+)
+
+install(CODE "
+    if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/etc/airsane/ignore.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/ignore.conf DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/airsane)
+    endif()
+")
+install(CODE "
+    if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/etc/airsane/options.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/options.conf DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/airsane)
+    endif()
+")
+install(CODE "
+    if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/etc/airsane/Gnome-scanner.png)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/Gnome-scanner.png DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/airsane)
+    endif()
+")
+install(CODE "
+    if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/etc/rc.d/airsaned)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/freebsd/airsaned DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/rc.d)
+    endif()
+")
 
 else()
 
