@@ -244,6 +244,8 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
   mIntent = settings.getString("Intent");
 
   mDocumentFormat = settings.getString("DocumentFormat");
+  if (mDocumentFormat.empty())
+      mDocumentFormat = settings.getString("DocumentFormatExt");
   std::clog << "document format requested: " << mDocumentFormat << "\n";
   if (autoselectFormat)
     mDocumentFormat = HttpServer::MIME_TYPE_PNG;
@@ -689,7 +691,8 @@ ScanJob::Private::finishTransfer(std::ostream& os)
       }
     }
   }
-  pEncoder->endDocument();
+  if (pEncoder)
+      pEncoder->endDocument();
   closeSession();
 }
 
