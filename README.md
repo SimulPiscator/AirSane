@@ -51,6 +51,14 @@ As of version 1.4.10, the Mopria Scan App will detect all AirSane scanners and
 display them with name and icon. After choosing scan options, you will be able
 to scan to your android device.
 
+### Windows 11
+Go to Settings->Bluetooth & devices->Printers and Scanners.
+There, click "Add Device".
+AirSane devices will appear as devices to add, click "Add".
+Wait until the device appears in the list of devices below, click the device,
+and choose "Install app" or "Open scanner" in order to install the Microsoft
+scanner app, or open it if has been installed.
+
 ## Installation
 ### Packages for Synology NAS
 Pre-built packages for Synology are available here: 
