@@ -46,18 +46,18 @@ have to use the scanner through 'Image Capture' once before it will be
 shown with this icon in 'Printers and Scanners'. This seems to be a bug in macOS
 at least up to Catalina.
 
-### Mopria client on Android
-As of version 1.4.10, the Mopria Scan App will detect all AirSane scanners and
-display them with name and icon. After choosing scan options, you will be able
-to scan to your android device.
-
 ### Windows 11
-Go to Settings->Bluetooth & devices->Printers and Scanners.
+Go to "Settings"->"Bluetooth & devices"->"Printers and Scanners."
 There, click "Add Device".
 AirSane devices will appear as devices to add, click "Add".
 Wait until the device appears in the list of devices below, click the device,
 and choose "Install app" or "Open scanner" in order to install the Microsoft
 scanner app, or open it if has been installed.
+
+### Mopria client on Android
+As of version 1.4.10, the Mopria Scan App will detect all AirSane scanners and
+display them with name and icon. After choosing scan options, you will be able
+to scan to your android device.
 
 ## Installation
 ### Packages for Synology NAS
