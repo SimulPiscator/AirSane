@@ -74,6 +74,7 @@ Server::Server(int argc, char** argv)
   , mWebinterface(true)
   , mResetoption(false)
   , mRandompaths(false)
+  , mCompatiblepath(false)
   , mDiscloseversion(true)
   , mHotplug(true)
   , mDoRun(true)
@@ -81,7 +82,7 @@ Server::Server(int argc, char** argv)
 {
   std::string port, interface, unixsocket, accesslog, hotplug, announce,
      webinterface, resetoption, discloseversion, localonly, optionsfile,
-     ignorelist, randompaths, debug, announcesecure;
+     ignorelist, randompaths, compatiblepath, debug, announcesecure;
   struct
   {
     const std::string name, def, info;
@@ -98,6 +99,7 @@ Server::Server(int argc, char** argv)
     { "reset-option", "false", "allow server reset from web interface", resetoption },
     { "disclose-version", "true", "disclose version information in web interface", discloseversion },
     { "random-paths", "false", "prepend a random uuid to scanner paths", randompaths },
+    { "compatible-path", "false", "use /eSCL as path for first scanner", compatiblepath },
     { "local-scanners-only",
       "true",
       "ignore SANE network scanners",
@@ -155,6 +157,7 @@ Server::Server(int argc, char** argv)
   mWebinterface = (webinterface == "true");
   mResetoption = (resetoption == "true");
   mRandompaths = (randompaths == "true");
+  mCompatiblepath = (compatiblepath == "true");
   mDiscloseversion = (discloseversion == "true");
   mLocalonly = (localonly == "true");
   mOptionsfile = optionsfile;
@@ -215,6 +218,7 @@ Server::run()
     if (mRandompaths)
       pathPrefix += Uuid::Random().toString() + "/";
     auto scanners = sanecpp::enumerate_devices(mLocalonly);
+    int scannerCount = 0;
     for (const auto& s : scanners) {
       std::clog << "found: " << s.name << " (" << s.vendor << " " << s.model
                 << ")" << std::endl;
@@ -233,7 +237,10 @@ Server::run()
         std::clog << "error: " << pScanner->error() << std::endl;
       }
       else {
-        pScanner->setUri(pathPrefix + pScanner->uuid());
+        if (mCompatiblepath && scannerCount++ == 0)
+            pScanner->setUri("/eSCL");
+        else
+            pScanner->setUri(pathPrefix + pScanner->uuid());
         std::ostringstream url;
         url << "http";
         if (mAnnouncesecure)

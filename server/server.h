@@ -60,7 +60,7 @@ private:
   ScannerList mScanners;
   std::filebuf mLogfile;
   bool mAnnounce, mWebinterface, mResetoption, mDiscloseversion,
-    mLocalonly, mHotplug, mRandompaths, mAnnouncesecure;
+    mLocalonly, mHotplug, mRandompaths, mCompatiblepath, mAnnouncesecure;
   std::string mOptionsfile, mIgnorelist;
   float mStartupTimeSeconds;
   bool mDoRun;
