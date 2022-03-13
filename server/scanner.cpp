@@ -737,6 +737,12 @@ Scanner::iconFile() const
   return p->mDeviceOptions.icon;
 }
 
+const std::string&
+Scanner::note() const
+{
+  return p->mDeviceOptions.note;
+}
+
 void
 Scanner::setIconUrl(const std::string& url)
 {

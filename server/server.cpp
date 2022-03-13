@@ -354,7 +354,10 @@ Server::buildMdnsService(const Scanner* pScanner)
   if (!s.empty())
     pService->setTxt("pdl", s.substr(1));
   pService->setTxt("ty", pScanner->makeAndModel());
-  pService->setTxt("note", mPublisher.hostname());
+  if (pScanner->note().empty())
+    pService->setTxt("note", mPublisher.hostname());
+  else
+    pService->setTxt("note", pScanner->note());
   pService->setTxt("uuid", pScanner->uuid());
   s = pScanner->uri();
   if (!s.empty() && s.front() == '/')
