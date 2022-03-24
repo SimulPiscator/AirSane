@@ -53,6 +53,7 @@ AirSane devices will appear as devices to add, click "Add".
 Wait until the device appears in the list of devices below, click the device,
 and choose "Install app" or "Open scanner" in order to install the Microsoft
 scanner app, or open it if has been installed before.
+Note that Windows 11 does not allow more than 4 scanners per AirSane instance.
 
 ### Mopria client on Android
 As of version 1.4.10, the Mopria Scan App will detect all AirSane scanners and
@@ -178,6 +179,10 @@ location of the options file.
 
 The image should have a size of 512x512, 256x256 or 128x128 pixels and an alpha channel for transparency.
 If pixel dimensions are not powers of two, the image will not be accepted by macOS.
+#### location
+A string that appears in the `note` field of the mDNS announcement. This should be an indication where the scanner is located,
+such as "Living Room" or "Office." If no location is given in the options file, this defaults to the host name of the machine
+that runs airsaned.
 
 ### Example
 ```
@@ -198,6 +203,7 @@ synthesize-gray yes
 # Set icon and calibration file option for a scanner "Canon LiDE 60"
 device Canon LiDE 60
 icon CanonLiDE60.png
+location Living Room
 calibration-file /home/simul/some path with spaces/canon-lide-60.cal
 ```
 
