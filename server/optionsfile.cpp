@@ -102,7 +102,7 @@ OptionsFile::scannerOptions(const Scanner* pScanner) const
     else if (option.first == "color-gamma")
       processedOptions.color_gamma = ::atof(option.second.c_str());
     else if (option.first == "synthesize-gray")
-      processedOptions.synthesize_gray = (option.second == "true");
+      processedOptions.synthesize_gray = (option.second == "true" || option.second == "yes");
     else
       processedOptions.sane_options.push_back(option);
   }

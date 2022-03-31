@@ -643,15 +643,16 @@ ScanJob::Private::finishTransfer(std::ostream& os)
     pEncoder->setHeight(p->lines);
     pEncoder->setBitDepth(p->depth);
     pEncoder->setDestination(&os);
-    if (mDeviceOptions.synthesize_gray && pEncoder->bytesPerLine() != p->bytes_per_line / 3) {
-      std::cerr << __FILE__ << ", line " << __LINE__
-                << ": encoder bytesPerLine (" << pEncoder->bytesPerLine()
-                << ") differs from SANE bytes_per_line/3 ("
-                << p->bytes_per_line / 3 << ")" << std::endl;
-      mState = aborted;
-      mStateReason = PWG_ERRORS_DETECTED;
-    } else if (!mDeviceOptions.synthesize_gray &&
-               pEncoder->bytesPerLine() != p->bytes_per_line) {
+    if (!mColorScan && mDeviceOptions.synthesize_gray) {
+      if (pEncoder->bytesPerLine() != p->bytes_per_line / 3) {
+            std::cerr << __FILE__ << ", line " << __LINE__
+                      << ": encoder bytesPerLine (" << pEncoder->bytesPerLine()
+                      << ") differs from SANE bytes_per_line/3 ("
+                      << p->bytes_per_line / 3 << ")" << std::endl;
+            mState = aborted;
+            mStateReason = PWG_ERRORS_DETECTED;
+      }
+    } else if (pEncoder->bytesPerLine() != p->bytes_per_line) {
       std::cerr << __FILE__ << ", line " << __LINE__
                 << ": encoder bytesPerLine (" << pEncoder->bytesPerLine()
                 << ") differs from SANE bytes_per_line (" << p->bytes_per_line
@@ -667,7 +668,7 @@ ScanJob::Private::finishTransfer(std::ostream& os)
       status = mpSession->read(buffer).status();
       if (status == SANE_STATUS_GOOD) {
         applyGamma(buffer);
-        if (mDeviceOptions.synthesize_gray)
+        if (!mColorScan && mDeviceOptions.synthesize_gray)
           synthesizeGray(buffer);
         try {
           pEncoder->writeLine(buffer.data());
