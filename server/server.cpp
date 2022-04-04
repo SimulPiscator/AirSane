@@ -201,16 +201,17 @@ Server::run()
   if (!mDoRun)
     return false;
 
-  struct timespec t = { 0 };
-  ::clock_gettime(CLOCK_MONOTONIC, &t);
-  float t0 = t.tv_sec + 1e-9 * t.tv_nsec;
-
   std::shared_ptr<Notifier> pNotifier;
   if (mHotplug)
     pNotifier = std::make_shared<Notifier>(*this);
 
   bool ok = false, done = false;
   do {
+    struct timespec t = { 0 };
+    ::clock_gettime(CLOCK_MONOTONIC, &t);
+    float t0 = 1.0 * t.tv_sec + 1e-9 * t.tv_nsec;
+    std::clog << "start time is " << t0 << std::endl;
+
     OptionsFile optionsfile(mOptionsfile);
     std::clog << "enumerating " << (mLocalonly ? "local " : " ") << "devices..."
               << std::endl;
@@ -270,8 +271,10 @@ Server::run()
       }
     }
     ::clock_gettime(CLOCK_MONOTONIC, &t);
-    float t1 = t.tv_sec + 1e-9 * t.tv_nsec;
+    float t1 = 1.0 * t.tv_sec + 1e-9 * t.tv_nsec;
+    std::clog << "end time is " << t1 << std::endl;
     mStartupTimeSeconds = t1 - t0;
+    std::clog << "startup took " << mStartupTimeSeconds << " secconds" << std::endl;
 
     ok = HttpServer::run();
     mScanners.clear();
