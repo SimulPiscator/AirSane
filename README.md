@@ -17,7 +17,7 @@ Authentication and secure communication are supported in conjunction with a
 proxy server such as nginx (see the [https readme file](README.https.md)).
 
 If you are looking for a powerful SANE web frontend, AirSane may not be for you.
-You may be interested in [phpSANE](https://sourceforge.net/projects/phpsane) instead.
+You may be interested in [phpSANE](https://github.com/gawindx/phpSane) instead.
 
 AirSane has been developed by reverse-engineering the communication protocol
 implemented in Apple's AirScanScanner client
