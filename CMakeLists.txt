@@ -23,8 +23,8 @@ find_package(Threads REQUIRED)
 
 include_directories(.)
 if(APPLE)
-  include_directories(/opt/local/include)
-  link_directories(/opt/local/lib)
+  include_directories(/opt/local/include /usr/local/include)
+  link_directories(/opt/local/lib /usr/local/lib)
   set(ZEROCONF_FILES
     zeroconf/mdnspublisher-dnssd.mm
   )
