@@ -34,7 +34,7 @@ its backend in `/opt/local/etc/sane.d/dll.conf`.
 There, you may also disable unused backends by prepending with a `#` in order
 to speed up device search.
 
-# Build AirSane using Homebrew
+## Build AirSane using Homebrew
 If you have not done so, install Homebrew as described here:
 https://brew.sh/
 
