@@ -61,7 +61,7 @@ display them with name and icon. After choosing scan options, you will be able
 to scan to your android device.
 
 ## Installation
-### Packages for Synology NAS
+### Packages for Synology NAS (DSM6 only, as DSM7 dropped support for USB devices)
 Pre-built packages for Synology are available here: 
 <https://search.synopackage.com/sources/pcloadletter>
 
