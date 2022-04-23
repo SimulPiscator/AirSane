@@ -46,6 +46,18 @@ have to use the scanner through 'Image Capture' once before it will be
 shown with this icon in 'Printers and Scanners'. This seems to be a bug in macOS
 at least up to Catalina.
 
+### Linux
+Install the [sane-airscan backend](https://github.com/alexpevzner/sane-airscan) with
+```
+sudo apt-get install sane-airscan
+```
+or whatever the packet manager of your distribution requires to install it.
+Using `sudo nano /etc/sane.d/dll.conf`, add a line "airscan", and prepend a # character
+before the "escl" entry if present. (There are two airscan backends, called 
+"escl" and "airscan", but only "airscan" is compatible with AirSane.)
+When done, `scanimage -L` should list your AirSane devices, and SANE clients such
+as XSane should be able to scan from them.
+
 ### Windows 11
 Go to "Settings"->"Bluetooth & devices"->"Printers and Scanners."
 There, click "Add Device".
