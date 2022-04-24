@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ctime>
 #include <regex>
 #include <sstream>
+#include <unistd.h>
 
 #include "mainpage.h"
 #include "scannerpage.h"
@@ -41,9 +42,9 @@ namespace {
 
 std::string hostname()
 {
-  std::string name;
-  std::ifstream("/etc/hostname") >> name;
-  return name;
+  char buf[256];
+  ::gethostname(buf, sizeof(buf));
+  return buf;
 }
 
 struct Notifier : HotplugNotifier
