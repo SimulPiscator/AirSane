@@ -39,6 +39,13 @@ extern const char* BUILD_TIME_STAMP;
 
 namespace {
 
+std::string hostname()
+{
+  std::string name;
+  std::ifstream("/etc/hostname") >> name;
+  return name;
+}
+
 struct Notifier : HotplugNotifier
 {
   Server& server;
@@ -238,7 +245,7 @@ Server::run()
         std::clog << "error: " << pScanner->error() << std::endl;
       }
       else {
-        if (mCompatiblepath && scannerCount++ == 0)
+        if (scannerCount++ == 0 && mCompatiblepath)
             pScanner->setUri("/eSCL");
         else
             pScanner->setUri(pathPrefix + pScanner->uuid());
@@ -246,7 +253,7 @@ Server::run()
         url << "http";
         if (mAnnouncesecure)
           url << "s";
-        url << "://" << mPublisher.hostnameFqdn() << ":" << port()
+        url << "://" << hostname() << ":" << port()
             << pScanner->uri();
         if (mWebinterface)
           pScanner->setAdminUrl(url.str());
@@ -254,7 +261,7 @@ Server::run()
           url << "/ScannerIcon";
           pScanner->setIconUrl(url.str());
         }
-        
+
         std::shared_ptr<MdnsPublisher::Service> pService;
         if (mAnnounce && !pScanner->error()) {
           pService = buildMdnsService(pScanner.get());
