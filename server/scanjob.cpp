@@ -546,15 +546,14 @@ ScanJob::Private::openSession()
   if (status == SANE_STATUS_GOOD) {
 
     auto& opt = mpSession->options();
-    
+
     for (const auto& option : mDeviceOptions.sane_options)
       opt[option.first] = option.second;
 
-    if (mIntent == "Preview")
-      opt[SANE_NAME_PREVIEW] = 1;
+    // The order in which options are set matters for some backends.
+    opt[SANE_NAME_SCAN_SOURCE] = mScanSource;
     opt[SANE_NAME_BIT_DEPTH] = mBitDepth;
     opt[SANE_NAME_SCAN_MODE] = mColorMode;
-    opt[SANE_NAME_SCAN_SOURCE] = mScanSource;
     bool ok = opt[SANE_NAME_SCAN_RESOLUTION].set_numeric_value(mRes_dpi);
     if (!ok)
       ok = opt[SANE_NAME_SCAN_X_RESOLUTION].set_numeric_value(mRes_dpi) ||
