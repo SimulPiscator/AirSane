@@ -18,7 +18,7 @@ mkdir AirSane-build && cd AirSane-build
 cmake  ../AirSane
 make
 sudo make install
-sudo launchctl load /Library/LaunchDaemons/org.simulpiscator.airsaned.plist 
+sudo launchctl load -w /Library/LaunchDaemons/org.simulpiscator.airsaned.plist 
 ```
 
 If everything went well, a window may pop up, asking whether to allow
@@ -50,7 +50,7 @@ mkdir AirSane-build && cd AirSane-build
 cmake  ../AirSane
 make
 sudo make install
-sudo launchctl load /Library/LaunchDaemons/org.simulpiscator.airsaned.plist 
+sudo launchctl load -w /Library/LaunchDaemons/org.simulpiscator.airsaned.plist 
 ```
 
 If everything went well, a window may pop up, asking whether to allow
