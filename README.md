@@ -23,7 +23,7 @@ AirSane has been developed by reverse-engineering the communication protocol
 implemented in Apple's AirScanScanner client
 (macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`).
 
-Regarding the mdns announcement, and the basic working of the eSCL protocol,
+Regarding the mDNS announcement, and the basic working of the eSCL protocol,
 [David Poole's blog](http://testcluster.blogspot.com/2014/03) was very helpful.
 
 In the meantime, the eSCL protocol has been officially published
