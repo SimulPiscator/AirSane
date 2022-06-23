@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.1)
 
 project(airsaned)
 
+include(GNUInstallDirs)
+
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
            ${CMAKE_CURRENT_BINARY_DIR}/_version.cpp
@@ -152,7 +154,8 @@ else()
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
 )
-install(FILES systemd/airsaned.service
+configure_file(systemd/airsaned.service.in ${CMAKE_BINARY_DIR}/airsaned.service)
+install(FILES ${CMAKE_BINARY_DIR}/airsaned.service
     DESTINATION /lib/systemd/system
 )
 install(FILES systemd/airsaned.default

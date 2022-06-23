@@ -1,0 +1,16 @@
+[Unit]
+Description=AirSane Imaging Service
+After=avahi-daemon.service
+
+[Service]
+EnvironmentFile=-/etc/default/airsane
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/airsaned --interface=${INTERFACE} --listen-port=${LISTEN_PORT} --access-log=${ACCESS_LOG} --hotplug=${HOTPLUG} --mdns-announce=${MDNS_ANNOUNCE} --announce-secure=${ANNOUNCE_SECURE} --unix-socket=${UNIX_SOCKET} --web-interface=${WEB_INTERFACE} --random-paths=${RANDOM_PATHS} --compatible-path=${COMPATIBLE_PATH} --local-scanners-only=${LOCAL_SCANNERS_ONLY} --disclose-version=${DISCLOSE_VERSION} --reset-option=${RESET_OPTION} --options-file=${OPTIONS_FILE} --ignore-list=${IGNORE_LIST}
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStartPre=/bin/sleep 15
+User=saned
+Group=saned
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+Alias=airsaned.service
