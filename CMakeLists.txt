@@ -154,7 +154,7 @@ else()
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
 )
-configure_file(systemd/airsaned.service.in ${CMAKE_BINARY_DIR}/airsaned.service)
+configure_file(systemd/airsaned.service.in ${CMAKE_BINARY_DIR}/airsaned.service @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/airsaned.service
     DESTINATION /lib/systemd/system
 )
