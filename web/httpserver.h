@@ -49,6 +49,8 @@ public:
   static const char *MIME_TYPE_JPEG, *MIME_TYPE_PDF, *MIME_TYPE_PNG;
   static std::string fileExtension(const std::string& mimeType);
 
+  static std::string toRelativeUrl(const std::string&);
+
   HttpServer();
   ~HttpServer();
   HttpServer(const HttpServer&) = delete;

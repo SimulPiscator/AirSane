@@ -56,6 +56,7 @@ public:
   const std::string& adminUrl() const;
   void setIconUrl(const std::string&);
   const std::string& iconUrl() const;
+
   const std::string& iconFile() const;
   const std::string& note() const;
   

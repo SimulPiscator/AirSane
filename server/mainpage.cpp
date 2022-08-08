@@ -43,13 +43,15 @@ MainPage::onRender()
       auto name = s.pScanner->publishedName();
 
       std::string icondef;
-      if (!s.pScanner->iconUrl().empty() ) {
-        icondef = "<img src='" + s.pScanner->iconUrl() + "'"
+      std::string iconUrl = HttpServer::toRelativeUrl(s.pScanner->iconUrl());
+      if (!iconUrl.empty() ) {
+        icondef = "<img src='" + iconUrl + "'"
                 + " alt='Scanner Icon'"
                 + " style='width:1.2em;height:1.2em;vertical-align:bottom;padding-right:0.6em'"
                 + ">";
       }
-      scannersList.addItem(anchor(s.pScanner->adminUrl()).addContent(icondef).addText(name));
+      std::string scannerUrl = HttpServer::toRelativeUrl(s.pScanner->adminUrl());
+      scannersList.addItem(anchor(scannerUrl).addContent(icondef).addText(name));
       scannersList.addContent("\n");
     }
     out() << scannersList << std::endl;

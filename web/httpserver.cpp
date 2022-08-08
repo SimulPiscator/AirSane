@@ -419,6 +419,18 @@ struct HttpServer::Private
 };
 
 std::string
+HttpServer::toRelativeUrl(const std::string& url)
+{
+  size_t pos = url.find("://");
+  if (pos != std::string::npos)
+  {
+    pos = url.find("/", pos + 3);
+    return url.substr(pos);
+  }
+  return url;
+}
+
+std::string
 HttpServer::statusReason(int status)
 {
   switch (status) {

@@ -62,7 +62,8 @@ buildScanJobTicket(const Dictionary& dict)
 ScannerPage::ScannerPage(Scanner& s)
   : mScanner(s)
 {
-  setFavicon(HttpServer::MIME_TYPE_PNG, mScanner.iconUrl());
+  std::string iconUrl = HttpServer::toRelativeUrl(mScanner.iconUrl());
+  setFavicon(HttpServer::MIME_TYPE_PNG, iconUrl);
 }
 
 void
@@ -119,8 +120,9 @@ ScannerPage::onRender()
   }
 
   std::string icondef;
-  if (!mScanner.iconUrl().empty() ) {
-    icondef = "<img src='" + mScanner.iconUrl() + "'"
+  if (!mScanner.iconUrl().empty()) {
+    std::string iconUrl = HttpServer::toRelativeUrl(mScanner.iconUrl());
+    icondef = "<img src='" + iconUrl + "'"
             + " alt='Scanner Icon'"
             + " style='width:1.2em;height:1.2em;vertical-align:bottom;padding-right:0.3em'"
             + ">";
