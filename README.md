@@ -38,11 +38,11 @@ link from the main page.
 When opening 'Image Capture', 'Preview', or other applications using the
 ImageKit framework, scanners exported by AirSane should be immediately available.
 
-A macOS compatible scanner plugin for the "GIMP" image editing software is provided
-[here](https://github.com/SimulPiscator/GimpScan).
-
 In the 'Printers and Scanners' control panel, exported scanners will be listed with 
 a type of 'Bonjour Scanner'.
+
+A macOS compatible scanner plugin for the "GIMP" image editing software is provided
+[here](https://github.com/SimulPiscator/GimpScan).
 
 If you define a custom icon for your scanner (see below), note that you will
 have to use the scanner through 'Image Capture' once before it will be
