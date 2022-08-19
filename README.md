@@ -69,7 +69,7 @@ AirSane devices will appear as devices to add, click "Add".
 Wait until the device appears in the list of devices below, click the device,
 and choose "Install app" or "Open scanner" in order to install the Microsoft
 scanner app, or open it if has been installed before.
-Note that Windows does not allow more than 4 scanners per AirSane instance.
+Note that Windows does not allow more than 4 AirSane scanners in total.
 
 ### Mopria client on Android
 As of version 1.4.10, the Mopria Scan App will detect all AirSane scanners and
