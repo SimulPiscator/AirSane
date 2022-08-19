@@ -38,6 +38,9 @@ link from the main page.
 When opening 'Image Capture', 'Preview', or other applications using the
 ImageKit framework, scanners exported by AirSane should be immediately available.
 
+A macOS compatible scanner plugin for the "GIMP" image editing software is provided
+[here](https://github.com/SimulPiscator/GimpScan).
+
 In the 'Printers and Scanners' control panel, exported scanners will be listed with 
 a type of 'Bonjour Scanner'.
 
@@ -56,7 +59,7 @@ Using `sudo nano /etc/sane.d/dll.conf`, add a line "airscan", and prepend a # ch
 before the "escl" entry if present. (There are two airscan backends, called 
 "escl" and "airscan", but only "airscan" is compatible with AirSane.)
 When done, `scanimage -L` should list your AirSane devices, and SANE clients such
-as XSane should be able to scan from them.
+as XSane or simple-scan should be able to scan from them.
 
 ### Windows
 eSCL support in Windows has been introduced in Windows 11 first, but is now available
