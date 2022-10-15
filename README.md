@@ -80,15 +80,12 @@ display them with name and icon. After choosing scan options, you will be able
 to scan to your android device.
 
 ## Installation
-### Packages for Synology NAS (DSM6 only)
-Pre-built packages for Synology are available here: 
-<https://search.synopackage.com/sources/pcloadletter>
 
-### Build for OpenWRT
+### Build and install from source for OpenWRT
 Build files and instructions for OpenWRT have been published here:
 <https://github.com/tbaela/AirSane-openwrt>
 
-### Build on macOS
+### Build and install from source on macOS
 AirSane may be run on a macOS installation in order to serve locally attached
 scanners to eSCL clients such as Apple Image Capture. For instructions, see 
 [the macOS README file](README.macOS.md).
