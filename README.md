@@ -146,8 +146,6 @@ by editing '/etc/default/airsane'. For options, and their meanings, run
 airsaned --help
 ```
 By default, the server listens on all local addresses, and on port 8090.
-From there, each exported scanner has its own port (this is necessary to match the mdns-sd
-specification which allows only a single service to be announced per address/port combination).
 
 To verify http access, open `http://localhost:8090/` in a web browser.
 From there, follow a link to a scanner page, and click the 'update preview'
