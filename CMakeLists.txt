@@ -30,11 +30,15 @@ if(APPLE)
     /opt/homebrew/include
     /usr/local/include
   )
-  link_directories(
-    /opt/local/lib
-    /opt/homebrew/lib
-    /usr/local/lib
-  )
+  if(IS_DIRECTORY /opt/local/lib)
+    link_directories(/opt/local/lib)
+  endif()
+  if(IS_DIRECTORY /opt/homebrew/lib)
+    link_directories(/opt/homebrew/lib)
+  endif()
+  if(IS_DIRECTORY /usr/local/lib)
+    link_directories(/usr/local/lib)
+  endif()
   set(ZEROCONF_FILES
     zeroconf/mdnspublisher-dnssd.mm
   )
