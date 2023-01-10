@@ -84,6 +84,8 @@ to scan to your android device.
 ### Build and install from source for OpenWRT
 Build files and instructions for OpenWRT have been published here:
 <https://github.com/tbaela/AirSane-openwrt>
+And its up-to-date revision is published here:
+<https://github.com/cmangla/AirSane-openwrt>
 
 ### Build and install from source on macOS
 AirSane may be run on a macOS installation in order to serve locally attached
