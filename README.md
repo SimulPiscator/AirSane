@@ -295,3 +295,11 @@ Most likely, the avahi-daemon package is not installed, or avahi-daemon is not r
   sudo systemctl start avahi-damon
 
 ```
+
+* You can see no scanners, and you’re using `scanbd`.
+`scanbd` works by proxying local scanners as network scanners, so you need to tell AirSane to include network scanners in its list. In `/etc/default/airsane`, set `LOCAL_SCANNERS_ONLY=false`. Also, at least on Debian systems, the `scanbm` service needs 2 network connections to be able to talk to AirSane, so:
+```
+  sudo systemctl edit scanbm.socket
+  # Change MaxConnections=1 to MaxConnections=2 and save
+  sudo systemctl restart scanbm.socket
+```
