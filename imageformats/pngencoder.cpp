@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include <stdexcept>
 #include <vector>
+#include <cstdint>
 #if __APPLE__
 #include <machine/endian.h>
 #elif __FreeBSD__

@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cmath>
 #include <csignal>
 #include <ctime>
+#include <cstdint>
 #include <regex>
 #include <sstream>
 #include <unistd.h>

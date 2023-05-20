@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "basic/dictionary.h"
 #include <iostream>
 #include <string>
+#include <cstdint>
 
 class HttpServer
 {
