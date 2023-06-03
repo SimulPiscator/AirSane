@@ -53,7 +53,7 @@ public:
   static std::string toRelativeUrl(const std::string&);
 
   HttpServer();
-  ~HttpServer();
+  virtual ~HttpServer();
   HttpServer(const HttpServer&) = delete;
   HttpServer& operator=(const HttpServer&) = delete;
 
