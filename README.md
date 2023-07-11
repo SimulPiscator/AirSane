@@ -2,13 +2,17 @@
 
 # AirSane
 
-A SANE WebScan frontend that supports Apple's AirScan protocol.
+AirSane is a [SANE](http://www.sane-project.org/) frontend, and a scanner server
+that supports Apple's AirScan protocol.
 Scanners are detected automatically, and published through mDNS.
 Acquired images may be transferred 
 in JPEG, PNG, and [PDF/raster](https://www.pdfraster.org/) format.
 
 AirSane's intended purpose is to be used with AirScan/eSCL clients such as
-Apple's Image Capture, but a simple web interface is provided as well.
+Apple's Image Capture, [sane-airscan]((https://github.com/alexpevzner/sane-airscan) on Linux,
+and the eSCL client built into Windows 10.
+
+In addition to the AirScan/eSCL server functionality, a simple web interface is provided.
 
 Images are encoded on-the-fly during acquisition, keeping memory/storage
 demands low. Thus, AirSane will run fine on a Raspberry Pi or similar device.
