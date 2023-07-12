@@ -204,7 +204,7 @@ A string that appears in the `note` field of the mDNS announcement. This should 
 such as "Living Room" or "Office." If no location is given in the options file, this defaults to the host name of the machine
 that runs airsaned.
 
-### Example
+### Example options.conf file
 ```
 # Example options.conf file for airsane
 # Set SANE brightness to 10 for all scanners
