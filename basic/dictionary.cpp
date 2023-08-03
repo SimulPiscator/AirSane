@@ -41,9 +41,10 @@ strtonum(const std::string& s)
 {
   std::istringstream iss(s);
   iss.imbue(clocale);
-  double num = std::numeric_limits<double>::quiet_NaN();
-  iss >> num;
-  return num;
+  double num;
+  if (iss >> num)
+    return num;
+  return std::numeric_limits<double>::quiet_NaN();
 }
 
 const std::string emptystring;
