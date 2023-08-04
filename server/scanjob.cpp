@@ -35,12 +35,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // pwg JobStateReasonsWKV
 static const char* PWG_NONE = "None";
-static const char* PWG_SERVICE_OFF_LINE = "ServiceOffLine";
+//static const char* PWG_SERVICE_OFF_LINE = "ServiceOffLine";
 static const char* PWG_RESOURCES_ARE_NOT_READY = "ResourcesAreNotReady";
 static const char* PWG_JOB_QUEUED = "JobQueued";
 static const char* PWG_JOB_SCANNING = "JobScanning";
-static const char* PWG_JOB_SCANNING_AND_TRANSFERRING =
-  "JobScanningAndTransferring";
+//static const char* PWG_JOB_SCANNING_AND_TRANSFERRING =
+//  "JobScanningAndTransferring";
 static const char* PWG_JOB_COMPLETED_SUCCESSFULLY = "JobCompletedSuccessfully";
 static const char* PWG_JOB_CANCELED_BY_USER = "JobCanceledByUser";
 static const char* PWG_INVALID_SCAN_TICKET = "InvalidScanTicket";
