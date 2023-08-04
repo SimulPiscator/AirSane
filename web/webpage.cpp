@@ -62,9 +62,9 @@ WebPage::numtostr(double d)
 }
 
 WebPage::WebPage()
-  : mpResponse(nullptr)
+  : mpOut(nullptr)
   , mpRequest(nullptr)
-  , mpOut(nullptr)
+  , mpResponse(nullptr)
 {
   addStyle("body { font-family:sans-serif }");
 }
