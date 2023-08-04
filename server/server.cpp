@@ -80,15 +80,15 @@ clientIsAirscan(const HttpServer::Request& req)
 
 Server::Server(int argc, char** argv)
   : mAnnounce(true)
-  , mLocalonly(true)
   , mWebinterface(true)
   , mResetoption(false)
+  , mDiscloseversion(true)
+  , mLocalonly(true)
+  , mHotplug(true)
   , mRandompaths(false)
   , mCompatiblepath(false)
-  , mDiscloseversion(true)
-  , mHotplug(true)
-  , mDoRun(true)
   , mStartupTimeSeconds(0)
+  , mDoRun(true)
 {
   std::string port, interface, unixsocket, accesslog, hotplug, announce,
      webinterface, resetoption, discloseversion, localonly, optionsfile,
