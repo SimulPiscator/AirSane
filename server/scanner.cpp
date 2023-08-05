@@ -237,8 +237,8 @@ Scanner::Private::Private(Scanner* p)
   , mpPlaten(nullptr)
   , mpAdf(nullptr)
   , mDuplex(false)
-  , mError(nullptr)
   , mTemporaryAdfStatus(SANE_STATUS_GOOD)
+  , mError(nullptr)
 {
   sInstances.insert(this);
 }

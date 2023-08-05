@@ -46,8 +46,8 @@ public:
   public:
     explicit Service(MdnsPublisher* p)
       : mpPublisher(p)
-      , mPort(0)
       , mIfIndex(-1)
+      , mPort(0)
     {}
     ~Service() { unannounce(); }
 
