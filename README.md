@@ -10,7 +10,7 @@ in JPEG, PNG, and [PDF/raster](https://www.pdfraster.org/) format.
 
 AirSane's intended purpose is to be used with AirScan/eSCL clients such as
 Apple's Image Capture, [sane-airscan](https://github.com/alexpevzner/sane-airscan) on Linux,
-and the eSCL client built into Windows 10.
+and the eSCL client built into Windows 10 and 11.
 
 In addition to the AirScan/eSCL server functionality, a simple web interface is provided.
 
