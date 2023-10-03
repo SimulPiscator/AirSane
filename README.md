@@ -248,7 +248,7 @@ above. By multiplying with another factor between 0.45 and 2.2, you can correct 
 
 ## Ignore List
 
-If a file exists at the location for the ignore list (by default, `/etc/airsane/ignorelist.conf`), AirSane will read that file line
+If a file exists at the location for the ignore list (by default, `/etc/airsane/ignore.conf`), AirSane will read that file line
 by line, treat each line as a regular expression to be matched against a device's SANE name, and will ignore any device that
 matches.
 
