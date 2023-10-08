@@ -39,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "web/accessfile.h"
 #include "basic/fdbuf.h"
 #include "errorpage.h"
 
@@ -111,16 +112,8 @@ urldecode(const std::string& s)
   return r;
 }
 
-typedef union
-{
-  sockaddr sa;
-  sockaddr_in in;
-  sockaddr_in6 in6;
-  sockaddr_un un;
-} Sockaddr;
-
 std::string
-ipString(Sockaddr address)
+ipString(const HttpServer::Sockaddr& address)
 {
   char buf[128] = "n/a";
   switch (address.sa.sa_family) {
@@ -140,7 +133,7 @@ ipString(Sockaddr address)
 }
 
 uint16_t
-portNumber(Sockaddr address)
+portNumber(const HttpServer::Sockaddr& address)
 {
   switch (address.sa.sa_family) {
     case AF_INET:
@@ -152,7 +145,7 @@ portNumber(Sockaddr address)
 }
 
 std::string
-describeAddress(const Sockaddr& address)
+describeAddress(const HttpServer::Sockaddr& address)
 {
   std::ostringstream oss;
   switch (address.sa.sa_family) {
@@ -167,10 +160,10 @@ describeAddress(const Sockaddr& address)
   return oss.str();
 }
 
-std::vector<Sockaddr>
+std::vector<HttpServer::Sockaddr>
 interfaceAddresses(const char* if_name)
 {
-  std::vector<Sockaddr> r;
+  std::vector<HttpServer::Sockaddr> r;
   struct ifaddrs* pAddr;
   if (::getifaddrs(&pAddr)) {
     std::cerr << ::strerror(errno) << std::endl;
@@ -178,7 +171,7 @@ interfaceAddresses(const char* if_name)
   }
   for (const ifaddrs* p = pAddr; p != nullptr; p = p->ifa_next) {
     if (p->ifa_addr && (!if_name || !::strcmp(if_name, p->ifa_name))) {
-      Sockaddr addr;
+      HttpServer::Sockaddr addr;
       switch (p->ifa_addr->sa_family) {
         case AF_INET:
           ::memcpy(&addr.sa, p->ifa_addr, sizeof(sockaddr_in));
@@ -206,6 +199,7 @@ struct HttpServer::Private
   uint16_t mPort;
   std::string mInterfaceName, mUnixSocket;
   int mInterfaceIndex, mBacklog;
+  AccessFile mAccessFile;
 
   std::atomic<bool> mRunning;
   std::atomic<int> mPipeWriteFd;
@@ -220,7 +214,7 @@ struct HttpServer::Private
     , mRunning(false)
     , mPipeWriteFd(-1)
   {}
-  
+
   int determineAddresses(std::vector<Sockaddr>& addresses)
   {
     int err = 0;
@@ -380,6 +374,12 @@ struct HttpServer::Private
 
   void handleRequest(int fd, Sockaddr address)
   {
+    if (!mAccessFile.isAllowed(address)) {
+      std::clog << "Blocked access from " + ipString(address) << std::endl;
+      ::close(fd);
+      return;
+    }
+
     fdbuf buf(fd);
     std::istream is(&buf);
     std::ostream os(&buf);
@@ -558,6 +558,13 @@ int
 HttpServer::backlog() const
 {
   return p->mBacklog;
+}
+
+HttpServer&
+HttpServer::applyAccessFile(const AccessFile& file)
+{
+  p->mAccessFile = file;
+  return *this;
 }
 
 bool

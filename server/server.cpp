@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scanner.h"
 #include "basic/uuid.h"
 #include "zeroconf/hotplugnotifier.h"
+#include "web/accessfile.h"
 
 extern const char* GIT_COMMIT_HASH;
 extern const char* GIT_BRANCH;
@@ -92,7 +93,7 @@ Server::Server(int argc, char** argv)
 {
   std::string port, interface, unixsocket, accesslog, hotplug, announce,
      webinterface, resetoption, discloseversion, localonly, optionsfile,
-     ignorelist, randompaths, compatiblepath, debug, announcesecure;
+     ignorelist, accessfile, randompaths, compatiblepath, debug, announcesecure;
   struct
   {
     const std::string name, def, info;
@@ -130,6 +131,14 @@ Server::Server(int argc, char** argv)
 #endif
       "location of device ignore list",
       ignorelist },
+    { "access-file",
+#ifdef __FreeBSD__
+      "/usr/local/etc/airsane/access.conf",
+#else
+      "/etc/airsane/access.conf",
+#endif
+      "location of access file",
+      accessfile },
     { "debug", "false", "log debug information to stderr", debug },
   };
   for (auto& opt : options)
@@ -171,6 +180,7 @@ Server::Server(int argc, char** argv)
   mDiscloseversion = (discloseversion == "true");
   mLocalonly = (localonly == "true");
   mOptionsfile = optionsfile;
+  mAccessfile = accessfile;
   mIgnorelist = ignorelist;
 
   uint16_t port_ = 0;
@@ -280,13 +290,21 @@ Server::run()
             mScanners.push_back(ScannerEntry({ pScanner, pService }));
       }
     }
+    ok = true;
+    AccessFile accessfile(mAccessfile);
+    if (!accessfile.errors().empty()) {
+      std::clog << "errors in accessfile:\n" << accessfile.errors() << " terminating" << std::endl;
+      ok = false;
+    }
+    HttpServer::applyAccessFile(accessfile);
+
     ::clock_gettime(CLOCK_MONOTONIC, &t);
     float t1 = 1.0 * t.tv_sec + 1e-9 * t.tv_nsec;
     std::clog << "end time is " << t1 << std::endl;
     mStartupTimeSeconds = t1 - t0;
     std::clog << "startup took " << mStartupTimeSeconds << " secconds" << std::endl;
 
-    ok = HttpServer::run();
+    ok = ok && HttpServer::run();
     mScanners.clear();
     if (ok && terminationStatus() == SIGHUP) {
       std::clog << "received SIGHUP, reloading" << std::endl;
@@ -500,10 +518,15 @@ Server::handleScannerRequest(ScannerList::value_type entry, const std::string& p
   }
   res = res.substr(1);
   size_t pos = res.find('/');
-  if (pos > res.length() && request.method() == HttpServer::HTTP_DELETE && entry.pScanner->cancelJob(res)) {
-    response.setStatus(HttpServer::HTTP_OK);
-    response.send();
-    return;
+  if (pos > res.length()) {
+    if (request.method() == HttpServer::HTTP_DELETE && entry.pScanner->cancelJob(res)) {
+      response.setStatus(HttpServer::HTTP_OK);
+      response.send();
+      return;
+    } else {
+      HttpServer::onRequest(request, response);
+      return;
+    }
   }
   if (res.substr(pos) == "/NextDocument" && request.method() == HttpServer::HTTP_GET) {
     auto job = entry.pScanner->getJob(res.substr(0, pos));

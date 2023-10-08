@@ -72,6 +72,7 @@ add_executable(${PROJECT_NAME}
     web/httpserver.cpp
     web/webpage.cpp
     web/errorpage.cpp
+    web/accessfile.cpp
     imageformats/imageencoder.cpp
     imageformats/jpegencoder.cpp
     imageformats/pdfencoder.cpp
@@ -112,6 +113,11 @@ install(FILES launchd/org.simulpiscator.airsaned.plist
 )
 
 install(CODE "
+    if(NOT EXISTS /usr/local/etc/airsane/access.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/access.conf DESTINATION /usr/local/etc/airsane)
+    endif()
+")
+install(CODE "
     if(NOT EXISTS /usr/local/etc/airsane/ignore.conf)
         file(INSTALL ${CMAKE_SOURCE_DIR}/etc/ignore.conf DESTINATION /usr/local/etc/airsane)
     endif()
@@ -140,6 +146,11 @@ install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION sbin
 )
 
+install(CODE "
+    if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/etc/airsane/access.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/access.conf DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/airsane)
+    endif()
+")
 install(CODE "
     if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/etc/airsane/ignore.conf)
         file(INSTALL ${CMAKE_SOURCE_DIR}/etc/ignore.conf DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/airsane)
@@ -175,6 +186,11 @@ install(FILES systemd/airsaned.default
     RENAME airsane
 )
 
+install(CODE "
+    if(NOT EXISTS /etc/airsane/access.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/access.conf DESTINATION /etc/airsane)
+    endif()
+")
 install(CODE "
     if(NOT EXISTS /etc/airsane/ignore.conf)
         file(INSTALL ${CMAKE_SOURCE_DIR}/etc/ignore.conf DESTINATION /etc/airsane)

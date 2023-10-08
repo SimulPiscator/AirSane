@@ -11,5 +11,6 @@ DISCLOSE_VERSION=true
 LOCAL_SCANNERS_ONLY=true
 RANDOM_PATHS=false
 OPTIONS_FILE=/etc/airsane/options.conf
+ACCESS_FILE=
 IGNORE_LIST=/etc/airsane/ignore.conf
 

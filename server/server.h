@@ -61,7 +61,7 @@ private:
   std::filebuf mLogfile;
   bool mAnnounce, mWebinterface, mResetoption, mDiscloseversion,
     mLocalonly, mHotplug, mRandompaths, mCompatiblepath, mAnnouncesecure;
-  std::string mOptionsfile, mIgnorelist;
+  std::string mOptionsfile, mAccessfile, mIgnorelist;
   float mStartupTimeSeconds;
   bool mDoRun;
 };

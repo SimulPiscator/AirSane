@@ -24,6 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <cstdint>
 
+#include <arpa/inet.h>
+#include <sys/un.h>
+
 class HttpServer
 {
 public:
@@ -72,6 +75,16 @@ public:
   const std::string& unixSocket() const;
   HttpServer& setBacklog(int);
   int backlog() const;
+
+  HttpServer& applyAccessFile(const class AccessFile&);
+
+  typedef union
+  {
+    sockaddr sa;
+    sockaddr_in in;
+    sockaddr_in6 in6;
+    sockaddr_un un;
+  } Sockaddr;
 
   bool run();
   bool terminate(int status);

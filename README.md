@@ -255,6 +255,16 @@ matches.
 The original purpose of the ignore list is to avoid loops with backends that auto-detect eSCL devices, but it may be used to suppress
 any device from AirSane's list of published devices.
 
+## Access File
+
+If a file exists at the location for the access file (by default, `/etc/airsane/access.conf`), the file's content 
+will be used to implement access restriction.
+
+Each non-comment line in the access file defines a rule to allow or deny access from a range of IP addresses.
+A rule either begins with "allow" to allow access, or "deny" to deny access. Separated with white space follows
+a single IP address, or a range of IP addresses in the form "192.168.0.0/16" where the number after the slash character
+defines the number of nonzero bits in the mask used to compare addresses.
+
 ## Troubleshoot
 
 * Compiling fails with error: "‘png_const_bytep’ does not name a type".
@@ -307,3 +317,9 @@ Most likely, the avahi-daemon package is not installed, or avahi-daemon is not r
   # Change MaxConnections=1 to MaxConnections=2 and save
   sudo systemctl restart scanbm.socket
 ```
+
+* You are unable to connect to the AirSane web page, or to scan from a remote computer.
+AirSane comes with a pre-configured access file that restricts access to local addresses. To disable this mechanism,
+you may temporarily rename the access file at `/etc/airsane/access.conf` (or `/usr/local/etc/airsane/access.conf` on 
+FreeBSD), and restart the daemon. If access is possible then, consider to add the remote machine's IP address
+to an "allow" clause in the access file, and enable it again.
