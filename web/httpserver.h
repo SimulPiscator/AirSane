@@ -55,6 +55,16 @@ public:
 
   static std::string toRelativeUrl(const std::string&);
 
+  typedef union
+  {
+    sockaddr sa;
+    sockaddr_in in;
+    sockaddr_in6 in6;
+    sockaddr_un un;
+  } Sockaddr;
+  static std::string ipString(const Sockaddr&);
+  static uint16_t portNumber(const Sockaddr&);
+
   HttpServer();
   virtual ~HttpServer();
   HttpServer(const HttpServer&) = delete;
@@ -77,14 +87,6 @@ public:
   int backlog() const;
 
   HttpServer& applyAccessFile(const class AccessFile&);
-
-  typedef union
-  {
-    sockaddr sa;
-    sockaddr_in in;
-    sockaddr_in6 in6;
-    sockaddr_un un;
-  } Sockaddr;
 
   bool run();
   bool terminate(int status);

@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstdint>
 #include <regex>
 #include <sstream>
+#include <iomanip>
 #include <unistd.h>
 
 #include "mainpage.h"
@@ -227,10 +228,17 @@ Server::run()
 
   bool ok = false, done = false;
   do {
+    AccessFile accessfile(mAccessfile);
+    if (!accessfile.errors().empty()) {
+      std::clog << "errors in accessfile:\n" << accessfile.errors() << " terminating" << std::endl;
+      return false;
+    }
+    HttpServer::applyAccessFile(accessfile);
+
     struct timespec t = { 0 };
     ::clock_gettime(CLOCK_MONOTONIC, &t);
     float t0 = 1.0 * t.tv_sec + 1e-9 * t.tv_nsec;
-    std::clog << "start time is " << t0 << std::endl;
+    std::clog << "start time is " << std::fixed << std::setprecision(2) << t0 << std::endl;
 
     OptionsFile optionsfile(mOptionsfile);
     std::clog << "enumerating " << (mLocalonly ? "local " : " ") << "devices..."
@@ -290,13 +298,6 @@ Server::run()
             mScanners.push_back(ScannerEntry({ pScanner, pService }));
       }
     }
-    ok = true;
-    AccessFile accessfile(mAccessfile);
-    if (!accessfile.errors().empty()) {
-      std::clog << "errors in accessfile:\n" << accessfile.errors() << " terminating" << std::endl;
-      ok = false;
-    }
-    HttpServer::applyAccessFile(accessfile);
 
     ::clock_gettime(CLOCK_MONOTONIC, &t);
     float t1 = 1.0 * t.tv_sec + 1e-9 * t.tv_nsec;
@@ -304,7 +305,7 @@ Server::run()
     mStartupTimeSeconds = t1 - t0;
     std::clog << "startup took " << mStartupTimeSeconds << " secconds" << std::endl;
 
-    ok = ok && HttpServer::run();
+    ok = HttpServer::run();
     mScanners.clear();
     if (ok && terminationStatus() == SIGHUP) {
       std::clog << "received SIGHUP, reloading" << std::endl;

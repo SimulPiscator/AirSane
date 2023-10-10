@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "accessfile.h"
+
+#include <ifaddrs.h>
 #include <fstream>
 #include <sstream>
 #include <cstring>
@@ -86,6 +88,7 @@ AccessFile::AccessFile(const std::string& path)
   std::ifstream file(path);
   if (!file.is_open())
     return;
+  std::clog << "reading access rules from file " << path << std::endl;
   std::string line;
   while (std::getline(file, line)) {
     while (!line.empty() && std::iswspace(line.front()))
@@ -99,7 +102,7 @@ AccessFile::AccessFile(const std::string& path)
     std::istringstream iss(line);
     Entry entry;
     if (!entry.parse(iss))
-      mErrors += "Illegal entry: " + line + "\n";
+      mErrors += "illegal entry in access file: " + line + "\n";
     else
       mEntries.push_back(entry);
   }
@@ -112,8 +115,10 @@ const std::string& AccessFile::errors() const
 
 bool AccessFile::isAllowed(const HttpServer::Sockaddr& addr) const
 {
-  if (mEntries.empty())
+  if (mEntries.empty()) {
+    std::clog << "allowing " << HttpServer::ipString(addr) << ": access file is empty" << std::endl;
     return true;
+  }
   for (const auto& entry : mEntries) {
     int result = entry.match(addr);
     if (result == Entry::Allow)
@@ -121,49 +126,112 @@ bool AccessFile::isAllowed(const HttpServer::Sockaddr& addr) const
     if (result == Entry::Deny)
       return false;
   }
+  std::clog << "denying " << HttpServer::ipString(addr) << ": no rules matched" << std::endl;
   return false;
 }
 
 std::istream& AccessFile::Entry::parse(std::istream& is)
 {
+  mNetworks.clear();
+
   std::string kind, address;
   is >> kind;
-  if (!::strcasecmp(kind.c_str(), "allow"))
+  if (!::strcasecmp(kind.c_str(), "allow")) {
     mKind = Allow;
-  else if (!::strcasecmp(kind.c_str(), "deny"))
+  }
+  else if (!::strcasecmp(kind.c_str(), "deny")) {
     mKind = Deny;
-  else
-    is.setstate(std::ios::failbit);
-  std::getline(is >> std::ws, address);
-  int bits = -1;
-  size_t pos = address.find_last_of("/");
-  if (pos != std::string::npos) {
-    bits = ::atoi(address.substr(pos + 1).c_str());
-    address = address.substr(0, pos);
-  }
-  if (::inet_pton(AF_INET, address.c_str(), &mAddress.in.sin_addr)) {
-    if (bits == -1)
-      bits = 32;
-    mAddress.sa.sa_family = AF_INET;
-    mMask = mAddress;
-    SetMaskBits(mMask, bits);
-  }
-  else if (::inet_pton(AF_INET6, address.c_str(), &mAddress.in6.sin6_addr)) {
-    if (bits == -1)
-      bits = 128;
-    mAddress.sa.sa_family = AF_INET6;
-    mMask = mAddress;
-    SetMaskBits(mMask, bits);
   }
   else {
+    std::cerr << "expected \"allow\" or \"deny\", got \"" << kind << "\"" << std::endl;
     is.setstate(std::ios::failbit);
+    return is;
+  }
+
+  std::getline(is >> std::ws, mRule);
+  const std::string ifkeywords = "local on ";
+  if (mRule.find(ifkeywords) == 0) {
+    std::string ifname = mRule.substr(ifkeywords.length());
+    if (ifname.empty()) {
+      std::cerr << "expected an interface name, or *" << std::endl;
+      is.setstate(std::ios::failbit);
+      return is;
+    }
+    bool matchAll = (ifname == "*");
+    struct ifaddrs* pAddr;
+    if (::getifaddrs(&pAddr)) {
+      std::cerr << ::strerror(errno) << std::endl;
+      is.setstate(std::ios::failbit);
+      return is;
+    }
+    for (const ifaddrs* p = pAddr; p != nullptr; p = p->ifa_next) {
+      if (p->ifa_addr && (matchAll || ifname == p->ifa_name)) {
+        Network network;
+        switch (p->ifa_addr->sa_family) {
+          case AF_INET:
+            ::memcpy(&network.address.sa, p->ifa_addr, sizeof(sockaddr_in));
+            ::memcpy(&network.mask.sa, p->ifa_netmask, sizeof(sockaddr_in));
+            break;
+          case AF_INET6:
+            ::memcpy(&network.address.sa, p->ifa_addr, sizeof(sockaddr_in6));
+            ::memcpy(&network.mask.sa, p->ifa_netmask, sizeof(sockaddr_in6));
+            break;
+        }
+        mNetworks.push_back(network);
+      }
+    }
+    ::freeifaddrs(pAddr);
+    if (mNetworks.empty()) {
+      std::cerr << "\"" << ifname << "\" does not match any network interfaces" << std::endl;
+      is.setstate(std::ios::failbit);
+      return is;
+    }
+  }
+  else {
+    Network network;
+    int bits = -1;
+    size_t pos = mRule.find_last_of("/");
+    std::string address;
+    if (pos != std::string::npos) {
+      bits = ::atoi(mRule.substr(pos + 1).c_str());
+      address = mRule.substr(0, pos);
+    }
+    else {
+      address = mRule;
+    }
+    if (::inet_pton(AF_INET, address.c_str(), &network.address.in.sin_addr)) {
+      if (bits == -1)
+        bits = 32;
+      network.address.sa.sa_family = AF_INET;
+      network.mask = network.address;
+      SetMaskBits(network.mask, bits);
+    }
+    else if (::inet_pton(AF_INET6, address.c_str(), &network.address.in6.sin6_addr)) {
+      if (bits == -1)
+        bits = 128;
+      network.address.sa.sa_family = AF_INET6;
+      network.mask = network.address;
+      SetMaskBits(network.mask, bits);
+    }
+    else {
+      std::cerr << "not an IP address: " << address << std::endl;
+      is.setstate(std::ios::failbit);
+      return is;
+    }
+    mNetworks.push_back(network);
   }
   return is;
 }
 
 int AccessFile::Entry::match(const HttpServer::Sockaddr &addr) const
 {
-  if (!MatchAddresses(addr, mAddress, mMask))
-    return NoMatch;
-  return mKind;
+  for (const auto& network : mNetworks) {
+    if (MatchAddresses(addr, network.address, network.mask)) {
+      std::clog << ((mKind == Allow) ? "allowing " : "denying ")
+                << HttpServer::ipString(addr) << ", matching rule: "
+                << mRule << std::endl;
+      return mKind;
+    }
+  }
+  return NoMatch;
 }

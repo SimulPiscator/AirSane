@@ -45,7 +45,12 @@ public:
     std::istream& parse(std::istream&);
    private:
     int mKind;
-    HttpServer::Sockaddr mAddress, mMask;
+    std::string mRule;
+    struct Network
+    {
+      HttpServer::Sockaddr address, mask;
+    };
+    std::vector<Network> mNetworks;
   };
   std::vector<Entry> mEntries;
   std::string mErrors;

@@ -113,45 +113,13 @@ urldecode(const std::string& s)
 }
 
 std::string
-ipString(const HttpServer::Sockaddr& address)
-{
-  char buf[128] = "n/a";
-  switch (address.sa.sa_family) {
-    case AF_INET:
-      ::inet_ntop(AF_INET, &address.in.sin_addr, buf, sizeof(buf));
-      break;
-    case AF_INET6:
-      ::strcpy(buf, "[");
-      ::inet_ntop(AF_INET6, &address.in6.sin6_addr, buf + 1, sizeof(buf) - 2);
-      ::strcat(buf, "]");
-      break;
-    case AF_UNIX:
-      ::strcpy(buf, "unix");
-      break;
-  }
-  return buf;
-}
-
-uint16_t
-portNumber(const HttpServer::Sockaddr& address)
-{
-  switch (address.sa.sa_family) {
-    case AF_INET:
-      return ntohs(address.in.sin_port);
-    case AF_INET6:
-      return ntohs(address.in6.sin6_port);
-  }
-  return 0;
-}
-
-std::string
 describeAddress(const HttpServer::Sockaddr& address)
 {
   std::ostringstream oss;
   switch (address.sa.sa_family) {
     case AF_INET:
     case AF_INET6:
-      oss << ipString(address) << ":" << portNumber(address);
+      oss << HttpServer::ipString(address) << ":" << HttpServer::portNumber(address);
       break;
     case AF_UNIX:
       oss << address.un.sun_path;
@@ -190,6 +158,38 @@ interfaceAddresses(const char* if_name)
 
 } // namespace
 
+std::string
+HttpServer::ipString(const HttpServer::Sockaddr& address)
+{
+  char buf[128] = "n/a";
+  switch (address.sa.sa_family) {
+    case AF_INET:
+      ::inet_ntop(AF_INET, &address.in.sin_addr, buf, sizeof(buf));
+      break;
+    case AF_INET6:
+      ::strncpy(buf, "[", sizeof(buf));
+      ::inet_ntop(AF_INET6, &address.in6.sin6_addr, buf + 1, sizeof(buf) - 2);
+      ::strncat(buf, "]", sizeof(buf) - strlen(buf) - 1);
+      break;
+    case AF_UNIX:
+      ::strncpy(buf, "unix", sizeof(buf));
+      break;
+  }
+  return buf;
+}
+
+uint16_t
+HttpServer::portNumber(const HttpServer::Sockaddr& address)
+{
+  switch (address.sa.sa_family) {
+    case AF_INET:
+      return ntohs(address.in.sin_port);
+    case AF_INET6:
+      return ntohs(address.in6.sin6_port);
+  }
+  return 0;
+}
+
 struct HttpServer::Private
 {
 
@@ -224,7 +224,7 @@ struct HttpServer::Private
       if (mUnixSocket.length() >= sizeof(addr.un.sun_path))
         err = ENAMETOOLONG;
       else {
-        ::strcpy(addr.un.sun_path, mUnixSocket.c_str());
+        ::strncpy(addr.un.sun_path, mUnixSocket.c_str(), sizeof(addr.un.sun_path));
         addresses.push_back(addr);
       }
     }
@@ -375,7 +375,6 @@ struct HttpServer::Private
   void handleRequest(int fd, Sockaddr address)
   {
     if (!mAccessFile.isAllowed(address)) {
-      std::clog << "Blocked access from " + ipString(address) << std::endl;
       ::close(fd);
       return;
     }
