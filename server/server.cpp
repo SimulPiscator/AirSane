@@ -228,7 +228,7 @@ Server::run()
 
   bool ok = false, done = false;
   do {
-    if (UnixSocket().empty()) {
+    if (unixSocket().empty()) {
       AccessFile accessfile(mAccessfile);
       if (!accessfile.errors().empty()) {
         std::clog << "errors in accessfile:\n" << accessfile.errors() << " terminating" << std::endl;
