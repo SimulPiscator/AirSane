@@ -228,12 +228,14 @@ Server::run()
 
   bool ok = false, done = false;
   do {
-    AccessFile accessfile(mAccessfile);
-    if (!accessfile.errors().empty()) {
-      std::clog << "errors in accessfile:\n" << accessfile.errors() << " terminating" << std::endl;
-      return false;
+    if (UnixSocket().empty()) {
+      AccessFile accessfile(mAccessfile);
+      if (!accessfile.errors().empty()) {
+        std::clog << "errors in accessfile:\n" << accessfile.errors() << " terminating" << std::endl;
+        return false;
+      }
+      HttpServer::applyAccessFile(accessfile);
     }
-    HttpServer::applyAccessFile(accessfile);
 
     struct timespec t = { 0 };
     ::clock_gettime(CLOCK_MONOTONIC, &t);
