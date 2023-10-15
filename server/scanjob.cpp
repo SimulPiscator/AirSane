@@ -89,7 +89,8 @@ struct ScanJob::Private
   bool atomicTransition(State from, State to);
   void updateStatus(SANE_Status);
 
-  void openSession();
+  SANE_Status openSession();
+  void startSession();
   void closeSession();
 
   bool beginTransfer();
@@ -264,9 +265,9 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
   else if (inputSource == "Feeder") {
     mScanSource = mpScanner->adfSourceName();
     mImagesToTransfer = std::numeric_limits<int>::max();
-    double batchIfPossible = settings.getNumber("BatchIfPossible");
-    if (batchIfPossible == 1.0 && mDocumentFormat == HttpServer::MIME_TYPE_PDF)
-      mKind = adfBatch;
+    double concatIfPossible = settings.getNumber("ConcatIfPossible");
+    if (concatIfPossible == 1.0 && mDocumentFormat == HttpServer::MIME_TYPE_PDF)
+      mKind = adfConcat;
     else
       mKind = adfSingle;
   }
@@ -293,8 +294,8 @@ ScanJob::Private::kindString() const
   switch (mKind) {
     case single:
       return "single";
-    case adfBatch:
-      return "ADF batch";
+    case adfConcat:
+      return "ADF concat";
     case adfSingle:
       return "ADF single";
   }
@@ -461,18 +462,19 @@ ScanJob::Private::updateStatus(SANE_Status status)
             mState = pending;
             mStateReason = PWG_NONE;
           }
+          closeSession();
           break;
       case adfSingle:
           mState = pending;
           mStateReason = PWG_NONE;
           break;
-      case adfBatch:
+      case adfConcat:
           updateStatus(mpSession->start().status());
           break;
       }
       break;
     case SANE_STATUS_NO_DOCS:
-      if (mImagesCompleted > 0 && (mKind == adfSingle || mKind == adfBatch)) {
+      if (mImagesCompleted > 0 && (mKind == adfSingle || mKind == adfConcat)) {
         mState = completed;
         mStateReason = PWG_JOB_COMPLETED_SUCCESSFULLY;
       } else {
@@ -480,6 +482,7 @@ ScanJob::Private::updateStatus(SANE_Status status)
         mStateReason = PWG_RESOURCES_ARE_NOT_READY;
       }
       mAdfStatus = status;
+      closeSession();
       break;
     default:
       mState = aborted;
@@ -530,14 +533,18 @@ ScanJob::Private::beginTransfer()
 {
   if(!atomicTransition(pending, processing))
     return false;
-  openSession();
-  bool ok = isProcessing();
+  bool ok = true;
+  if (!mpSession)
+    ok = (openSession() == SANE_STATUS_GOOD);
+  if (ok)
+    startSession();
+  ok = isProcessing();
   if (!ok)
     closeSession();
   return ok;
 }
 
-void
+SANE_Status
 ScanJob::Private::openSession()
 {
   SANE_Status status = SANE_STATUS_GOOD;
@@ -583,10 +590,14 @@ ScanJob::Private::openSession()
     if (!ok)
       status = SANE_STATUS_INVAL;
   }
-  if (status == SANE_STATUS_GOOD) {
-    status = mpSession->start().status();
-    updateStatus(status);
-  }
+  return status;
+}
+
+void
+ScanJob::Private::startSession()
+{
+  SANE_Status status = mpSession->start().status();
+  updateStatus(status);
 }
 
 void
@@ -694,7 +705,6 @@ ScanJob::Private::finishTransfer(std::ostream& os)
   }
   if (pEncoder)
       pEncoder->endDocument();
-  closeSession();
 }
 
 ScanJob&

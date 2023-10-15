@@ -49,7 +49,7 @@ buildScanJobTicket(const Dictionary& dict)
   d.eraseKey("PaperSize");
   d["XOffset"] = "0";
   d["YOffset"] = "0";
-  d["BatchIfPossible"] = "1";
+  d["ConcatIfPossible"] = "1";
   std::string ticket = "<x:ContentRegionUnits>escl:ThreeHundredthsOfInches</"
                        "x:ContentRegionUnits>\n";
   for (auto& s : d) // just enough xml syntax for ScanJob to recognize

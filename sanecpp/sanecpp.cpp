@@ -557,6 +557,12 @@ session::start()
   log << "sane_start(" << m_device.get() << ") with options:" << m_options
       << std::endl;
   m_status = ::sane_start(m_device.get());
+  switch (m_status) {
+    case SANE_STATUS_GOOD:
+      break;
+    default:
+      log << "sane_start(" << m_device.get() << "): " << m_status << std::endl;
+  }
   if (m_status == SANE_STATUS_GOOD)
     m_status = ::sane_get_parameters(m_device.get(), &m_parameters);
   return *this;

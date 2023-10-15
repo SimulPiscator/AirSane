@@ -39,7 +39,7 @@ public:
                                    bool autoselectFormat,
                                    const OptionsFile::Options&);
 
-  enum { single, adfSingle, adfBatch };
+  enum { single, adfSingle, adfConcat };
   int kind() const;
 
   int ageSeconds() const;
