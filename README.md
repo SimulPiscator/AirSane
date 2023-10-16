@@ -265,7 +265,7 @@ A rule either begins with "allow" to allow access, or "deny" to deny access. Sep
 a single IP address, or a range of IP addresses in the form "192.168.0.0/16" where the number after the slash character
 defines the number of nonzero bits in the mask used to compare addresses.
 Alternatively, a rule may specify a network interface from which local addresses and netmasks are taken: "local on eth0"
-or "local on *" to use all existing network interfaces.
+to use address and netmask from interface `eth0`, or "local on *" to use all existing network interfaces.
 
 ## Troubleshoot
 
