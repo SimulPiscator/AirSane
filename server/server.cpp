@@ -113,7 +113,7 @@ Server::Server(int argc, char** argv)
     { "random-paths", "false", "prepend a random uuid to scanner paths", randompaths },
     { "compatible-path", "false", "use /eSCL as path for first scanner", compatiblepath },
     { "local-scanners-only",
-      "true",
+      "false",
       "ignore SANE network scanners",
       localonly },
     { "options-file",
