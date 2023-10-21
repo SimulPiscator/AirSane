@@ -10,6 +10,7 @@
 		<string>--listen-port=8090</string>
 		<string>--options-file=/usr/local/etc/airsane/options.conf</string>
 		<string>--ignore-list=/usr/local/etc/airsane/ignore.conf</string>
+                <string>--access-file=/usr/local/etc/airsane/access.conf</string>
 		<string>--disclose-version=true</string>
 		<string>--reset-option=true</string>
 	</array>

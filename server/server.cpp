@@ -111,7 +111,7 @@ Server::Server(int argc, char** argv)
     { "reset-option", "false", "allow server reset from web interface", resetoption },
     { "disclose-version", "true", "disclose version information in web interface", discloseversion },
     { "random-paths", "false", "prepend a random uuid to scanner paths", randompaths },
-    { "compatible-path", "false", "use /eSCL as path for first scanner", compatiblepath },
+    { "compatible-path", "true", "use /eSCL as path for first scanner", compatiblepath },
     { "local-scanners-only",
       "false",
       "ignore SANE network scanners",
