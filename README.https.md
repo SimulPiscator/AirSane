@@ -42,7 +42,7 @@ exit
 ### Restart nginx
 ```sudo service nginx restart```
 
-Secure communication have been tested and confirmed to work
+Secure communication has been tested and confirmed to work
 using a Firefox web browser, macOS Image Capture, and Mopria Scan for Android as clients.
 Authentication only works using a web browser, or Mopria Scan for Android.
 
