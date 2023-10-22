@@ -192,6 +192,10 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
 {
   const char* err = nullptr;
 
+  mIntent = settings.getString("Intent");
+  if (mIntent.empty())
+    err = PWG_INVALID_SCAN_TICKET;
+
   double res_dpi = settings.getNumber("XResolution");
   if (res_dpi != settings.getNumber("YResolution"))
     err = PWG_INVALID_SCAN_TICKET;
@@ -206,22 +210,24 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
     left = 0;
   if (std::isnan(top))
     top = 0;
-
-  if (std::isnan(width) || std::isnan(height) || std::isnan(res_dpi))
-    err = PWG_INVALID_SCAN_TICKET;
+  if (std::isnan(res_dpi))
+    res_dpi = 300;
 
   double px_per_unit = 1.0;
   std::string units = settings.getString("ContentRegionUnits");
   if (units == "escl:ThreeHundredthsOfInches")
     px_per_unit = res_dpi / 300.0;
-  else
-    err = PWG_INVALID_SCAN_TICKET;
 
   mLeft_px = left * px_per_unit;
   mTop_px = top * px_per_unit;
   mWidth_px = width * px_per_unit;
   mHeight_px = height * px_per_unit;
   mRes_dpi = res_dpi;
+
+  if (std::isnan(mWidth_px))
+    mWidth_px = mpScanner->maxWidthPx300dpi();
+  if (std::isnan(mHeight_px))
+    mHeight_px = mpScanner->maxHeightPx300dpi();
 
   mBitDepth = 0;
 
@@ -241,22 +247,37 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
       mBitDepth = esclBpp;
     }
   }
-  if (mColorMode.empty())
-    err = PWG_INVALID_SCAN_TICKET;
-
-  mIntent = settings.getString("Intent");
+  if (mColorMode.empty()) {
+    if (mIntent == "Photo")
+      mColorMode = mpScanner->colorScanModeName();
+    else
+      mColorMode = mpScanner->grayScanModeName();
+    mBitDepth = 8;
+  }
 
   mDocumentFormat = settings.getString("DocumentFormat");
   if (mDocumentFormat.empty())
       mDocumentFormat = settings.getString("DocumentFormatExt");
-  std::clog << "document format requested: " << mDocumentFormat << "\n";
-  if (autoselectFormat)
+  if (!mDocumentFormat.empty())
+     std::clog << "document format requested: " << mDocumentFormat << "\n";
+  else if (mIntent == "Document" || mIntent == "Text")
+     mDocumentFormat = HttpServer::MIME_TYPE_PDF;
+  else if (mIntent == "Photo")
+     mDocumentFormat = HttpServer::MIME_TYPE_JPEG;
+
+  if (mDocumentFormat.empty() || autoselectFormat)
     mDocumentFormat = HttpServer::MIME_TYPE_PNG;
   std::clog << "document format used: " << mDocumentFormat << "\n";
 
   mImagesCompleted = 0;
 
   std::string inputSource = settings.getString("InputSource");
+  if (inputSource.empty()) {
+    if (mpScanner->hasPlaten())
+      inputSource = "Platen";
+    else
+      inputSource = "Feeder";
+  }
   if (inputSource == "Platen") {
     mScanSource = mpScanner->platenSourceName();
     mKind = single;
