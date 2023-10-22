@@ -914,12 +914,12 @@ Scanner::cancelJob(const std::string& uuid)
 }
 
 int
-Scanner::purgeJobs(int maxAgeSeconds)
+Scanner::purgeJobs(int maxIdleSeconds)
 {
   int n = 0;
   std::lock_guard<std::mutex> lock(p->mJobsMutex);
   for (auto i = p->mJobs.begin(); i != p->mJobs.end();) {
-    if (i->second->ageSeconds() > maxAgeSeconds) {
+    if (i->second->idleSeconds() > maxIdleSeconds) {
       i = p->mJobs.erase(i);
       ++n;
     } else {

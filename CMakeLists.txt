@@ -63,6 +63,7 @@ add_executable(${PROJECT_NAME}
     server/server.cpp
     server/mainpage.cpp
     server/scanner.cpp
+    server/purgethread.cpp
     server/scanjob.cpp
     server/scannerpage.cpp
     sanecpp/sanecpp.cpp

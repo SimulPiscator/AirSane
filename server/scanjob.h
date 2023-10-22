@@ -43,7 +43,7 @@ public:
   int kind() const;
 
   int ageSeconds() const;
-  int imagesToTransfer() const;
+  int idleSeconds() const;
   int imagesCompleted() const;
   std::string uri() const;
   const std::string& uuid() const;

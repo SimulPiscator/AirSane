@@ -104,7 +104,7 @@ struct ScanJob::Private
   Scanner* mpScanner;
 
   std::string mUuid;
-  ::time_t mCreated;
+  ::time_t mCreated, mLastActive;
   std::atomic<State> mState;
   std::atomic<const char*> mStateReason;
   SANE_Status mAdfStatus;
@@ -114,7 +114,7 @@ struct ScanJob::Private
   bool mColorScan;
   double mLeft_px, mTop_px, mWidth_px, mHeight_px;
 
-  int mKind, mImagesToTransfer, mImagesCompleted;
+  int mKind, mImagesCompleted;
   std::shared_ptr<sanecpp::session> mpSession;
 
   OptionsFile::Options mDeviceOptions;
@@ -126,6 +126,7 @@ ScanJob::ScanJob(Scanner* scanner, const std::string& uuid)
 {
   p->mpScanner = scanner;
   p->mCreated = ::time(nullptr);
+  p->mLastActive = p->mCreated;
   p->mUuid = uuid;
   p->mState = pending;
   p->mStateReason = PWG_NONE;
@@ -151,9 +152,9 @@ ScanJob::ageSeconds() const
 }
 
 int
-ScanJob::imagesToTransfer() const
+ScanJob::idleSeconds() const
 {
-  return p->mImagesToTransfer;
+  return ::time(nullptr) - p->mLastActive;
 }
 
 int
@@ -253,18 +254,15 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
     mDocumentFormat = HttpServer::MIME_TYPE_PNG;
   std::clog << "document format used: " << mDocumentFormat << "\n";
 
-  mImagesToTransfer = 1;
   mImagesCompleted = 0;
 
   std::string inputSource = settings.getString("InputSource");
   if (inputSource == "Platen") {
     mScanSource = mpScanner->platenSourceName();
-    mImagesToTransfer = 1;
     mKind = single;
   }
   else if (inputSource == "Feeder") {
     mScanSource = mpScanner->adfSourceName();
-    mImagesToTransfer = std::numeric_limits<int>::max();
     double concatIfPossible = settings.getNumber("ConcatIfPossible");
     if (concatIfPossible == 1.0 && mDocumentFormat == HttpServer::MIME_TYPE_PDF)
       mKind = adfConcat;
@@ -508,9 +506,6 @@ ScanJob::writeJobInfoXml(std::ostream& os) const
         "<pwg:JobState>"
      << p->statusString()
      << "</pwg:JobState>\r\n"
-        "<pwg:ImagesToTransfer>"
-     << p->mImagesToTransfer
-     << "</pwg:ImagesToTransfer>\r\n"
         "<pwg:ImagesCompleted>"
      << p->mImagesCompleted
      << "</pwg:ImagesCompleted>\r\n"
@@ -618,6 +613,7 @@ ScanJob::finishTransfer(std::ostream& os)
 void
 ScanJob::Private::finishTransfer(std::ostream& os)
 {
+  mLastActive = ::time(nullptr);
   std::shared_ptr<ImageEncoder> pEncoder;
   if (isProcessing()) {
     if (mDocumentFormat == HttpServer::MIME_TYPE_JPEG) {
@@ -673,6 +669,7 @@ ScanJob::Private::finishTransfer(std::ostream& os)
     }
   }
   while (isProcessing()) {
+    mLastActive = ::time(nullptr);
     std::vector<char> buffer(mpSession->parameters()->bytes_per_line);
     SANE_Status status = SANE_STATUS_GOOD;
     while (status == SANE_STATUS_GOOD && os && isProcessing()) {
@@ -705,6 +702,7 @@ ScanJob::Private::finishTransfer(std::ostream& os)
   }
   if (pEncoder)
       pEncoder->endDocument();
+  mLastActive = ::time(nullptr);
 }
 
 ScanJob&

@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "optionsfile.h"
 #include "scanjob.h"
 #include "scanner.h"
+#include "purgethread.h"
 #include "basic/uuid.h"
 #include "zeroconf/hotplugnotifier.h"
 #include "web/accessfile.h"
@@ -89,12 +90,15 @@ Server::Server(int argc, char** argv)
   , mHotplug(true)
   , mRandompaths(false)
   , mCompatiblepath(false)
+  , mJobtimeout(0)
+  , mPurgeinterval(0)
   , mStartupTimeSeconds(0)
   , mDoRun(true)
 {
   std::string port, interface, unixsocket, accesslog, hotplug, announce,
      webinterface, resetoption, discloseversion, localonly, optionsfile,
-     ignorelist, accessfile, randompaths, compatiblepath, debug, announcesecure;
+     ignorelist, accessfile, randompaths, compatiblepath, debug, announcesecure,
+     jobtimeout, purgeinterval;
   struct
   {
     const std::string name, def, info;
@@ -112,10 +116,9 @@ Server::Server(int argc, char** argv)
     { "disclose-version", "true", "disclose version information in web interface", discloseversion },
     { "random-paths", "false", "prepend a random uuid to scanner paths", randompaths },
     { "compatible-path", "true", "use /eSCL as path for first scanner", compatiblepath },
-    { "local-scanners-only",
-      "false",
-      "ignore SANE network scanners",
-      localonly },
+    { "local-scanners-only", "false", "ignore SANE network scanners", localonly },
+    { "job-timeout", "120", "timeout for idle jobs (seconds)", jobtimeout },
+    { "purge-interval", "5", "how often job lists are purged (seconds)", purgeinterval },
     { "options-file",
 #ifdef __FreeBSD__
       "/usr/local/etc/airsane/options.conf",
@@ -188,6 +191,17 @@ Server::Server(int argc, char** argv)
   if (!(std::istringstream(port) >> port_)) {
     std::cerr << "invalid port number: " << port << std::endl;
     mDoRun = false;
+  }
+  if (!(std::istringstream(jobtimeout) >> mJobtimeout) || mJobtimeout < 1) {
+    std::cerr << "invalid job timeout: " << mJobtimeout << std::endl;
+    mDoRun = false;
+  }
+  if (!(std::istringstream(purgeinterval) >> mPurgeinterval) || mPurgeinterval < 1) {
+    std::cerr << "invalid purge interval: " << mPurgeinterval << std::endl;
+    mDoRun = false;
+  }
+  if (mJobtimeout <= mPurgeinterval) {
+    std::cerr << "job timeout must be greater than purge interval" << std::endl;
   }
   if (help) {
     std::cout << "options, and their defaults, are:\n";
@@ -307,7 +321,10 @@ Server::run()
     mStartupTimeSeconds = t1 - t0;
     std::clog << "startup took " << mStartupTimeSeconds << " secconds" << std::endl;
 
-    ok = HttpServer::run();
+    {
+      PurgeThread purgethread(mScanners, mPurgeinterval, mJobtimeout);
+      ok = HttpServer::run();
+    }
     mScanners.clear();
     if (ok && terminationStatus() == SIGHUP) {
       std::clog << "received SIGHUP, reloading" << std::endl;
