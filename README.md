@@ -69,6 +69,8 @@ as XSane or simple-scan should be able to scan from them.
 eSCL support in Windows has been introduced in Windows 11 first, but is now available
 in Windows 10 as well: <https://support.microsoft.com/en-us/topic/june-28-2022-kb5014666-os-builds-19042-1806-19043-1806-and-19044-1806-preview-4bd911df-f290-4753-bdec-a83bc8709eb6>
 
+Unfortunately, eSCL scanning from Windows seems to be broken as of Nov. 2023.
+
 #### Connecting to an AirSane scanner
 Go to "Settings"->"Bluetooth & devices"->"Printers and Scanners."
 There, click "Add Device".
