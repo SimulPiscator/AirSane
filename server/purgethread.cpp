@@ -58,9 +58,11 @@ void PurgeThread::Private::terminate()
 void PurgeThread::Private::threadFunc()
 {
   while (interruptibleSleep(mSleepDuration)) {
-    std::clog << "purging jobs with timeout of " << mMaxTime << "seconds";
-    for (const auto& entry : *mpScanners)
-      entry.pScanner->purgeJobs(mMaxTime);
+    for (const auto& entry : *mpScanners) {
+      int count = entry.pScanner->purgeJobs(mMaxTime);
+      if (count > 0)
+        std::clog << "purged " << count << " jobs" << std::endl;
+    }
   }
 }
 
