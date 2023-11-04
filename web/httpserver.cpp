@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ctime>
 #include <sstream>
 #include <thread>
+#include <mutex>
 
 #include <arpa/inet.h>
 #ifdef __FreeBSD__
@@ -200,6 +201,7 @@ struct HttpServer::Private
   std::string mInterfaceName, mUnixSocket;
   int mInterfaceIndex, mBacklog;
   AccessFile mAccessFile;
+  std::mutex mAccessFileMutex;
 
   std::atomic<bool> mRunning;
   std::atomic<int> mPipeWriteFd;
@@ -374,10 +376,12 @@ struct HttpServer::Private
 
   void handleRequest(int fd, Sockaddr address)
   {
+    std::unique_lock<std::mutex> lock(mAccessFileMutex);
     if (!mAccessFile.isAllowed(address)) {
       ::close(fd);
       return;
     }
+    lock.unlock();
 
     fdbuf buf(fd);
     std::istream is(&buf);
@@ -562,6 +566,7 @@ HttpServer::backlog() const
 HttpServer&
 HttpServer::applyAccessFile(const AccessFile& file)
 {
+  std::lock_guard<std::mutex> lock(p->mAccessFileMutex);
   p->mAccessFile = file;
   return *this;
 }
