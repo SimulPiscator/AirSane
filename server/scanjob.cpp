@@ -194,10 +194,10 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
 
   mIntent = settings.getString("Intent");
   if (mIntent.empty())
-    err = PWG_INVALID_SCAN_TICKET;
+    mIntent = "Photo";
 
   double res_dpi = settings.getNumber("XResolution");
-  if (res_dpi != settings.getNumber("YResolution"))
+  if (!std::isnan(res_dpi) && res_dpi != settings.getNumber("YResolution"))
     err = PWG_INVALID_SCAN_TICKET;
   res_dpi = ::floor(res_dpi + 0.5);
 
