@@ -26,8 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <poll.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#if __FreeBSD__
+#include <netlink/netlink.h>
+#include <netlink/rtnetlink.h>
+#else
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+#endif
 #include <net/if.h>
 #endif // !__APPLE__
 
