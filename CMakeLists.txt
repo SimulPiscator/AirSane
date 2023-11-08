@@ -80,6 +80,7 @@ add_executable(${PROJECT_NAME}
     imageformats/pngencoder.cpp
     zeroconf/mdnspublisher.cpp
     zeroconf/hotplugnotifier.cpp
+    zeroconf/networkhotplugnotifier.cpp
     ${ZEROCONF_FILES}
 )
 if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)

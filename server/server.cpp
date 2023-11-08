@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "purgethread.h"
 #include "basic/uuid.h"
 #include "zeroconf/hotplugnotifier.h"
+#include "zeroconf/networkhotplugnotifier.h"
 #include "web/accessfile.h"
 
 extern const char* GIT_COMMIT_HASH;
@@ -72,6 +73,26 @@ struct Notifier : HotplugNotifier
   }
 };
 
+struct NetworkNotifier : NetworkHotplugNotifier
+{
+  Server& server;
+  explicit NetworkNotifier(Server& s)
+    : server(s)
+  {}
+  void onHotplugEvent(Event ev) override
+  {
+    switch (ev) {
+      case addressArrived:
+      case addressLeft:
+        std::clog << "network hotplug event, reloading configuration" << std::endl;
+        server.terminate(SIGHUP);
+        break;
+      case other:
+        break;
+    }
+  }
+};
+
 bool
 clientIsAirscan(const HttpServer::Request& req)
 {
@@ -88,6 +109,7 @@ Server::Server(int argc, char** argv)
   , mDiscloseversion(true)
   , mLocalonly(true)
   , mHotplug(true)
+  , mNetworkhotplug(true)
   , mRandompaths(false)
   , mCompatiblepath(false)
   , mJobtimeout(0)
@@ -95,8 +117,8 @@ Server::Server(int argc, char** argv)
   , mStartupTimeSeconds(0)
   , mDoRun(true)
 {
-  std::string port, interface, unixsocket, accesslog, hotplug, announce,
-     webinterface, resetoption, discloseversion, localonly, optionsfile,
+  std::string port, interface, unixsocket, accesslog, hotplug, networkhotplug,
+     announce, webinterface, resetoption, discloseversion, localonly, optionsfile,
      ignorelist, accessfile, randompaths, compatiblepath, debug, announcesecure,
      jobtimeout, purgeinterval;
   struct
@@ -109,6 +131,7 @@ Server::Server(int argc, char** argv)
     { "unix-socket", "", "listen on named unix socket", unixsocket },
     { "access-log", "", "HTTP access log, - for stdout", accesslog },
     { "hotplug", "true", "repeat scanner search on hotplug event", hotplug },
+    { "network-hotplug", "true", "restart server on network change", networkhotplug },
     { "mdns-announce", "true", "announce scanners via mDNS", announce },
     { "announce-secure", "false", "announce secure connection", announcesecure },
     { "web-interface", "true", "enable web interface", webinterface },
@@ -175,6 +198,7 @@ Server::Server(int argc, char** argv)
   sanecpp::log.rdbuf(std::clog.rdbuf());
 
   mHotplug = (hotplug == "true");
+  mNetworkhotplug = (networkhotplug == "true");
   mAnnounce = (announce == "true");
   mAnnouncesecure = (announcesecure == "true");
   mWebinterface = (webinterface == "true");
@@ -239,6 +263,10 @@ Server::run()
   std::shared_ptr<Notifier> pNotifier;
   if (mHotplug)
     pNotifier = std::make_shared<Notifier>(*this);
+
+  std::shared_ptr<NetworkNotifier> pNetworkNotifier;
+  if (mNetworkhotplug)
+    pNetworkNotifier = std::make_shared<NetworkNotifier>(*this);
 
   bool ok = false, done = false;
   do {
