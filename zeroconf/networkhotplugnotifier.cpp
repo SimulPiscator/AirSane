@@ -40,6 +40,7 @@ struct NetworkHotplugNotifier::Private
   Private(NetworkHotplugNotifier* pNotifier)
   : mpNotifier(pNotifier), mPipeWriteFd(-1), mPipeReadFd(-1)
   {
+#if !__APPLE__
     int fds[2];
     if (::pipe(fds) < 0) {
         std::cerr << "Could not create socket pair " << errno << std::endl;
@@ -48,15 +49,18 @@ struct NetworkHotplugNotifier::Private
     mPipeReadFd = fds[0];
     mPipeWriteFd = fds[1];
     mThread = std::thread([this]() { hotplugThread(); });
+#endif // !__APPLE__
   }
 
   ~Private()
   {
+#if !__APPLE__
     char c = '0';
     ::write(mPipeWriteFd, &c, 1);
     mThread.join();
     ::close(mPipeWriteFd);
     ::close(mPipeReadFd);
+#endif // !__APPLE__
   }
 
   void hotplugThread()
