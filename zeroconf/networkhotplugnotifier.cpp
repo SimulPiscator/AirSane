@@ -22,12 +22,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <thread>
 
+#if !__APPLE__
 #include <poll.h>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <net/if.h>
+#endif // !__APPLE__
 
 struct NetworkHotplugNotifier::Private
 {
@@ -59,6 +61,7 @@ struct NetworkHotplugNotifier::Private
 
   void hotplugThread()
   {
+#if !__APPLE__
     int sock = ::socket(PF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (sock < 0) {
       std::cerr << "Could not create netlink socket: " << errno << std::endl;
@@ -103,6 +106,7 @@ struct NetworkHotplugNotifier::Private
         }
       }
     }
+#endif // !__APPLE__
   }
 };
 
