@@ -25,7 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstdint>
 
 #include <arpa/inet.h>
+#include <sys/socket.h>
 #include <sys/un.h>
+#include <netinet/in.h>
 
 class HttpServer
 {

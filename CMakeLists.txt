@@ -24,6 +24,11 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 include_directories(.)
+if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
+  include_directories(/usr/local/include)
+  link_directories(/usr/local/lib)
+endif()
+
 if(APPLE)
   include_directories(
     /opt/local/include 

@@ -28,13 +28,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <netinet/in.h>
 #if __FreeBSD__
 #include <netlink/netlink.h>
-#include <netlink/rtnetlink.h>
+#include <netlink/netlink_route.h>
 #else
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #endif
 #include <net/if.h>
 #endif // !__APPLE__
+
+#include <string.h>
 
 struct NetworkHotplugNotifier::Private
 {
@@ -48,7 +50,8 @@ struct NetworkHotplugNotifier::Private
 #if !__APPLE__
     int fds[2];
     if (::pipe(fds) < 0) {
-        std::cerr << "Could not create socket pair " << errno << std::endl;
+        std::cerr << "Could not create socket pair " 
+                  << ::strerror(errno) << std::endl;
         return;
     }
     mPipeReadFd = fds[0];
@@ -73,7 +76,8 @@ struct NetworkHotplugNotifier::Private
 #if !__APPLE__
     int sock = ::socket(PF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (sock < 0) {
-      std::cerr << "Could not create netlink socket: " << errno << std::endl;
+      std::cerr << "Could not create netlink socket: "
+                << ::strerror(errno) << std::endl;
       return;
     }
 
