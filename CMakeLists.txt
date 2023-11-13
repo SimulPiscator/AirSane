@@ -46,15 +46,19 @@ if(APPLE)
   endif()
   set(ZEROCONF_FILES
     zeroconf/mdnspublisher-dnssd.mm
+    zeroconf/networkhotplugnotifier-macos.mm
   )
   set(ZEROCONF_LIBS
     "-lobjc"
+    "-framework Foundation"
     "-framework IOKit"
     "-framework CFNetwork"
+    "-framework CoreFoundation"
   )
 else()
   set(ZEROCONF_FILES
     zeroconf/mdnspublisher-avahi.cpp
+    zeroconf/networkhotplugnotifier.cpp
   )
   set(ZEROCONF_LIBS
     avahi-client
@@ -85,7 +89,6 @@ add_executable(${PROJECT_NAME}
     imageformats/pngencoder.cpp
     zeroconf/mdnspublisher.cpp
     zeroconf/hotplugnotifier.cpp
-    zeroconf/networkhotplugnotifier.cpp
     ${ZEROCONF_FILES}
 )
 if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)

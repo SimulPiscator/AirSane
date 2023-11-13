@@ -34,6 +34,7 @@ protected:
     other,
     addressArrived,
     addressLeft,
+    addressChange,
   };
   virtual void onHotplugEvent(Event) {}
 
