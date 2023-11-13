@@ -63,8 +63,6 @@ std::ostream log(nullptr);
 
 option option_set::s_nulloption;
 
-// we call sane_exit() as frequently as possible
-// in order to minimize effects from bugs/leaks in backends
 static int sane_init_refcount = 0;
 static std::mutex sane_init_mutex;
 
@@ -87,6 +85,16 @@ sane_init_release()
     log << "sane_exit()" << std::endl;
     ::sane_exit();
   }
+}
+
+init::init()
+{
+  sane_init_addref();
+}
+
+init::~init()
+{
+  sane_init_release();
 }
 
 option_set::option_set() {}

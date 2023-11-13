@@ -38,6 +38,12 @@ dtostr_c(double);
 // will enable logging to stderr
 extern std::ostream log;
 
+struct init
+{
+    init();
+    ~init();
+};
+
 struct device_info
 {
   std::string name, vendor, model, type;

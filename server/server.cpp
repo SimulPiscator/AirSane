@@ -84,6 +84,7 @@ struct NetworkNotifier : NetworkHotplugNotifier
     switch (ev) {
       case addressArrived:
       case addressLeft:
+      case addressChange:
         std::clog << "network hotplug event, reloading configuration" << std::endl;
         server.terminate(SIGHUP);
         break;
@@ -267,6 +268,8 @@ Server::run()
   std::shared_ptr<NetworkNotifier> pNetworkNotifier;
   if (mNetworkhotplug)
     pNetworkNotifier = std::make_shared<NetworkNotifier>(*this);
+    
+  sanecpp::init saneinit;
 
   bool ok = false, done = false;
   do {
