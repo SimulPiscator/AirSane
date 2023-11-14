@@ -23,6 +23,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <vector>
 
+#if __APPLE__
+#include <machine/endian.h>
+#elif __FreeBSD__
+#include <sys/endian.h>
+#else
+#include <endian.h>
+#endif
+
 static_assert(BITS_IN_JSAMPLE == 8,
               "libjpeg must have been compiled with BITS_IN_JSAMPLE = 8");
 
@@ -167,7 +175,7 @@ JpegEncoder::qualityPercent() const
 void
 JpegEncoder::onImageBegin()
 {
-  if (bitDepth() != BITS_IN_JSAMPLE)
+  if (bitDepth() != 8 && bitDepth() != 16)
     throw std::runtime_error("JpegEncoder: bit depth unsupported");
   if (currentImage() > 0)
     throw std::runtime_error("JpegEncoder: cannot encode more than one image per file");
@@ -218,7 +226,23 @@ JpegEncoder::onImageEnd()
 void
 JpegEncoder::onWriteLine(const void* data)
 {
-  auto linedata = JSAMPROW(data);
+  std::vector<unsigned char> line(width() * components());
+  if (bitDepth() == 16) {
+    union { const void* p; const unsigned short* s; const unsigned char* c; } p = { data };
+#if BYTE_ORDER == LITTLE_ENDIAN
+  const int idx = 1;
+#else
+  const int idx = 0;
+#endif
+    for (int i = 0; i < line.size(); ++i) {
+      line[i] = p.c[idx];
+      ++p.s;
+    }
+  }
+  else if (bitDepth() == 8) {
+    ::memcpy(line.data(), data, line.size());
+  }
+  auto linedata = JSAMPROW(line.data());
   int written = ::jpeg_write_scanlines(&p->mCompressStruct, &linedata, 1);
   if (written != 1)
     throw std::runtime_error("JpegEncoder: could not write scan line");
