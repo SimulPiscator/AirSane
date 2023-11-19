@@ -312,7 +312,7 @@ struct HttpServer::Private
       pfds[0].events = POLLIN;
       for (auto& address : addresses) {
         int sockfd = createListeningSocket(address);
-        if (sockfd < 0)
+        if (sockfd < 0 && errno != EADDRNOTAVAIL) // may occur due to race condition at network reconfiguration
           err = errno;
         else {
           struct pollfd pfd = { sockfd, POLLIN, 0 };
