@@ -406,7 +406,7 @@ ScanJob::Private::synthesizeGray(std::vector<char>& ioData)
     while (in.c < ioData.data() + ioData.size()) {
       float f = rweight * in.s[0] + gweight * in.s[1] + bweight * in.s[2];
       f += 0.5f;
-      f = std::min(255.0f, f);
+      f = std::min(65535.0f, f);
       *out.s = f;
       in.s += 3;
       out.s += 1;
