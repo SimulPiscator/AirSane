@@ -948,9 +948,7 @@ Scanner::writeScannerStatusXml(std::ostream& os) const
         "<pwg:Version>2.0</pwg:Version>\r\n"
         "<pwg:State>"
      << p->statusString()
-     << "</pwg:State>\r\n"
-        "<pwg:StateReasons>\r\n<pwg:StateReason>None</pwg:StateReason>\r\n</"
-        "pwg:StateReasons>\r\n";
+     << "</pwg:State>\r\n";
 
   if (p->mpAdf)
     os << "<scan:AdfState>" << p->temporaryAdfStatusString()
