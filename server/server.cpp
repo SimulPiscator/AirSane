@@ -132,7 +132,7 @@ Server::Server(int argc, char** argv)
     { "unix-socket", "", "listen on named unix socket", unixsocket },
     { "access-log", "", "HTTP access log, - for stdout", accesslog },
     { "hotplug", "true", "repeat scanner search on hotplug event", hotplug },
-    { "network-hotplug", "false", "restart server on network change", networkhotplug },
+    { "network-hotplug", "true", "restart server on network change", networkhotplug },
     { "mdns-announce", "true", "announce scanners via mDNS", announce },
     { "announce-secure", "false", "announce secure connection", announcesecure },
     { "web-interface", "true", "enable web interface", webinterface },
