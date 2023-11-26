@@ -230,9 +230,9 @@ JpegEncoder::onWriteLine(const void* data)
   if (bitDepth() == 16) {
     union { const void* p; const unsigned short* s; const unsigned char* c; } p = { data };
 #if BYTE_ORDER == LITTLE_ENDIAN
-  const int idx = 1;
+    const int idx = 1;
 #else
-  const int idx = 0;
+    const int idx = 0;
 #endif
     for (int i = 0; i < line.size(); ++i) {
       line[i] = p.c[idx];
