@@ -265,6 +265,8 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
   else if (mIntent == "Photo")
      mDocumentFormat = HttpServer::MIME_TYPE_JPEG;
 
+  // If Apple Airscan requests JPEG, we send PNG instead because it is
+  // lossless and supports all bit depths.
   if (mDocumentFormat.empty() || autoselectFormat)
     mDocumentFormat = HttpServer::MIME_TYPE_PNG;
   std::clog << "document format used: " << mDocumentFormat << "\n";
