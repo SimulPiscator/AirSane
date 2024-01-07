@@ -43,7 +43,7 @@ namespace {
 // Return true if a sorts smaller/less than b.
 struct CompareAddresses
 {
-  bool operator()(const HttpServer::Sockaddr& a, const HttpServer::Sockaddr& b)
+  bool operator()(const HttpServer::Sockaddr& a, const HttpServer::Sockaddr& b) const
   {
     if (a.sa.sa_family != b.sa.sa_family)
       return a.sa.sa_family < b.sa.sa_family;
