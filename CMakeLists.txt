@@ -79,6 +79,7 @@ add_executable(${PROJECT_NAME}
     basic/uuid.cpp
     basic/dictionary.cpp
     basic/fdbuf.cpp
+    basic/workerthread.cpp
     web/httpserver.cpp
     web/webpage.cpp
     web/errorpage.cpp

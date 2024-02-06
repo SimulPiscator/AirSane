@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "imageformats/pngencoder.h"
 #include "scanner.h"
 #include "web/httpserver.h"
+#include "basic/workerthread.h"
 
 #include <atomic>
 #include <cassert>
@@ -104,21 +105,29 @@ struct ScanJob::Private
   Scanner* mpScanner;
 
   std::string mUuid;
-  ::time_t mCreated, mLastActive;
+  std::atomic<::time_t> mCreated, mLastActive;
   std::atomic<State> mState;
   std::atomic<const char*> mStateReason;
-  SANE_Status mAdfStatus;
+  std::atomic<SANE_Status> mAdfStatus;
 
   std::string mScanSource, mIntent, mDocumentFormat, mColorMode;
   int mBitDepth, mRes_dpi;
   bool mColorScan;
   double mLeft_px, mTop_px, mWidth_px, mHeight_px;
 
-  int mKind, mImagesCompleted;
+  std::atomic<int> mKind, mImagesCompleted;
   std::shared_ptr<sanecpp::session> mpSession;
 
   OptionsFile::Options mDeviceOptions;
   std::vector<uint16_t> mGammaTable;
+
+  // We need a job-permanent worker thread to execute
+  // beginTransfer() and finishTransfer().
+  // If these functions are called from two different
+  // threads (e.g., requests for NextDocument), we get
+  // into difficulties because backends are not required
+  // to be thread safe.
+  WorkerThread mWorkerThread;
 };
 
 ScanJob::ScanJob(Scanner* scanner, const std::string& uuid)
@@ -126,7 +135,7 @@ ScanJob::ScanJob(Scanner* scanner, const std::string& uuid)
 {
   p->mpScanner = scanner;
   p->mCreated = ::time(nullptr);
-  p->mLastActive = p->mCreated;
+  p->mLastActive = p->mCreated.load();
   p->mUuid = uuid;
   p->mState = pending;
   p->mStateReason = PWG_NONE;
@@ -543,7 +552,18 @@ ScanJob::writeJobInfoXml(std::ostream& os) const
 bool
 ScanJob::beginTransfer()
 {
-  return p->beginTransfer();
+  struct : WorkerThread::Callable
+  {
+    void onCall() override
+    {
+      result = p->beginTransfer();
+    }
+    bool result = false;
+    Private* p = nullptr;
+  } functionCall;
+  functionCall.p = p;
+  p->mWorkerThread.executeSynchronously(functionCall);
+  return functionCall.result;
 }
 
 bool
@@ -629,7 +649,18 @@ ScanJob::Private::closeSession()
 ScanJob&
 ScanJob::finishTransfer(std::ostream& os)
 {
-  p->finishTransfer(os);
+  struct : WorkerThread::Callable
+  {
+    void onCall() override
+    {
+      p->finishTransfer(*pOs);
+    }
+    Private* p = nullptr;
+    std::ostream* pOs = nullptr;
+  } functionCall;
+  functionCall.p = p;
+  functionCall.pOs = &os;
+  p->mWorkerThread.executeSynchronously(functionCall);
   return *this;
 }
 
