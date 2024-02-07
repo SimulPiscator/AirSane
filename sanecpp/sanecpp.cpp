@@ -316,10 +316,11 @@ option::string_value(int index) const
   SANE_Handle h = m_set ? m_set->m_device.get() : nullptr;
   if (h && is_string() && index == 0) {
     std::vector<SANE_Char> value(m_desc->size);
-    if (SANE_STATUS_GOOD ==
-        ::sane_control_option(
-          h, m_index, SANE_ACTION_GET_VALUE, value.data(), nullptr))
+    SANE_Status status = ::sane_control_option(h, m_index, SANE_ACTION_GET_VALUE, value.data(), nullptr);
+    if (status == SANE_STATUS_GOOD)
       s = value.data();
+    else
+      log << "sane_control_option(" << h << ", " << m_index << ", SANE_ACTION_GET_VALUE) -> " << status << std::endl;
   }
   return s;
 }
@@ -389,10 +390,11 @@ option::numeric_value(int index) const
   if (index < 0 || index >= array_size())
     return value;
   std::vector<SANE_Word> data(array_size());
-  if (SANE_STATUS_GOOD !=
-      ::sane_control_option(
-        h, m_index, SANE_ACTION_GET_VALUE, data.data(), nullptr))
+  SANE_Status status = ::sane_control_option(h, m_index, SANE_ACTION_GET_VALUE, data.data(), nullptr);
+  if (status != SANE_STATUS_GOOD) {
+    log << "sane_control_option(" << h << ", " << m_index << ", SANE_ACTION_GET_VALUE) -> " << status << std::endl;
     return value;
+  }
   value = data[index];
   if (m_desc->type == SANE_TYPE_FIXED)
     value = SANE_UNFIX(value);
