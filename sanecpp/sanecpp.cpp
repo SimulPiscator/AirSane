@@ -564,8 +564,6 @@ session::~session()
 session&
 session::start()
 {
-  log << "sane_start(" << m_device.get() << ") with options:" << m_options
-      << std::endl;
   m_status = ::sane_start(m_device.get());
   switch (m_status) {
     case SANE_STATUS_GOOD:
@@ -607,6 +605,14 @@ session::read(std::vector<char>& buffer)
       log << "sane_read(" << m_device.get() << "): " << status << std::endl;
   }
   m_status = status;
+  return *this;
+}
+
+const session&
+session::dump_options() const
+{
+  log << "session " << m_device.get() << " options:" << m_options
+      << std::endl;
   return *this;
 }
 

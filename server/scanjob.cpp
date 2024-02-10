@@ -572,10 +572,12 @@ ScanJob::Private::beginTransfer()
   if(!atomicTransition(pending, processing))
     return false;
   bool ok = true;
-  if (!mpSession)
+  if (!mpSession) {
     ok = (openSession() == SANE_STATUS_GOOD);
-  if (ok)
-    startSession();
+    if (ok)
+      mpSession->dump_options();
+  }
+  startSession();
   ok = isProcessing();
   if (!ok)
     closeSession();

@@ -34,7 +34,7 @@ fdbuf::fdbuf(int fd, int putback)
 
 fdbuf::~fdbuf()
 {
-  sync();
+  fdbuf::sync();
   ::close(mFd);
 }
 

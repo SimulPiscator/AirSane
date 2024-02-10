@@ -170,6 +170,7 @@ public:
   session& start();
   session& cancel();
   session& read(std::vector<char>&);
+  const session& dump_options() const;
 
 private:
   void init();
