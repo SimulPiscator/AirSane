@@ -742,6 +742,7 @@ ScanJob::Private::finishTransfer(std::ostream& os)
           std::cerr << e.what() << ", aborting" << std::endl;
           mState = aborted;
           mStateReason = PWG_ERRORS_DETECTED;
+          closeSession();
         }
       }
     }
