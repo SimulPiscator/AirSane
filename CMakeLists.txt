@@ -117,30 +117,30 @@ endif()
 if(APPLE)
 
 install(TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION /usr/local/sbin
+    RUNTIME DESTINATION sbin
 )
 install(FILES launchd/org.simulpiscator.airsaned.plist
     DESTINATION /Library/LaunchDaemons
 )
 
 install(CODE "
-    if(NOT EXISTS /usr/local/etc/airsane/access.conf)
-        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/access.conf DESTINATION /usr/local/etc/airsane)
+    if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/etc/airsane/access.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/access.conf DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/airsane)
     endif()
 ")
 install(CODE "
-    if(NOT EXISTS /usr/local/etc/airsane/ignore.conf)
-        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/ignore.conf DESTINATION /usr/local/etc/airsane)
+    if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/etc/airsane/ignore.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/ignore.conf DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/airsane)
     endif()
 ")
 install(CODE "
-    if(NOT EXISTS /usr/local/etc/airsane/options.conf)
-        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/options.conf DESTINATION /usr/local/etc/airsane)
+    if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/etc/airsane/options.conf)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/options.conf DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/airsane)
     endif()
 ")
 install(CODE "
-    if(NOT EXISTS /usr/local/etc/airsane/Gnome-scanner.png)
-        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/Gnome-scanner.png DESTINATION /usr/local/etc/airsane)
+    if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/etc/airsane/Gnome-scanner.png)
+        file(INSTALL ${CMAKE_SOURCE_DIR}/etc/Gnome-scanner.png DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/airsane)
     endif()
 ")
 
