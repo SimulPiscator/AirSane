@@ -58,11 +58,15 @@ fdbuf::sync()
   const char* p = pbase();
   while (n > 0) {
     int written = ::write(mFd, p, n);
-    if (written < 0)
-      return -1;
-    n -= written;
-    p += written;
-    mTotalWritten += written;
+    if (written < 0) {
+      if (errno != EINTR)
+        return -1;
+    }
+    else { // written >= 0
+      n -= written;
+      p += written;
+      mTotalWritten += written;
+    }
   }
   return 0;
 }
@@ -88,9 +92,10 @@ fdbuf::underflow()
       return traits_type::eof();
 
     int read = ::read(mFd, start, n);
-    if (read == 0)
+    if (read == 0 || (read < 0 && errno != EINTR))
       return traits_type::eof();
-    setg(mInbuf, start, start + read);
+    if (read > 0)
+      setg(mInbuf, start, start + read);
   }
   return traits_type::to_int_type(*gptr());
 }
