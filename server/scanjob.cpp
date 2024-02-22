@@ -76,6 +76,22 @@ struct ScanSettingsXml
   std::string xml;
 };
 
+template<class T> std::string describeStreamState(T& stream)
+{
+  if (stream.good())
+      return "(good)";
+  std::string state;
+  if (stream.fail())
+      state += "fail, ";
+  if (stream.eof())
+      state += "eof, ";
+  if (stream.bad())
+      state += "bad, ";
+  if (!state.empty())
+      state = state.substr(0, state.length() - 2);
+  return "(" + state + ")";
+}
+
 }
 
 struct ScanJob::Private
@@ -725,19 +741,22 @@ ScanJob::Private::finishTransfer(std::ostream& os)
     }
   }
   while (isProcessing()) {
+    int linesWritten = 0;
     mLastActive = ::time(nullptr);
     std::vector<char> buffer(mpSession->parameters()->bytes_per_line);
     SANE_Status status = SANE_STATUS_GOOD;
     while (status == SANE_STATUS_GOOD && os && isProcessing()) {
       status = mpSession->read(buffer).status();
+      mLastActive = ::time(nullptr);
       if (status == SANE_STATUS_GOOD) {
         applyGamma(buffer);
         if (!mColorScan && mDeviceOptions.synthesize_gray)
           synthesizeGray(buffer);
         try {
           pEncoder->writeLine(buffer.data());
+          ++linesWritten;
           if (!os.flush())
-            throw std::runtime_error("Could not send data");
+            throw std::runtime_error("Could not send data, state: " + describeStreamState(os));
         } catch (const std::runtime_error& e) {
           std::cerr << e.what() << ", aborting" << std::endl;
           mState = aborted;
@@ -746,6 +765,7 @@ ScanJob::Private::finishTransfer(std::ostream& os)
         }
       }
     }
+    std::clog << "lines written: " << linesWritten << std::endl;
     if (isProcessing()) {
       ++mImagesCompleted;
       std::clog << "images completed: " << mImagesCompleted << std::endl;
