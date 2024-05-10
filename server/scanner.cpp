@@ -601,14 +601,33 @@ Scanner::Private::InputSource::init(const sanecpp::option_set& opt)
   if (!opt[SANE_NAME_BIT_DEPTH].is_null())
     mMaxBits = opt[SANE_NAME_BIT_DEPTH].max();
 
+  // Defaults in case TL_X etc are not defined.
+  // SANE requests that backends must work in the absence of those options.
+  // We define a max height and width that allows for both US Letter and A4.
+  mMinWidth = 0;
+  mMaxWidth = 216; // US Letter width in mm
+  mMinHeight = 0;
+  mMaxHeight = 297; // A4 height in mm
+  mMaxPhysicalWidth = mMaxWidth;
+  mMaxPhysicalHeight = mMaxHeight;
+  SANE_Unit unit = SANE_UNIT_MM;
+
   const auto &tl_x = opt[SANE_NAME_SCAN_TL_X], &tl_y = opt[SANE_NAME_SCAN_TL_Y],
              &br_x = opt[SANE_NAME_SCAN_BR_X], &br_y = opt[SANE_NAME_SCAN_BR_Y];
 
-  if (tl_x.is_null() || tl_y.is_null() || br_x.is_null() || br_y.is_null())
-    return "missing scan area parameter(s)";
-  auto unit = tl_x.unit();
-  if (tl_y.unit() != unit || br_x.unit() != unit || br_y.unit() != unit)
-    return "inconsistent unit in scan area parameters";
+  if (!tl_x.is_null() && !tl_y.is_null() && !br_x.is_null() && !br_y.is_null())
+  {
+    unit = tl_x.unit();
+    if (tl_y.unit() != unit || br_x.unit() != unit || br_y.unit() != unit)
+      return "inconsistent unit in scan area parameters";
+
+    mMinWidth = std::max(0.0, br_x.min() - tl_x.max());
+    mMaxWidth = br_x.max() - tl_x.min();
+    mMaxPhysicalWidth = br_x.max();
+    mMinHeight = std::max(0.0, br_y.min() - tl_y.max());
+    mMaxHeight = br_y.max() - tl_y.min();
+    mMaxPhysicalHeight = br_y.max();
+  }
 
   // eSCL expresses sizes in terms of pixels at 300 dpi
   double f = 300;
@@ -623,12 +642,6 @@ Scanner::Private::InputSource::init(const sanecpp::option_set& opt)
       return "unexpected unit in scan area parameters";
   }
 
-  mMinWidth = std::max(0.0, br_x.min() - tl_x.max());
-  mMaxWidth = br_x.max() - tl_x.min();
-  mMaxPhysicalWidth = br_x.max();
-  mMinHeight = std::max(0.0, br_y.min() - tl_y.max());
-  mMaxHeight = br_y.max() - tl_y.min();
-  mMaxPhysicalHeight = br_y.max();
   for (auto pValue : { &mMinWidth,
                        &mMaxWidth,
                        &mMinHeight,
