@@ -337,7 +337,7 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
 const char*
 ScanJob::Private::kindString() const
 {
-  switch (mKind) {
+  switch (mKind.load()) {
     case single:
       return "single";
     case adfConcat:
@@ -499,7 +499,7 @@ ScanJob::Private::updateStatus(SANE_Status status)
       mStateReason = PWG_JOB_CANCELED_BY_USER;
       break;
     case SANE_STATUS_EOF:
-      switch(mKind) {
+      switch(mKind.load()) {
       case single:
           if (mImagesCompleted > 0) {
               mState = completed;
