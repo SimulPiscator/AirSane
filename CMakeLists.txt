@@ -31,7 +31,7 @@ endif()
 
 if(APPLE)
   include_directories(
-    /opt/local/include 
+    /opt/local/include
     /opt/homebrew/include
     /usr/local/include
   )
@@ -101,6 +101,7 @@ target_link_libraries(
     png
     ${ZEROCONF_LIBS}
     usb
+    atomic
 )
 else()
 target_link_libraries(
@@ -111,6 +112,7 @@ target_link_libraries(
     png
     ${ZEROCONF_LIBS}
     usb-1.0
+    atomic
 )
 endif()
 
