@@ -92,18 +92,19 @@ add_executable(${PROJECT_NAME}
     zeroconf/hotplugnotifier.cpp
     ${ZEROCONF_FILES}
 )
+
 if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
-target_link_libraries(
-    ${PROJECT_NAME}
-    Threads::Threads
-    sane
-    jpeg
-    png
-    ${ZEROCONF_LIBS}
-    usb
-    atomic
-)
+  set(LIBUSB usb)
 else()
+  set(LIBUSB usb-1.0)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set(LIBATOMIC atomic)
+else()
+  set(LIBATOMIC)
+endif()
+
 target_link_libraries(
     ${PROJECT_NAME}
     Threads::Threads
@@ -111,10 +112,9 @@ target_link_libraries(
     jpeg
     png
     ${ZEROCONF_LIBS}
-    usb-1.0
-    atomic
+    ${LIBUSB}
+    ${LIBATOMIC}
 )
-endif()
 
 if(APPLE)
 
