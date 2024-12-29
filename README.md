@@ -23,15 +23,10 @@ proxy server such as nginx (see the [https readme file](README.https.md)).
 If you are looking for a powerful SANE web frontend, AirSane may not be for you.
 You may be interested in [scanservjs](https://github.com/sbs20/scanservjs) instead.
 
-AirSane has been developed by reverse-engineering the communication protocol
-implemented in Apple's AirScanScanner client
-(macos 10.12.6, `/System/Library/Image Capture/Devices/AirScanScanner.app`).
+AirSane implements the Mopria eSCL protocol as published [here](https://mopria.org/mopria-escl-specification).
 
 Regarding the mDNS announcement, and the basic working of the eSCL protocol,
 [David Poole's blog](http://testcluster.blogspot.com/2014/03) was very helpful.
-
-In the meantime, the eSCL protocol has been officially published
-[here](https://mopria.org/mopria-escl-specification).
 
 ## Usage
 ### Web interface
