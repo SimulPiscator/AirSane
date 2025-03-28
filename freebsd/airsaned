@@ -5,20 +5,39 @@
 # KEYWORD: shutdown
 #
 # Add the following line to /etc/rc.conf[.local] to enable airsaned:
-#	airsaned_enable="YES"
+#   airsaned_enable="YES"
 
 . /etc/rc.subr
 
-name=airsaned
-rcvar=airsaned_enable
+name="airsaned"
+rcvar=${name}_enable
 
-load_rc_config airsane
+load_rc_config $name
 
 : ${airsaned_enable:="NO"}
 : ${airsaned_args:=""}
 
-command="%%PREFIX%%/sbin/${name}"
-command_args="${airsaned_args} &"
-sig_stop="KILL"
+pidfile="/var/run/${name}.pid"
+pidfile_ch="/var/run/${name}_ch.pid"
+
+command="/usr/sbin/daemon"
+app_file="%%PREFIX%%/sbin/${name}"
+
+command_args="-r -H -o /var/log/${name}.log -P ${pidfile} -p ${pidfile_ch} ${app_file} ${airsaned_args}"
+
+stop_cmd=airsaned_stop
+
+airsaned_stop()
+{
+  if [ -f ${pidfile} ];  then
+    kill -KILL $(cat ${pidfile})
+    rm -f ${pidfile}
+  fi
+
+  if [ -f ${pidfile_ch} ]; then
+    kill -KILL $(cat ${pidfile_ch})
+    rm -f ${pidfile_ch}
+  fi
+}
 
 run_rc_command "$1"
