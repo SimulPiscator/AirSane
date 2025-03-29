@@ -56,8 +56,9 @@ std::string hostname()
 struct Notifier : HotplugNotifier
 {
   Server& server;
-  explicit Notifier(Server& s)
-    : server(s)
+  int reloadDelay;
+  Notifier(Server& s, int delay)
+    : server(s), reloadDelay(delay)
   {}
   void onHotplugEvent(Event ev) override
   {
@@ -65,6 +66,7 @@ struct Notifier : HotplugNotifier
       case deviceArrived:
       case deviceLeft:
         std::clog << "hotplug event, reloading configuration" << std::endl;
+        ::sleep(reloadDelay);
         server.terminate(SIGHUP);
         break;
       case other:
@@ -76,8 +78,9 @@ struct Notifier : HotplugNotifier
 struct NetworkNotifier : NetworkHotplugNotifier
 {
   Server& server;
-  explicit NetworkNotifier(Server& s)
-    : server(s)
+  int reloadDelay;
+  NetworkNotifier(Server& s, int delay)
+    : server(s), reloadDelay(delay)
   {}
   void onHotplugEvent(Event ev) override
   {
@@ -86,6 +89,7 @@ struct NetworkNotifier : NetworkHotplugNotifier
       case addressLeft:
       case addressChange:
         std::clog << "network hotplug event, reloading configuration" << std::endl;
+        ::sleep(reloadDelay);
         server.terminate(SIGHUP);
         break;
       case other:
@@ -113,6 +117,7 @@ Server::Server(int argc, char** argv)
   , mNetworkhotplug(true)
   , mRandompaths(false)
   , mCompatiblepath(false)
+  , mReloadDelay(1)
   , mJobtimeout(0)
   , mPurgeinterval(0)
   , mStartupTimeSeconds(0)
@@ -121,7 +126,7 @@ Server::Server(int argc, char** argv)
   std::string port, interface, unixsocket, accesslog, hotplug, networkhotplug,
      announce, webinterface, resetoption, discloseversion, localonly, optionsfile,
      ignorelist, accessfile, randompaths, compatiblepath, debug, announcesecure,
-     jobtimeout, purgeinterval;
+     reloaddelay, jobtimeout, purgeinterval;
   struct
   {
     const std::string name, def, info;
@@ -132,6 +137,7 @@ Server::Server(int argc, char** argv)
     { "unix-socket", "", "listen on named unix socket", unixsocket },
     { "access-log", "", "HTTP access log, - for stdout", accesslog },
     { "hotplug", "true", "repeat scanner search on hotplug event", hotplug },
+    { "reload-delay", "1", "how long a hotplug reload is delayed (seconds)", reloaddelay },
     { "network-hotplug", "true", "restart server on network change", networkhotplug },
     { "mdns-announce", "true", "announce scanners via mDNS", announce },
     { "announce-secure", "false", "announce secure connection", announcesecure },
@@ -217,6 +223,10 @@ Server::Server(int argc, char** argv)
     std::cerr << "invalid port number: " << port << std::endl;
     mDoRun = false;
   }
+  if (!(std::istringstream(reloaddelay) >> mReloadDelay) || mReloadDelay < 0) {
+    std::cerr << "invalid reload delay: " << mReloadDelay << std::endl;
+    mDoRun = false;
+  }
   if (!(std::istringstream(jobtimeout) >> mJobtimeout) || mJobtimeout < 1) {
     std::cerr << "invalid job timeout: " << mJobtimeout << std::endl;
     mDoRun = false;
@@ -263,11 +273,11 @@ Server::run()
 
   std::shared_ptr<Notifier> pNotifier;
   if (mHotplug)
-    pNotifier = std::make_shared<Notifier>(*this);
+    pNotifier = std::make_shared<Notifier>(*this, mReloadDelay);
 
   std::shared_ptr<NetworkNotifier> pNetworkNotifier;
   if (mNetworkhotplug)
-    pNetworkNotifier = std::make_shared<NetworkNotifier>(*this);
+    pNetworkNotifier = std::make_shared<NetworkNotifier>(*this, mReloadDelay);
     
   sanecpp::init saneinit;
 

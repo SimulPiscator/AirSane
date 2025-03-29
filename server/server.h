@@ -62,7 +62,7 @@ private:
   bool mAnnounce, mWebinterface, mResetoption, mDiscloseversion,
     mLocalonly, mHotplug, mNetworkhotplug, mRandompaths, mCompatiblepath, mAnnouncesecure;
   std::string mOptionsfile, mAccessfile, mIgnorelist;
-  int mJobtimeout, mPurgeinterval;
+  int mReloadDelay, mJobtimeout, mPurgeinterval;
   float mStartupTimeSeconds;
   bool mDoRun;
 };
