@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "scanjob.h"
 #include "scanner.h"
 #include "purgethread.h"
+#include "basic/url.h"
 #include "basic/uuid.h"
 #include "zeroconf/hotplugnotifier.h"
 #include "zeroconf/networkhotplugnotifier.h"
@@ -126,7 +127,7 @@ Server::Server(int argc, char** argv)
   std::string port, interface, unixsocket, accesslog, hotplug, networkhotplug,
      announce, webinterface, resetoption, discloseversion, localonly, optionsfile,
      ignorelist, accessfile, randompaths, compatiblepath, debug, announcesecure,
-     reloaddelay, jobtimeout, purgeinterval;
+     reloaddelay, jobtimeout, purgeinterval, announcebaseurl;
   struct
   {
     const std::string name, def, info;
@@ -141,6 +142,7 @@ Server::Server(int argc, char** argv)
     { "network-hotplug", "true", "restart server on network change", networkhotplug },
     { "mdns-announce", "true", "announce scanners via mDNS", announce },
     { "announce-secure", "false", "announce secure connection", announcesecure },
+    { "announce-base-url", "", "optional base url, overrides listen-port and announce-secure options", announcebaseurl },
     { "web-interface", "true", "enable web interface", webinterface },
     { "reset-option", "false", "allow server reset from web interface", resetoption },
     { "disclose-version", "true", "disclose version information in web interface", discloseversion },
@@ -217,6 +219,37 @@ Server::Server(int argc, char** argv)
   mOptionsfile = optionsfile;
   mAccessfile = accessfile;
   mIgnorelist = ignorelist;
+
+  Url url(announcebaseurl);
+  if (url.protocol() == "http") {
+    mAnnouncesecure = false;
+  }
+  else if (url.protocol() == "https") {
+    mAnnouncesecure = true;
+  }
+  else if (!url.protocol().empty()){
+    std::cerr << "invalid protocol: " << url.protocol() << std::endl;
+    mDoRun = false;
+  }
+
+  mHostname = hostname();
+  if (!url.host().empty()) {
+    mHostname = url.host();
+  }
+
+  mBasePath = url.path();
+  if (!mBasePath.empty() && mBasePath.back() == '/')
+      mBasePath.pop_back();
+
+  std::string urlport = url.port();
+  if (!urlport.empty()) {
+    port = urlport;
+  }
+
+  if (!url.user().empty() || !url.password().empty()) {
+    std::cerr << "cannot specify user name in base url" << std::endl;
+    mDoRun = false;
+  }
 
   uint16_t port_ = 0;
   if (!(std::istringstream(port) >> port_)) {
@@ -331,7 +364,7 @@ Server::run()
         url << "http";
         if (mAnnouncesecure)
           url << "s";
-        url << "://" << hostname() << ":" << port()
+        url << "://" << mHostname << ":" << port() << mBasePath
             << pScanner->uri();
         if (mWebinterface)
           pScanner->setAdminUrl(url.str());
@@ -447,7 +480,7 @@ Server::buildMdnsService(const Scanner* pScanner)
     pService->setTxt("pdl", s.substr(1));
   pService->setTxt("ty", pScanner->makeAndModel());
   if (pScanner->note().empty())
-    pService->setTxt("note", mPublisher.hostname());
+    pService->setTxt("note", mHostname);
   else
     pService->setTxt("note", pScanner->note());
   pService->setTxt("uuid", pScanner->uuid());
@@ -481,7 +514,7 @@ void
 Server::onRequest(const Request& request, Response& response)
 {
   if (mWebinterface) {
-      if (request.uri() == "/") {
+      if (request.uri() == mBasePath + "/") {
         response.setStatus(HttpServer::HTTP_OK);
         response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, "text/html");
         MainPage(mScanners, mResetoption, mDiscloseversion)
@@ -510,8 +543,8 @@ Server::onRequest(const Request& request, Response& response)
       }
   }
   for (auto entry : mScanners) {// copy of entry is intended to protect scanner object
-    if (request.uri().find(entry.pScanner->uri()) == 0) {
-      std::string remainder = request.uri().substr(entry.pScanner->uri().length());
+    if (request.uri().find(mBasePath + entry.pScanner->uri()) == 0) {
+      std::string remainder = request.uri().substr((mBasePath + entry.pScanner->uri()).length());
       handleScannerRequest(entry, remainder, request, response);
       return;
     }

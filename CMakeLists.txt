@@ -76,6 +76,7 @@ add_executable(${PROJECT_NAME}
     server/scanjob.cpp
     server/scannerpage.cpp
     sanecpp/sanecpp.cpp
+    basic/url.cpp
     basic/uuid.cpp
     basic/dictionary.cpp
     basic/fdbuf.cpp
