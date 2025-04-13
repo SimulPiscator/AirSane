@@ -236,13 +236,19 @@ Server::Server(int argc, char** argv)
   if (!url.host().empty()) {
     mHostname = url.host();
   }
+  if (mHostname == "%h") {
+    mHostname = mPublisher.hostname();
+  }
+  else if (mHostname == "%H") {
+    mHostname = mPublisher.hostnameFqdn();
+  }
 
   mBasePath = url.path();
   if (!mBasePath.empty() && mBasePath.back() == '/')
       mBasePath.pop_back();
 
   std::string urlport = url.port();
-  if (!urlport.empty()) {
+  if (urlport != "%p" && !urlport.empty()) {
     port = urlport;
   }
 
