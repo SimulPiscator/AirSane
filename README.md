@@ -172,7 +172,9 @@ announce scanners via mDNS
 #### ANNOUNCE_SECURE=false	
 announce secure connection
 #### ANNOUNCE_BASE_URL=
-optional base URL, overrides listen-port and announce-secure options
+optional base URL, overrides listen-port and announce-secure options;
+if the URL's hostname part is %h or %H, it is replaced with the result of avahi_client_get_host_name(), or avahi_client_get_host_name_fqdn(), respectively;
+if the URL's port part is %p, it is replaced with the value of LISTEN_PORT
 #### WEB_INTERFACE=true
 enable web interface
 #### RESET_OPTION=false
