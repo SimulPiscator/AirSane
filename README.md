@@ -152,6 +152,47 @@ button for a preview scan.
 
 ## Optional configuration
 
+### Options in `/etc/default/airsane`
+The options in `/etc/default/airsane` correspond to command line options of the `airsaned` program.
+The options, and their defaults, are:
+#### INTERFACE=*
+listen on named interface only
+#### LISTEN_PORT=8090
+listening port
+#### UNIX_SOCKET=
+listen on named unix socket
+#### ACCESS_LOG=
+HTTP access log file
+#### HOTPLUG=true
+repeat scanner search on hotplug event
+#### RELOAD_DELAY=1
+how long a hotplug reload is delayed (seconds)
+#### MDNS_ANNOUNCE=true
+announce scanners via mDNS
+#### ANNOUNCE_SECURE=false	
+announce secure connection
+#### ANNOUNCE_BASE_URL=
+optional base URL, overrides listen-port and announce-secure options
+#### WEB_INTERFACE=true
+enable web interface
+#### RESET_OPTION=false
+allow server reset from web interface
+#### DISCLOSE_VERSION=true
+disclose version information in web interface
+#### RANDOM_PATHS=false	
+prepend a random uuid to scanner paths
+#### COMPATIBLE_PATH=true	
+use /eSCL as path for first scanner
+#### LOCAL_SCANNERS_ONLY=false
+ignore SANE network scanners
+#### OPTIONS_FILE=/etc/airsane/options.conf	
+location of device options file
+#### IGNORE_LIST=/etc/airsane/ignore.conf
+location of device ignore list
+#### ACCESS_FILE=/etc/airsane/access.conf
+location of access file
+
+### Options in the `options.conf` file
 In addition to the options that may be configured through `/etc/default/airsane`, it is possible to configure 
 options to be used when scanning from a certain device.
 To specify such options, create a file `/etc/airsane/options.conf`, readable by user `saned`.  
@@ -166,25 +207,25 @@ This file may contain the following kinds of lines:
   options from all of these `device` sections will be applied.  
   Options may be SANE backend options, or AirSane device options (see below).
 
-### SANE backend options
+#### SANE backend options
 To display the SANE options supported by a device, use `sudo -u saned scanimage -L` to get its SANE name, and
 then `sudo -u saned scanimage -d <device name> -A` to get a list of options.  
 In `options.conf`, SANE options must be given without leading minus signs, and with white space between the 
 option's name and its value. White space is removed from the beginnning and the end of the value.
 
-### AirSane device options
-#### gray-gamma
+#### AirSane device options
+##### gray-gamma
 A gamma value that is applied to grayscale image data before transmission. The gamma value is given as a floating-point value.
-#### color-gamma
+##### color-gamma
 A gamma value that is applied to color image data before transmission, using identical gamma values for all components.
-#### synthesize-gray
+##### synthesize-gray
 A value of `yes` or `no`. If set to `yes`, AirSane will always request color data from the SANE backend, even if the user
 requests a grayscale scan. In this case, grayscale values will be computed from RGB component data after gamma correction, 
 using weights as suited for sRGB data:  
 `Y = 0.2126 * R + 0.7152 * G + 0.0722 * B`  
 This is useful for backends that do not allow true grayscale scanning or incorrectly return a single color component even if
 true gray is requested ([observed](https://gitlab.com/sane-project/backends/-/issues/308) with the SANE genesys backend).
-#### icon
+##### icon
 Name of a png file that should be used as the scanner's icon.
 This may be an absolute path, or a relative path.
 If relative (e.g., just a file name without a path), it is relative to the 
@@ -192,12 +233,12 @@ location of the options file.
 
 The image should have a size of 512x512, 256x256 or 128x128 pixels and an alpha channel for transparency.
 If pixel dimensions are not powers of two, the image will not be accepted by macOS.
-#### location
+##### location
 A string that appears in the `note` field of the mDNS announcement. This should be an indication where the scanner is located,
 such as "Living Room" or "Office." If no location is given in the options file, this defaults to the host name of the machine
 that runs airsaned.
 
-### Example options.conf file
+#### Example options.conf file
 ```
 # Example options.conf file for airsane
 # Set SANE brightness to 10 for all scanners
@@ -220,7 +261,7 @@ location Living Room
 calibration-file /home/simul/some path with spaces/canon-lide-60.cal
 ```
 
-## Color Management (Gamma Correction)
+### Color Management (Gamma Correction)
 
 When receiving scan data from an AirScan scanner, macOS seems to ignore all color space related information from the
 transmitted image files, and interprets color and gray levels according to standard scanner color profiles.
