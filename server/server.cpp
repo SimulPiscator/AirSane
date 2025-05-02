@@ -317,8 +317,6 @@ Server::run()
   std::shared_ptr<NetworkNotifier> pNetworkNotifier;
   if (mNetworkhotplug)
     pNetworkNotifier = std::make_shared<NetworkNotifier>(*this, mReloadDelay);
-    
-  sanecpp::init saneinit;
 
   bool ok = false, done = false;
   do {
@@ -342,6 +340,9 @@ Server::run()
     std::string pathPrefix = "/";
     if (mRandompaths)
       pathPrefix += Uuid::Random().toString() + "/";
+
+    sanecpp::init* saneinit = new sanecpp::init;
+
     auto scanners = sanecpp::enumerate_devices(mLocalonly);
     int scannerCount = 0;
     for (const auto& s : scanners) {
@@ -415,6 +416,8 @@ Server::run()
       ok = false;
       done = true;
     }
+
+    delete saneinit;
   } while (!done);
   if (ok) {
     std::clog << "server finished ok" << std::endl;
