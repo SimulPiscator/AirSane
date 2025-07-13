@@ -129,6 +129,7 @@ struct ScanJob::Private
   std::string mScanSource, mIntent, mDocumentFormat, mColorMode;
   int mBitDepth, mRes_dpi;
   bool mColorScan;
+  bool mDuplex;
   double mLeft_px, mTop_px, mWidth_px, mHeight_px;
 
   std::atomic<int> mKind, mImagesCompleted;
@@ -310,7 +311,12 @@ ScanJob::Private::init(const ScanSettingsXml& settings, bool autoselectFormat, c
     mKind = single;
   }
   else if (inputSource == "Feeder") {
-    mScanSource = mpScanner->adfSourceName();
+    mDuplex = settings.getNumber("Duplex") == 1.0;
+    if (mDuplex) {
+        mScanSource = mpScanner->adfDuplexSourceName();
+    } else {
+        mScanSource = mpScanner->adfSimplexSourceName();
+    }
     double concatIfPossible = settings.getNumber("ConcatIfPossible");
     if (concatIfPossible == 1.0 && mDocumentFormat == HttpServer::MIME_TYPE_PDF)
       mKind = adfConcat;

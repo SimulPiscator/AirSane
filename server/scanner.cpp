@@ -205,8 +205,7 @@ struct Scanner::Private
     explicit InputSource(Private* p);
     const char* init(const sanecpp::option_set&);
     void writeCapabilitiesXml(std::ostream&) const;
-  } * mpPlaten, *mpAdf;
-  bool mDuplex;
+  } * mpPlaten, *mpAdfSimplex, *mpAdfDuplex;
 
   std::string mGrayScanModeName, mColorScanModeName;
   mutable int mCurrentProfile;
@@ -239,8 +238,8 @@ std::set<Scanner::Private*> Scanner::Private::sInstances;
 Scanner::Private::Private(Scanner* p)
   : p(p)
   , mpPlaten(nullptr)
-  , mpAdf(nullptr)
-  , mDuplex(false)
+  , mpAdfSimplex(nullptr)
+  , mpAdfDuplex(nullptr)
   , mTemporaryAdfStatus(SANE_STATUS_GOOD)
   , mError(nullptr)
 {
@@ -250,7 +249,8 @@ Scanner::Private::Private(Scanner* p)
 Scanner::Private::~Private()
 {
   delete mpPlaten;
-  delete mpAdf;
+  delete mpAdfSimplex;
+  delete mpAdfDuplex;
   sInstances.erase(this);
 }
 
@@ -278,20 +278,16 @@ Scanner::Private::writeScannerCapabilitiesXml(std::ostream& os) const
     mpPlaten->writeCapabilitiesXml(os);
     os << "</scan:PlatenInputCaps>\r\n</scan:Platen>\r\n";
   }
-  if (mpAdf && !mDuplex) {
+  if (mpAdfSimplex) {
     os << "<scan:Adf>\r\n<scan:AdfSimplexInputCaps>\r\n";
-    mpAdf->writeCapabilitiesXml(os);
-    os << "</scan:AdfSimplexInputCaps>\r\n"
-       << "<scan:AdfOptions>\r\n"
-       << "<scan:AdfOption>DetectPaperLoaded</scan:AdfOption>\r\n"
-       << "</scan:AdfOptions>\r\n"
-       << "</scan:Adf>\r\n";
-  }
-  if (mpAdf && mDuplex) {
-    os << "<scan:Adf>\r\n<scan:AdfDuplexInputCaps>\r\n";
-    mpAdf->writeCapabilitiesXml(os);
-    os << "</scan:AdfDuplexInputCaps>\r\n"
-       << "<scan:AdfOptions>\r\n"
+    mpAdfSimplex->writeCapabilitiesXml(os);
+    os << "</scan:AdfSimplexInputCaps>\r\n";
+    if (mpAdfDuplex) {
+      os << "<scan:AdfDuplexInputCaps>\r\n";
+      mpAdfDuplex->writeCapabilitiesXml(os);
+      os << "</scan:AdfDuplexInputCaps>\r\n";
+    }
+    os << "<scan:AdfOptions>\r\n"
        << "<scan:AdfOption>DetectPaperLoaded</scan:AdfOption>\r\n"
        << "</scan:AdfOptions>\r\n"
        << "</scan:Adf>\r\n";
@@ -565,20 +561,35 @@ Scanner::Private::init2(const OptionsFile& optionsfile)
       mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpPlaten->mMaxHeight);
     }
   }
-  if (!adfName.empty()) {
-    mInputSources.push_back("Feeder");
-    mDuplex = !adfDuplexName.empty();
-    opt[SANE_NAME_SCAN_SOURCE].set_string_value(adfName);
-    mpAdf = new Private::InputSource(this);
-    err = mpAdf->init(opt);
+  if (!adfSimplexName.empty() || !adfDuplexName.empty()) {
+      mInputSources.push_back("Feeder");
+  }
+  if (!adfSimplexName.empty()) {
+    opt[SANE_NAME_SCAN_SOURCE].set_string_value(adfSimplexName);
+    mpAdfSimplex = new Private::InputSource(this);
+    err = mpAdfSimplex->init(opt);
     if (!err) {
-      mpAdf->mSupportedIntents = std::vector<std::string>({
+      mpAdfSimplex->mSupportedIntents = std::vector<std::string>({
         "TextAndGraphic",
         "Photo",
       });
-      maxBits = std::max(maxBits, mpAdf->mMaxBits);
-      mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpAdf->mMaxWidth);
-      mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpAdf->mMaxHeight);
+      maxBits = std::max(maxBits, mpAdfSimplex->mMaxBits);
+      mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpAdfSimplex->mMaxWidth);
+      mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpAdfSimplex->mMaxHeight);
+    }
+  }
+  if (!adfDuplexName.empty()) {
+    opt[SANE_NAME_SCAN_SOURCE].set_string_value(adfDuplexName);
+    mpAdfDuplex = new Private::InputSource(this);
+    err = mpAdfDuplex->init(opt);
+    if (!err) {
+      mpAdfDuplex->mSupportedIntents = std::vector<std::string>({
+        "TextAndGraphic",
+        "Photo",
+      });
+      maxBits = std::max(maxBits, mpAdfDuplex->mMaxBits);
+      mMaxWidthPx300dpi = std::max(mMaxWidthPx300dpi, mpAdfDuplex->mMaxWidth);
+      mMaxHeightPx300dpi = std::max(mMaxHeightPx300dpi, mpAdfDuplex->mMaxHeight);
     }
   }
   if (maxBits == 16) {
@@ -799,9 +810,16 @@ Scanner::platenSupportedIntents() const
 }
 
 std::vector<std::string>
-Scanner::adfSupportedIntents() const
+Scanner::adfSimplexSupportedIntents() const
 {
-  return p->mpAdf ? p->mpAdf->mSupportedIntents : std::vector<std::string>();
+  return p->mpAdfSimplex ? p->mpAdfSimplex->mSupportedIntents : std::vector<std::string>();
+  ;
+}
+
+std::vector<std::string>
+Scanner::adfDuplexSupportedIntents() const
+{
+  return p->mpAdfDuplex ? p->mpAdfDuplex->mSupportedIntents : std::vector<std::string>();
   ;
 }
 
@@ -844,13 +862,13 @@ Scanner::hasPlaten() const
 bool
 Scanner::hasAdf() const
 {
-  return p->mpAdf;
+  return p->mpAdfSimplex;
 }
 
 bool
 Scanner::hasDuplexAdf() const
 {
-  return p->mpAdf && p->mDuplex;
+  return p->mpAdfDuplex;
 }
 
 std::string
@@ -860,9 +878,15 @@ Scanner::platenSourceName() const
 }
 
 std::string
-Scanner::adfSourceName() const
+Scanner::adfSimplexSourceName() const
 {
-  return p->mpAdf ? p->mpAdf->mSourceName : "";
+  return p->mpAdfSimplex ? p->mpAdfSimplex->mSourceName : "";
+}
+
+std::string
+Scanner::adfDuplexSourceName() const
+{
+  return p->mpAdfDuplex ? p->mpAdfDuplex->mSourceName : "";
 }
 
 std::string
@@ -963,7 +987,7 @@ Scanner::writeScannerStatusXml(std::ostream& os) const
      << p->statusString()
      << "</pwg:State>\r\n";
 
-  if (p->mpAdf)
+  if (p->mpAdfSimplex || p->mpAdfDuplex)
     os << "<scan:AdfState>" << p->temporaryAdfStatusString()
        << "</scan:AdfState>\r\n";
 
