@@ -64,7 +64,8 @@ public:
   const std::vector<std::string>& txtColorSpaces() const;
   const std::vector<std::string>& colorModes() const;
   std::vector<std::string> platenSupportedIntents() const;
-  std::vector<std::string> adfSupportedIntents() const;
+  std::vector<std::string> adfSimplexSupportedIntents() const;
+  std::vector<std::string> adfDuplexSupportedIntents() const;
   const std::vector<std::string>& inputSources() const;
 
   int minResDpi() const;
@@ -77,7 +78,8 @@ public:
   bool hasDuplexAdf() const;
 
   std::string platenSourceName() const;
-  std::string adfSourceName() const;
+  std::string adfSimplexSourceName() const;
+  std::string adfDuplexSourceName() const;
   std::string grayScanModeName() const;
   std::string colorScanModeName() const;
 
