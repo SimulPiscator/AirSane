@@ -341,7 +341,7 @@ Server::run()
     if (mRandompaths)
       pathPrefix += Uuid::Random().toString() + "/";
 
-    sanecpp::init* saneinit = new sanecpp::init;
+    sanecpp::init saneinit; // init/deinit after every iteration of the do/while loop
 
     auto scanners = sanecpp::enumerate_devices(mLocalonly);
     int scannerCount = 0;
@@ -416,8 +416,6 @@ Server::run()
       ok = false;
       done = true;
     }
-
-    delete saneinit;
   } while (!done);
   if (ok) {
     std::clog << "server finished ok" << std::endl;
