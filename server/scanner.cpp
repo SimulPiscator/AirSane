@@ -389,7 +389,7 @@ Scanner::Private::temporaryAdfStatusString()
   mTemporaryAdfStatus = SANE_STATUS_GOOD;
   switch (adfStatus) {
     case SANE_STATUS_GOOD:
-      return "ScannerAdfLoaded";
+      return isOpen() ? "ScannerAdfLoaded" : "ScannerAdfEmpty";
     case SANE_STATUS_JAMMED:
       return "ScannerAdfJam";
     case SANE_STATUS_COVER_OPEN:

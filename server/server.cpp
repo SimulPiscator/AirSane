@@ -641,6 +641,10 @@ Server::handleScannerRequest(ScannerList::value_type entry, const std::string& p
           response.setHeader(HttpServer::HTTP_HEADER_CONTENT_TYPE, job->documentFormat());
           response.setHeader(HttpServer::HTTP_HEADER_TRANSFER_ENCODING, "chunked");
           job->finishTransfer(response.send());
+        } else if (job->adfStatus() == SANE_STATUS_NO_DOCS) {
+          entry.pScanner->setTemporaryAdfStatus(job->adfStatus());
+          response.setStatus(HttpServer::HTTP_NOT_FOUND);
+          response.send();
         } else if (job->adfStatus() != SANE_STATUS_GOOD) {
           entry.pScanner->setTemporaryAdfStatus(job->adfStatus());
           response.setStatus(HttpServer::HTTP_CONFLICT);
