@@ -285,8 +285,8 @@ Scanner::Private::writeScannerCapabilitiesXml(std::ostream& os) const
       mpAdfDuplex->writeCapabilitiesXml(os);
       os << "</scan:AdfDuplexInputCaps>\r\n";
     }
-    os << "<scan:AdfOptions>\r\n"
-       << "<scan:AdfOption>DetectPaperLoaded</scan:AdfOption>\r\n";
+    os << "<scan:AdfOptions>\r\n";
+//    os << "<scan:AdfOption>DetectPaperLoaded</scan:AdfOption>\r\n";
     if (mpAdfDuplex) {
       os << "<scan:AdfOption>Duplex</scan:AdfOption>\r\n";
     }
