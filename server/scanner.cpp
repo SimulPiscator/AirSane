@@ -987,11 +987,11 @@ Scanner::writeScannerStatusXml(std::ostream& os) const
         "<pwg:State>"
      << p->statusString()
      << "</pwg:State>\r\n";
-
+#if 0
   if (p->mpAdfSimplex || p->mpAdfDuplex)
     os << "<scan:AdfState>" << p->temporaryAdfStatusString()
        << "</scan:AdfState>\r\n";
-
+#endif
   os << "<scan:Jobs>\r\n";
   std::lock_guard<std::mutex> lock(p->mJobsMutex);
   for (const auto& job : p->mJobs)
