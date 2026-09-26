@@ -755,6 +755,10 @@ ScanJob::Private::finishTransfer(std::ostream& os)
       status = mpSession->read(buffer).status();
       mLastActive = ::time(nullptr);
       if (status == SANE_STATUS_GOOD) {
+        // Some backends (e.g., hpaio) send more lines
+        // than announced. Keep reading until EOF, but discard the excess.
+        if (linesWritten >= pEncoder->height())
+          continue;
         applyGamma(buffer);
         if (!mColorScan && mDeviceOptions.synthesize_gray)
           synthesizeGray(buffer);
@@ -769,6 +773,28 @@ ScanJob::Private::finishTransfer(std::ostream& os)
           mStateReason = PWG_ERRORS_DETECTED;
           closeSession();
         }
+      }
+    }
+    // Some backends (e.g., hpaio) may deliver fewer lines
+    // than announced. Pad the rest of the image with white lines.
+    if (status == SANE_STATUS_EOF && isProcessing() &&
+        linesWritten > 0 && linesWritten < pEncoder->height()) {
+      std::clog << "padding " << (pEncoder->height() - linesWritten)
+                << " missing lines" << std::endl;
+      const char white =
+        mpSession->parameters()->depth == 1 ? char(0x00) : char(0xFF);
+      buffer.assign(buffer.size(), white);
+      try {
+        while (linesWritten < pEncoder->height()) {
+          pEncoder->writeLine(buffer.data());
+          ++linesWritten;
+        }
+        os.flush();
+      } catch (const std::runtime_error& e) {
+        std::cerr << e.what() << ", aborting" << std::endl;
+        mState = aborted;
+        mStateReason = PWG_ERRORS_DETECTED;
+        closeSession();
       }
     }
     std::clog << "lines written: " << linesWritten << std::endl;
