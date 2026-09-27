@@ -588,10 +588,6 @@ session::~session()
 session&
 session::start()
 {
-  if (m_session_state != pristine) {
-    log << "session::start(): trying to re-initialize session";
-    return *this;
-  }
   if (m_sane_status != SANE_STATUS_GOOD) {
     log << "session::start(): " << m_sane_status << " at entry" << std::endl;
     return *this;
