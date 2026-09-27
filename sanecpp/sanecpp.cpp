@@ -588,15 +588,21 @@ session::~session()
 session&
 session::start()
 {
-  if (m_session_state != pristine) {
-    log << "session::start(): trying to re-initialize session";
+  // Multi-page scans (ADF, duplex) are acquired by calling sane_start()
+  // again on the same handle after the previous frame has been read to EOF.
+  // Backends such as brscan4 keep the back side of a duplex page buffered,
+  // and lose it if the handle is cancelled or closed in between.
+  // So we only refuse to start while a read is in progress.
+  if (m_session_state == reading) {
+    log << "session::start(): cannot start while reading" << std::endl;
     return *this;
   }
-  if (m_sane_status != SANE_STATUS_GOOD) {
+  if (m_sane_status != SANE_STATUS_GOOD && m_sane_status != SANE_STATUS_EOF) {
     log << "session::start(): " << m_sane_status << " at entry" << std::endl;
     return *this;
   }
 
+  m_session_state = pristine;
   m_sane_status = ::sane_start(m_device.get());
   switch (m_sane_status) {
     case SANE_STATUS_GOOD:
