@@ -184,8 +184,8 @@ private:
 
   std::mutex m_session_state_mutex;
   std::condition_variable m_session_state_changed;
-  enum { pristine, initialized, reading };
-  std::atomic<int> m_session_state {pristine};
+  enum { idle, initialized, reading };
+  std::atomic<int> m_session_state {idle};
 };
 
 } // namespace sanecpp

@@ -602,7 +602,7 @@ session::start()
     return *this;
   }
 
-  m_session_state = pristine;
+  m_session_state = idle;
   m_sane_status = ::sane_start(m_device.get());
   switch (m_sane_status) {
     case SANE_STATUS_GOOD:
