@@ -46,7 +46,7 @@ namespace {
     ::memset(data, 0, width / 8);
     for (int i = 0; i < bits; ++i) {
       int byte = i / 8, bit = i % 8;
-      data[byte] |= (1 << bit);
+      data[byte] |= (1 << (7 - bit));
     }
     return true;
   }
