@@ -391,7 +391,7 @@ Server::run()
           } else
             pService.reset();
           }
-          if (pService && !pScanner->error())
+          if ((!mAnnounce || pService) && !pScanner->error())
             mScanners.push_back(ScannerEntry({ pScanner, pService }));
       }
     }
