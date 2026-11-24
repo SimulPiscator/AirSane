@@ -197,7 +197,7 @@ struct Scanner::Private
     std::string mSourceName;
     std::vector<std::string> mSupportedIntents;
     double mMinWidth, mMaxWidth, mMinHeight, mMaxHeight, mMaxPhysicalWidth,
-      mMaxPhysicalHeight;
+      mMaxPhysicalHeight, mMaxOpticalXResolution, mMaxOpticalYResolution;
     int mMaxBits;
 
     explicit InputSource(Private* p);
@@ -424,9 +424,15 @@ Scanner::Private::InputSource::writeCapabilitiesXml(std::ostream& os) const
      << "</scan:MaxPhysicalWidth>\r\n"
         "<scan:MaxPhysicalHeight>"
      << mMaxPhysicalHeight
-     << "</scan:MaxPhysicalHeight>\r\n"
-        "<scan:MaxScanRegions>1</scan:MaxScanRegions>\r\n"
-        "<scan:SettingProfiles>\r\n";
+     << "</scan:MaxPhysicalHeight>\r\n";
+  os << "<scan:MaxOpticalXResolution>"
+     << mMaxOpticalXResolution
+     << "</scan:MaxOpticalXResolution>\r\n";
+  os << "<scan:MaxOpticalYResolution>"
+     << mMaxOpticalYResolution
+     << "</scan:MaxOpticalYResolution>\r\n";
+  os << "<scan:MaxScanRegions>1</scan:MaxScanRegions>\r\n"
+     << "<scan:SettingProfiles>\r\n";
   p->writeSettingProfile(mMaxBits, os);
   os << "</scan:SettingProfiles>\r\n"
         "<scan:SupportedIntents>\r\n";
@@ -651,6 +657,19 @@ Scanner::Private::InputSource::init(const sanecpp::option_set& opt)
       break;
     default:
       return "unexpected unit in scan area parameters";
+  }
+
+  // SANE requires that either SANE_NAME_SCAN_RESOLUTION
+  // or SANE_NAME_SCAN_X_RESOLUTION and SANE_NAME_SCAN_Y_RESOLUTION
+  // exist and be active.
+  const auto& resolution = opt[SANE_NAME_SCAN_RESOLUTION];
+  if (resolution.is_active()) {
+    mMaxOpticalXResolution = resolution.max();
+    mMaxOpticalYResolution = resolution.max();
+  }
+  else {
+    mMaxOpticalXResolution = opt[SANE_NAME_SCAN_X_RESOLUTION].max();
+    mMaxOpticalYResolution = opt[SANE_NAME_SCAN_Y_RESOLUTION].max();
   }
 
   for (auto pValue : { &mMinWidth,
