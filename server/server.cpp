@@ -341,61 +341,62 @@ Server::run()
     if (mRandompaths)
       pathPrefix += Uuid::Random().toString() + "/";
 
-    sanecpp::init saneinit; // init/deinit after every iteration of the do/while loop
+    { // limit saneinit scope to scanner initialization
+      sanecpp::init saneinit;
 
-    auto scanners = sanecpp::enumerate_devices(mLocalonly);
-    int scannerCount = 0;
-    for (const auto& s : scanners) {
-      std::clog << "found: " << s.name << " (" << s.vendor << " " << s.model
-                << ")" << std::endl;
-      if (matchIgnorelist(s)) {
-        std::clog << "ignoring " << s.name << std::endl;
-        continue;
-      }
-      auto pScanner = std::make_shared<Scanner>(s);
-      std::clog << "stable unique name: " << pScanner->stableUniqueName()
-                << std::endl;
-      std::clog << "uuid: " << pScanner->uuid() << std::endl;
-
-      chooseUniquePublishedName(pScanner.get());
-
-      if (!pScanner->initWithOptions(optionsfile)) {
-        std::clog << "error: " << pScanner->error() << std::endl;
-      }
-      else {
-        if (scannerCount++ == 0 && mCompatiblepath)
-            pScanner->setUri("/eSCL");
-        else
-            pScanner->setUri(pathPrefix + pScanner->uuid());
-        std::ostringstream url;
-        url << "http";
-        if (mAnnouncesecure)
-          url << "s";
-        url << "://" << mHostname << ":" << port() << mBasePath
-            << pScanner->uri();
-        if (mWebinterface)
-          pScanner->setAdminUrl(url.str());
-        if (!pScanner->iconFile().empty()) {
-          url << "/ScannerIcon";
-          pScanner->setIconUrl(url.str());
+      auto scanners = sanecpp::enumerate_devices(mLocalonly);
+      int scannerCount = 0;
+      for (const auto& s : scanners) {
+        std::clog << "found: " << s.name << " (" << s.vendor << " " << s.model
+                  << ")" << std::endl;
+        if (matchIgnorelist(s)) {
+          std::clog << "ignoring " << s.name << std::endl;
+          continue;
         }
+        auto pScanner = std::make_shared<Scanner>(s);
+        std::clog << "stable unique name: " << pScanner->stableUniqueName()
+                  << std::endl;
+        std::clog << "uuid: " << pScanner->uuid() << std::endl;
 
-        std::shared_ptr<MdnsPublisher::Service> pService;
-        if (mAnnounce && !pScanner->error()) {
-          pService = buildMdnsService(pScanner.get());
-          pService->setPort(port());
-          if (pService->announce()) {
-            std::clog << "published as '" << pService->name() << "'" << std::endl;
-              // may have changed due to collision
-            pScanner->setPublishedName(pService->name());
-          } else
-            pService.reset();
+        chooseUniquePublishedName(pScanner.get());
+
+        if (!pScanner->initWithOptions(optionsfile)) {
+          std::clog << "error: " << pScanner->error() << std::endl;
+        }
+        else {
+          if (scannerCount++ == 0 && mCompatiblepath)
+              pScanner->setUri("/eSCL");
+          else
+              pScanner->setUri(pathPrefix + pScanner->uuid());
+          std::ostringstream url;
+          url << "http";
+          if (mAnnouncesecure)
+            url << "s";
+          url << "://" << mHostname << ":" << port() << mBasePath
+              << pScanner->uri();
+          if (mWebinterface)
+            pScanner->setAdminUrl(url.str());
+          if (!pScanner->iconFile().empty()) {
+            url << "/ScannerIcon";
+            pScanner->setIconUrl(url.str());
           }
-          if ((!mAnnounce || pService) && !pScanner->error())
-            mScanners.push_back(ScannerEntry({ pScanner, pService }));
+
+          std::shared_ptr<MdnsPublisher::Service> pService;
+          if (mAnnounce && !pScanner->error()) {
+            pService = buildMdnsService(pScanner.get());
+            pService->setPort(port());
+            if (pService->announce()) {
+              std::clog << "published as '" << pService->name() << "'" << std::endl;
+                // may have changed due to collision
+              pScanner->setPublishedName(pService->name());
+            } else
+              pService.reset();
+            }
+            if ((!mAnnounce || pService) && !pScanner->error())
+              mScanners.push_back(ScannerEntry({ pScanner, pService }));
+        }
       }
     }
-
     ::clock_gettime(CLOCK_MONOTONIC, &t);
     float t1 = 1.0 * t.tv_sec + 1e-9 * t.tv_nsec;
     std::clog << "end time is " << t1 << std::endl;
