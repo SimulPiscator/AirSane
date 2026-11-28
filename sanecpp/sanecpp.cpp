@@ -603,6 +603,7 @@ session::start()
   }
 
   m_session_state = idle;
+  m_chunk_pos = m_chunk_len = 0; // discard data left over from a previous frame
   m_sane_status = ::sane_start(m_device.get());
   switch (m_sane_status) {
     case SANE_STATUS_GOOD:
@@ -647,11 +648,28 @@ session::read(std::vector<char>& buffer)
   SANE_Status status = SANE_STATUS_GOOD;
   size_t total = 0;
   SANE_Byte* p = reinterpret_cast<SANE_Byte*>(buffer.data());
-  while (status == SANE_STATUS_GOOD && total < buffer.size()) {
-    SANE_Int read;
-    status =
-      ::sane_read(m_device.get(), p + total, buffer.size() - total, &read);
-    total += read;
+  // Brother's proprietary backends (brscan3 etc.) fail with SANE_STATUS_NO_MEM
+  // if sane_read() is given a small buffer, such as a single scan line.
+  // Read large chunks from the backend, and hand them out line by line.
+  if (m_chunk.empty())
+    m_chunk.resize(1024 * 1024);
+  while (total < buffer.size()) {
+    if (m_chunk_pos == m_chunk_len) {
+      if (status != SANE_STATUS_GOOD)
+        break;
+      SANE_Int read = 0;
+      status = ::sane_read(
+        m_device.get(), m_chunk.data(), SANE_Int(m_chunk.size()), &read);
+      m_chunk_pos = 0;
+      m_chunk_len = status == SANE_STATUS_GOOD ? size_t(read) : 0;
+      continue;
+    }
+    size_t count = buffer.size() - total;
+    if (count > m_chunk_len - m_chunk_pos)
+      count = m_chunk_len - m_chunk_pos;
+    ::memcpy(p + total, m_chunk.data() + m_chunk_pos, count);
+    m_chunk_pos += count;
+    total += count;
   }
   switch (status) {
     case SANE_STATUS_GOOD:

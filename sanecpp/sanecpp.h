@@ -181,6 +181,8 @@ private:
   option_set m_options;
   SANE_Status m_sane_status;
   SANE_Parameters m_parameters;
+  std::vector<SANE_Byte> m_chunk;
+  size_t m_chunk_pos = 0, m_chunk_len = 0;
 
   std::mutex m_session_state_mutex;
   std::condition_variable m_session_state_changed;
